@@ -50,7 +50,19 @@
         <!-- Header Principal -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><span class="text-danger">🌸</span> Mi Negocio por Catálogo</h2>
-            <span class="badge bg-dark fs-6" id="activeCampaignBadge">Campaña Activa: Cargando...</span>
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-white px-3 py-1.5 rounded-pill shadow-sm border d-flex align-items-center gap-2">
+                    <span class="small fw-bold text-secondary">Nivel:</span>
+                    <select id="globalRevellerTier" class="form-select form-select-sm border-0 bg-transparent fw-bold text-danger" onchange="updateRevellerTier(this.value)">
+                        <option value="25">Bronce (25%)</option>
+                        <option value="30">Plata (30%)</option>
+                        <option value="32">Oro (32%)</option>
+                        <option value="35">Zafiro (35%)</option>
+                        <option value="40">Diamante (40%)</option>
+                    </select>
+                </div>
+                <span class="badge bg-dark fs-6" id="activeCampaignBadge">Campaña: Cargando...</span>
+            </div>
         </div>
 
         <!-- Pestañas de Navegación -->
@@ -105,10 +117,10 @@
                             <h5 class="card-title mb-3">Agregar Artículo del Folleto</h5>
                             <div class="mb-2">
                                 <label class="form-label">Marca</label>
-                                <select id="itemBrand" class="form-select">
-                                    <option value="Natura">Natura 🌸</option>
-                                    <option value="Avon">Avon 💄</option>
-                                    <option value="Casa & Estilo">Casa & Estilo 🏠</option>
+                                <select id="itemBrand" class="form-select" onchange="calculateItemPreview()">
+                                    <option value="Natura">Natura 🌸 (Según Nivel)</option>
+                                    <option value="Avon">Avon 💄 (Según Nivel)</option>
+                                    <option value="Casa & Estilo">Casa & Estilo 🏠 (15% Fijo)</option>
                                 </select>
                             </div>
                             <div class="row g-2 mb-2">
@@ -132,9 +144,26 @@
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label">Precio Catálogo ($)</label>
-                                    <input type="number" id="itemPrice" class="form-control" placeholder="0.00" step="0.01">
+                                    <input type="number" id="itemPrice" class="form-control" placeholder="0.00" step="0.01" oninput="calculateItemPreview()">
                                 </div>
                             </div>
+                            
+                            <!-- Preview de Ganancia -->
+                            <div class="p-2 bg-light rounded border mb-3 small">
+                                <div class="d-flex justify-content-between text-muted">
+                                    <span>Descuento Aplicado:</span>
+                                    <strong id="previewDiscountPct">25%</strong>
+                                </div>
+                                <div class="d-flex justify-content-between text-success">
+                                    <span>Tu Ganancia Estimada:</span>
+                                    <strong id="previewProfit">$0.00</strong>
+                                </div>
+                                <div class="d-flex justify-content-between text-danger">
+                                    <span>Precio Mayorista (Costo):</span>
+                                    <strong id="previewCost">$0.00</strong>
+                                </div>
+                            </div>
+
                             <button class="btn btn-outline-primary w-100" onclick="addItemToOrder()"><i class="bi bi-plus-lg me-1"></i> Añadir al Pedido</button>
                         </div>
                     </div>
@@ -147,11 +176,11 @@
                                     <thead>
                                         <tr>
                                             <th>Marca</th>
-                                            <th>Cód.</th>
                                             <th>Artículo</th>
                                             <th>Cant.</th>
-                                            <th>Precio</th>
-                                            <th>Subtotal</th>
+                                            <th>P. Catálogo</th>
+                                            <th>Ganancia</th>
+                                            <th>Costo</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -161,8 +190,16 @@
                                 </table>
                             </div>
                             <hr>
-                            <div class="d-flex justify-content-between h4 mb-3">
-                                <span>Total Pedido:</span>
+                            <div class="d-flex justify-content-between small text-success fw-bold mb-1">
+                                <span>Ganancia Total Estimada en este Pedido:</span>
+                                <span id="orderTotalProfit">$0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between small text-danger fw-bold mb-2">
+                                <span>Total Mayorista a Pagar a la Empresa:</span>
+                                <span id="orderTotalCost">$0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between h4 mb-3 border-top pt-2">
+                                <span>Total a Cobrar al Cliente:</span>
                                 <span id="orderTotal" class="fw-bold text-danger">$0.00</span>
                             </div>
                             <button class="btn btn-success btn-lg w-100 fw-bold" onclick="saveOrderAndSendWhatsApp()">
@@ -181,18 +218,19 @@
                 </div>
 
                 <div class="card p-3">
-                    <h5 class="card-title mb-3">Estado de Cuenta y Cobros por Cliente</h5>
+                    <h5 class="card-title mb-3">Estado de Cuenta y Ganancias por Cliente</h5>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
                             <thead>
                                 <tr>
                                     <th>Cliente</th>
                                     <th>Campaña</th>
-                                    <th>Total Pedido</th>
+                                    <th>Total Cobro</th>
+                                    <th>Ganancia Neta</th>
                                     <th>Pagado</th>
                                     <th>Saldo Pendiente</th>
                                     <th>Estado Pago</th>
-                                    <th>Acciones / Registrar Pago</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="collectionsTable"></tbody>
@@ -235,7 +273,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Detalles / Anotaciones Extra (Opcional)</label>
-                                <textarea id="aiExtraNotes" class="form-control" rows="2" placeholder="Ej: 3 cuotas sin interés, regalo sorpresa en compras superiores a $20.000..."></textarea>
+                                <textarea id="aiExtraNotes" class="form-control" rows="2" placeholder="Ej: 3 cuotas sin interés, regalo sorpresa..."></textarea>
                             </div>
 
                             <button class="btn btn-primary w-100 fw-bold py-2" onclick="generateAIMessage()">
@@ -261,7 +299,7 @@
         </div>
     </div>
 
-    <!-- Modal para Registrar Pago de Factura a la Empresa (Inversión Inicial) -->
+    <!-- Modal para Registrar Pago de Factura a la Empresa -->
     <div class="modal fade" id="invoicePaymentModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -278,19 +316,12 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Monto Total de la Factura a Pagar ($)</label>
                         <input type="number" id="invAmount" class="form-control form-control-lg" placeholder="Ej: 45000" step="0.01" required>
-                        <small class="text-muted">Este monto representa el dinero que ponés de tu bolsillo para abonar el pedido a la marca (saldo negativo / inversión inicial).</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Medio con el que pagaste la factura</label>
-                        <select id="invMethod" class="form-select">
-                            <option value="Efectivo (Bolsillo)">Efectivo / Propio 💵</option>
-                            <option value="Tarjeta / Transferencia">Tarjeta / Transferencia Bancaria 💳</option>
-                        </select>
+                        <small class="text-muted">Dinero puesto de tu bolsillo para abonar el costo mayorista a la marca (saldo negativo / inversión inicial).</small>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" onclick="confirmInvoicePayment()"><i class="bi bi-dash-circle me-1"></i> Registrar Saldo Negativo / Pago</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmInvoicePayment()"><i class="bi bi-dash-circle me-1"></i> Registrar Saldo Negativo</button>
                 </div>
             </div>
         </div>
@@ -395,16 +426,45 @@
             appId: "1:1031476884953:web:33e775518b497f1d3595c8"
         };
 
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.firestore();
 
         let campaigns = [];
         let orders = [];
         let currentOrderItems = [];
+        let currentRevellerDiscount = parseInt(localStorage.getItem('reveller_tier')) || 25; // Default Bronce 25%
 
         document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('globalRevellerTier').value = currentRevellerDiscount;
             initFirebaseListeners();
+            calculateItemPreview();
         });
+
+        function updateRevellerTier(val) {
+            currentRevellerDiscount = parseInt(val);
+            localStorage.setItem('reveller_tier', currentRevellerDiscount);
+            calculateItemPreview();
+        }
+
+        function getDiscountForBrand(brand) {
+            if (brand === 'Casa & Estilo') return 15; // Fijo 15%
+            return currentRevellerDiscount; // Natura y Avon según nivel (Bronce 25%, Plata 30%, Oro 32%, Zafiro 35%, Diamante 40%)
+        }
+
+        function calculateItemPreview() {
+            const brand = document.getElementById('itemBrand').value;
+            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+            const discountPct = getDiscountForBrand(brand);
+
+            const profit = price * (discountPct / 100);
+            const cost = price - profit;
+
+            document.getElementById('previewDiscountPct').textContent = `${discountPct}%`;
+            document.getElementById('previewProfit').textContent = `$${profit.toFixed(2)}`;
+            document.getElementById('previewCost').textContent = `$${cost.toFixed(2)}`;
+        }
 
         function initFirebaseListeners() {
             db.collection('campaigns').orderBy('startDate', 'desc').onSnapshot(snapshot => {
@@ -428,7 +488,7 @@
             const activeBadge = document.getElementById('activeCampaignBadge');
 
             const activeCamp = campaigns.find(c => c.status === 'Activa');
-            if (activeCamp) activeBadge.textContent = `Campaña Activa: ${activeCamp.name}`;
+            if (activeCamp) activeBadge.textContent = `Campaña: ${activeCamp.name}`;
             else activeBadge.textContent = `Sin campaña activa`;
 
             if (campaigns.length === 0) {
@@ -452,11 +512,11 @@
                                 <h5 class="fw-bold mb-0">${c.name}</h5>
                                 <span class="badge ${badge}">${c.status}</span>
                             </div>
-                            <small class="text-muted mb-2">📅 Inicio: ${c.startDate || '-'} | Cierre: ${c.endDate || '-'}</small>
+                            <small class="text-muted mb-2">📅 Cierre: ${c.endDate || '-'}</small>
                             
                             <div class="p-2 bg-light rounded border mb-2 d-flex justify-content-between align-items-center">
                                 <div>
-                                    <span class="small text-muted d-block">Factura Pagada a la Empresa (Inversión):</span>
+                                    <span class="small text-muted d-block">Factura Pagada (Costo Mayorista):</span>
                                     <strong class="text-danger">-$${invoicePaid.toFixed(2)}</strong>
                                 </div>
                                 <button class="btn btn-sm btn-outline-danger" onclick="openInvoiceModal('${c.id}', '${c.name}', ${invoicePaid})">
@@ -482,21 +542,13 @@
         async function confirmInvoicePayment() {
             const campId = document.getElementById('invCampaignId').value;
             const amount = parseFloat(document.getElementById('invAmount').value) || 0;
-
-            await db.collection('campaigns').doc(campId).update({
-                invoicePaid: amount
-            });
-
+            await db.collection('campaigns').doc(campId).update({ invoicePaid: amount });
             bootstrap.Modal.getInstance(document.getElementById('invoicePaymentModal')).hide();
-            alert('¡Pago de factura a la empresa registrado con éxito!');
+            alert('¡Pago de factura registrado con éxito!');
         }
 
         function updateCampaignSelects() {
-            const selects = [
-                document.getElementById('orderCampaignSelect'), 
-                document.getElementById('filterCampaignSelect'),
-                document.getElementById('aiCampaignSelect')
-            ];
+            const selects = [document.getElementById('orderCampaignSelect'), document.getElementById('filterCampaignSelect'), document.getElementById('aiCampaignSelect')];
             selects.forEach(select => {
                 if(!select) return;
                 const currentVal = select.value;
@@ -542,47 +594,70 @@
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
 
             if (!name || price <= 0) {
-                alert('Ingresá el nombre del producto y un precio válido.');
+                alert('Ingresá el nombre del producto y un precio de catálogo válido.');
                 return;
             }
 
-            currentOrderItems.push({ brand, code, page, name, qty, price });
+            const discountPct = getDiscountForBrand(brand);
+            const unitProfit = price * (discountPct / 100);
+            const unitCost = price - unitProfit;
+
+            currentOrderItems.push({ 
+                brand, code, page, name, qty, 
+                price, discountPct, 
+                profit: unitProfit * qty, 
+                cost: unitCost * qty 
+            });
+
             renderOrderTable();
             
             document.getElementById('itemCode').value = '';
             document.getElementById('itemPage').value = '';
             document.getElementById('itemName').value = '';
             document.getElementById('itemPrice').value = '';
+            calculateItemPreview();
         }
 
         function renderOrderTable() {
             const tbody = document.getElementById('orderItemsTable');
             tbody.innerHTML = '';
-            let total = 0;
+            let totalCatalog = 0;
+            let totalProfit = 0;
+            let totalCost = 0;
 
             if (currentOrderItems.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Aún no agregaste productos al pedido.</td></tr>`;
                 document.getElementById('orderTotal').textContent = '$0.00';
+                document.getElementById('orderTotalProfit').textContent = '$0.00';
+                document.getElementById('orderTotalCost').textContent = '$0.00';
                 return;
             }
 
             currentOrderItems.forEach((item, index) => {
-                const subtotal = item.price * item.qty;
-                total += subtotal;
+                const catalogSubtotal = item.price * item.qty;
+                const itemProfit = item.profit;
+                const itemCost = item.cost;
+
+                totalCatalog += catalogSubtotal;
+                totalProfit += itemProfit;
+                totalCost += itemCost;
+
                 const badgeClass = item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
                 tbody.innerHTML += `
                     <tr>
-                        <td><span class="badge ${badgeClass}">${item.brand}</span></td>
-                        <td>${item.code || '-'}</td>
+                        <td><span class="badge ${badgeClass}">${item.brand}</span><br><small class="text-muted">${item.discountPct}% desc</small></td>
                         <td>${item.name}</td>
                         <td>${item.qty}</td>
-                        <td>$${item.price.toFixed(2)}</td>
-                        <td class="fw-bold">$${subtotal.toFixed(2)}</td>
+                        <td>$${catalogSubtotal.toFixed(2)}</td>
+                        <td class="text-success fw-bold">+$${itemProfit.toFixed(2)}</td>
+                        <td class="text-danger">$${itemCost.toFixed(2)}</td>
                         <td><button class="btn btn-sm btn-link text-danger" onclick="currentOrderItems.splice(${index},1); renderOrderTable()"><i class="bi bi-x-circle"></i></button></td>
                     </tr>`;
             });
 
-            document.getElementById('orderTotal').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('orderTotal').textContent = `$${totalCatalog.toFixed(2)}`;
+            document.getElementById('orderTotalProfit').textContent = `+$${totalProfit.toFixed(2)}`;
+            document.getElementById('orderTotalCost').textContent = `-$${totalCost.toFixed(2)}`;
         }
 
         async function saveOrderAndSendWhatsApp() {
@@ -591,11 +666,13 @@
             const clientPhone = document.getElementById('clientPhone').value.trim();
 
             if (!campaign || !clientName || currentOrderItems.length === 0) {
-                alert('Seleccioná la campaña, completá el nombre del cliente y agregá al menos un producto.');
+                alert('Seleccioná la campaña, completá el nombre del cliente y agregá productos.');
                 return;
             }
 
             let total = currentOrderItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
+            let totalProfit = currentOrderItems.reduce((acc, item) => acc + item.profit, 0);
+            let totalCost = currentOrderItems.reduce((acc, item) => acc + item.cost, 0);
 
             const orderData = {
                 campaign,
@@ -603,6 +680,8 @@
                 clientPhone,
                 items: currentOrderItems,
                 total,
+                totalProfit,
+                totalCost,
                 paidAmount: 0,
                 paymentStatus: 'Pendiente',
                 lastPaymentMethod: '-',
@@ -626,7 +705,7 @@
             document.getElementById('clientName').value = '';
             document.getElementById('clientPhone').value = '';
             renderOrderTable();
-            alert('¡Pedido guardado con éxito y listo para cobrar!');
+            alert('¡Pedido guardado con éxito!');
         }
 
         // --- MÓDULO 3: COBRANZAS Y CUENTAS ---
@@ -638,22 +717,23 @@
             let filtered = orders.filter(o => !filterCamp || o.campaign === filterCamp);
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No hay pedidos registrados para mostrar.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No hay pedidos registrados.</td></tr>`;
                 return;
             }
 
             filtered.forEach(o => {
                 const paid = o.paidAmount || 0;
                 const saldo = o.total - paid;
+                const profit = o.totalProfit || 0;
                 let badgeClass = 'bg-danger';
                 let statusText = 'Pendiente ⏳';
 
                 if (paid >= o.total) {
                     badgeClass = 'bg-success';
-                    statusText = 'Pagado Completo ✅';
+                    statusText = 'Pagado ✅';
                 } else if (paid > 0) {
                     badgeClass = 'bg-warning text-dark';
-                    statusText = 'Pago Parcial ⚠️';
+                    statusText = 'Parcial ⚠️';
                 }
 
                 tbody.innerHTML += `
@@ -661,11 +741,12 @@
                         <td><strong>${o.clientName}</strong><br><small class="text-muted">${o.clientPhone || ''}</small></td>
                         <td><span class="badge bg-secondary">${o.campaign}</span></td>
                         <td class="fw-bold">$${o.total.toFixed(2)}</td>
+                        <td class="text-success fw-bold">+$${profit.toFixed(2)}</td>
                         <td class="text-success">$${paid.toFixed(2)}</td>
                         <td class="text-danger fw-bold">$${saldo.toFixed(2)}</td>
-                        <td><span class="badge ${badgeClass}">${statusText}</span><br><small class="text-muted">Método: ${o.lastPaymentMethod || '-'}</small></td>
+                        <td><span class="badge ${badgeClass}">${statusText}</span></td>
                         <td>
-                            <button class="btn btn-sm btn-outline-success me-1" onclick="openPaymentModal('${o.id}', '${o.clientName}', ${saldo})"><i class="bi bi-cash"></i> Registrar Pago</button>
+                            <button class="btn btn-sm btn-outline-success me-1" onclick="openPaymentModal('${o.id}', '${o.clientName}', ${saldo})"><i class="bi bi-cash"></i> Cobrar</button>
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder('${o.id}')"><i class="bi bi-trash"></i></button>
                         </td>
                     </tr>`;
@@ -685,16 +766,10 @@
             const amountToAdd = parseFloat(document.getElementById('payAmount').value) || 0;
             const method = document.getElementById('payMethod').value;
 
-            if (amountToAdd <= 0) {
-                alert('Ingresá un monto válido.');
-                return;
-            }
-
             const orderDoc = orders.find(o => o.id === orderId);
             if (!orderDoc) return;
 
             const newPaidAmount = (orderDoc.paidAmount || 0) + amountToAdd;
-
             await db.collection('orders').doc(orderId).update({
                 paidAmount: newPaidAmount,
                 lastPaymentMethod: method
@@ -705,12 +780,12 @@
         }
 
         async function deleteOrder(id) {
-            if (confirm('¿Estás segura de eliminar este pedido y su cuenta?')) {
+            if (confirm('¿Estás segura de eliminar este pedido?')) {
                 await db.collection('orders').doc(id).delete();
             }
         }
 
-        // --- MÓDULO 4: ASISTENTE IA WHATSAPP (GEMINI) ---
+        // --- ASISTENTE IA WHATSAPP ---
         async function generateAIMessage() {
             const campaignName = document.getElementById('aiCampaignSelect').value;
             const messageType = document.getElementById('aiMessageType').value;
@@ -718,39 +793,34 @@
             const extraNotes = document.getElementById('aiExtraNotes').value.trim();
 
             if (!campaignName) {
-                alert('Por favor seleccioná una campaña para el mensaje.');
+                alert('Seleccioná una campaña.');
                 return;
             }
 
             const camp = campaigns.find(c => c.name === campaignName);
-            const linkInfo = camp ? `Links disponibles:\n- Natura: ${camp.linkNatura || 'N/A'}\n- Avon: ${camp.linkAvon || 'N/A'}\n- Casa & Estilo: ${camp.linkCasa || 'N/A'}` : '';
+            const linkInfo = camp ? `Links:\n- Natura: ${camp.linkNatura || 'N/A'}\n- Avon: ${camp.linkAvon || 'N/A'}\n- Casa & Estilo: ${camp.linkCasa || 'N/A'}` : '';
 
-            const prompt = `Actúa como una vendedora experta y amigable de venta por catálogo de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp atractivo, cálido y persuasivo con emojis para enviar a las clientas.
+            const prompt = `Actúa como vendedora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp atractivo con emojis para difundir.
             - Campaña: ${campaignName} (Cierra el: ${camp ? camp.endDate : 'próximamente'})
-            - Tipo de mensaje: ${messageType}
-            - Marca enfocada: ${brand}
-            - Notas adicionales: ${extraNotes}
+            - Tipo: ${messageType}
+            - Marca: ${brand}
+            - Notas: ${extraNotes}
             ${linkInfo}
-            El mensaje debe invitar a realizar encargos, incluir los links si corresponden y tener un tono sumamente comercial pero cercano. Devuelve únicamente el texto del mensaje listo para copiar.`;
+            Devuelve únicamente el texto listo para copiar.`;
 
             document.getElementById('aiResultOutput').value = "Generando mensaje con la IA... 🤖✨";
 
             try {
-                // Usando el modelo correcto de Gemini Flash
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyD6nfEiJ8Rkka4sWKzHweZ6tvFZu6BsI-0`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
 
                 const data = await response.json();
-                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No se pudo generar el texto. Intentá nuevamente.";
-                document.getElementById('aiResultOutput').value = aiText;
+                document.getElementById('aiResultOutput').value = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error al generar.";
             } catch (error) {
-                console.error(error);
-                document.getElementById('aiResultOutput').value = "Error al conectar con la IA de Gemini. Verificá tu conexión.";
+                document.getElementById('aiResultOutput').value = "Error al conectar con la IA.";
             }
         }
 
@@ -758,15 +828,12 @@
             const textarea = document.getElementById('aiResultOutput');
             textarea.select();
             document.execCommand('copy');
-            alert('¡Texto copiado al portapapeles!');
+            alert('¡Texto copiado!');
         }
 
         function sendWhatsAppBroadcast() {
             const text = document.getElementById('aiResultOutput').value;
-            if (!text) {
-                alert('Primero generá un mensaje.');
-                return;
-            }
+            if (!text) return;
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
     </script>
