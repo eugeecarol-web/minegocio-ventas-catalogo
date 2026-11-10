@@ -74,10 +74,13 @@
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ordersTab" type="button"><i class="bi bi-cart-plus me-2"></i>2. Cargar Pedido</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#collectionsTab" type="button"><i class="bi bi-wallet2 me-2"></i>3. Cobranzas y Cuentas</button>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#catalogMemoryTab" type="button"><i class="bi bi-journal-code me-2"></i>3. Memoria de Códigos</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#aiAssistantTab" type="button"><i class="bi bi-robot me-2"></i>4. Asistente IA WhatsApp</button>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#collectionsTab" type="button"><i class="bi bi-wallet2 me-2"></i>4. Cobranzas y Cuentas</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#aiAssistantTab" type="button"><i class="bi bi-robot me-2"></i>5. Asistente IA WhatsApp</button>
             </li>
         </ul>
 
@@ -115,7 +118,12 @@
                         </div>
 
                         <div class="card p-3">
-                            <h5 class="card-title mb-3">Agregar Artículo del Folleto</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">Agregar Artículo del Folleto</h5>
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#selectSavedProductModal">
+                                    <i class="bi bi-bookmark-star me-1"></i> Usar Guardados
+                                </button>
+                            </div>
                             <div class="mb-2">
                                 <label class="form-label">Marca</label>
                                 <select id="itemBrand" class="form-select" onchange="calculateItemPreview()">
@@ -151,7 +159,6 @@
                             <div class="mb-3">
                                 <label class="form-label small text-secondary">Descuento al Cliente (%) (Opcional)</label>
                                 <input type="number" id="itemClientDiscount" class="form-control form-control-sm" value="0" min="0" max="100" step="0.5" oninput="calculateItemPreview()">
-                                <small class="text-muted">Si le hacés una atención o descuento especial a la clienta sobre el precio de folleto.</small>
                             </div>
                             
                             <!-- Preview de Ganancia -->
@@ -192,9 +199,9 @@
                                             <th>Artículo</th>
                                             <th>Cant.</th>
                                             <th>P. Catálogo</th>
-                                            <th>Desc. Cliente</th>
+                                            <th>Desc.</th>
                                             <th>A Cobrar</th>
-                                            <th>Tu Ganancia</th>
+                                            <th>Ganancia</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -224,7 +231,44 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 3: Cobranzas y Cuentas -->
+            <!-- MÓDULO 3: Memoria de Códigos Frecuentes -->
+            <div class="tab-pane fade" id="catalogMemoryTab">
+                <div class="card p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4><i class="bi bi-journal-code text-primary me-2"></i>Memoria de Códigos Frecuentes</h4>
+                            <p class="text-muted small mb-0">Aquí quedan guardados automáticamente todos los productos que vas cargando. También podés agregarlos manualmente para tenerlos listos al armar tus pedidos online a la empresa.</p>
+                        </div>
+                        <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#productMemoryModal" onclick="resetProductMemoryForm()">
+                            <i class="bi bi-plus-circle me-1"></i> Nuevo Producto
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" id="memorySearchInput" class="form-control" placeholder="🔍 Buscar por código, nombre o marca..." oninput="renderProductMemory()">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Marca</th>
+                                    <th>Código</th>
+                                    <th>Descripción</th>
+                                    <th>Precio Ref. ($)</th>
+                                    <th>Veces Pedido</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productMemoryTableBody">
+                                <tr><td colspan="6" class="text-center text-muted">Cargando memoria de productos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 4: Cobranzas y Cuentas -->
             <div class="tab-pane fade" id="collectionsTab">
                 <div class="card p-3 mb-4">
                     <h5 class="card-title mb-3"><i class="bi bi-search me-2"></i>Filtrar Cuentas por Campaña</h5>
@@ -253,7 +297,7 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 4: Asistente IA WhatsApp -->
+            <!-- MÓDULO 5: Asistente IA WhatsApp -->
             <div class="tab-pane fade" id="aiAssistantTab">
                 <div class="row">
                     <div class="col-md-5">
@@ -313,6 +357,76 @@
         </div>
     </div>
 
+    <!-- Modal: Seleccionar Producto desde la Memoria de Códigos -->
+    <div class="modal fade" id="selectSavedProductModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="bi bi-bookmark-star me-2"></i>Seleccionar Producto Guardado</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="text" id="modalMemorySearch" class="form-control mb-3" placeholder="🔍 Buscar código o nombre..." oninput="renderModalMemoryList()">
+                    <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Marca</th>
+                                    <th>Código</th>
+                                    <th>Descripción</th>
+                                    <th>Precio Ref.</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalMemoryTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Crear/Editar Producto en Memoria -->
+    <div class="modal fade" id="productMemoryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="memoryModalTitle">Guardar Producto en Memoria</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="memoryProductForm">
+                        <input type="hidden" id="memId">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Marca</label>
+                            <select id="memBrand" class="form-select">
+                                <option value="Natura">Natura 🌸</option>
+                                <option value="Avon">Avon 💄</option>
+                                <option value="Casa & Estilo">Casa & Estilo 🏠</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Código de Producto</label>
+                            <input type="text" id="memCode" class="form-control" placeholder="Ej: 12345" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Descripción del Artículo</label>
+                            <input type="text" id="memName" class="form-control" placeholder="Ej: Perfume Kaiak Clásico" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Precio de Referencia ($)</label>
+                            <input type="number" id="memPrice" class="form-control" placeholder="0.00" step="0.01">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="saveMemoryProduct()">Guardar en Memoria</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para Registrar Pago de Factura a la Empresa -->
     <div class="modal fade" id="invoicePaymentModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -330,7 +444,6 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Monto Total de la Factura a Pagar ($)</label>
                         <input type="number" id="invAmount" class="form-control form-control-lg" placeholder="Ej: 45000" step="0.01" required>
-                        <small class="text-muted">Dinero puesto de tu bolsillo para abonar el costo mayorista a la marca (saldo negativo / inversión inicial).</small>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -376,7 +489,7 @@
         </div>
     </div>
 
-    <!-- Modal Campaña (Crear / Editar) -->
+    <!-- Modal Campaña -->
     <div class="modal fade" id="campaignModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
@@ -447,8 +560,9 @@
 
         let campaigns = [];
         let orders = [];
+        let productMemory = [];
         let currentOrderItems = [];
-        let currentRevellerDiscount = parseInt(localStorage.getItem('reveller_tier')) || 25; // Default Bronce 25%
+        let currentRevellerDiscount = parseInt(localStorage.getItem('reveller_tier')) || 25;
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('globalRevellerTier').value = currentRevellerDiscount;
@@ -463,8 +577,8 @@
         }
 
         function getWholesaleDiscountForBrand(brand) {
-            if (brand === 'Casa & Estilo') return 15; // 15% Fijo
-            return currentRevellerDiscount; // Natura y Avon según nivel (25%, 30%, 32%, 35%, 40%)
+            if (brand === 'Casa & Estilo') return 15;
+            return currentRevellerDiscount;
         }
 
         function calculateItemPreview() {
@@ -496,6 +610,13 @@
                 snapshot.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
                 renderCollections();
             });
+
+            db.collection('product_memory').orderBy('timesOrdered', 'desc').onSnapshot(snapshot => {
+                productMemory = [];
+                snapshot.forEach(doc => productMemory.push({ id: doc.id, ...doc.data() }));
+                renderProductMemory();
+                renderModalMemoryList();
+            });
         }
 
         // --- GESTIÓN DE CAMPAÑAS Y FACTURAS ---
@@ -517,13 +638,36 @@
                 const badge = c.status === 'Activa' ? 'bg-success' : 'bg-secondary';
                 const invoicePaid = c.invoicePaid || 0;
 
+                // Consolidar productos de esta campaña agrupados por marca y código
+                const campOrders = orders.filter(o => o.campaign === c.name);
+                const consolidatedMap = {};
+
+                campOrders.forEach(o => {
+                    if (o.items && Array.isArray(o.items)) {
+                        o.items.forEach(item => {
+                            const key = `${item.brand}_${item.code || item.name}`;
+                            if (!consolidatedMap[key]) {
+                                consolidatedMap[key] = {
+                                    brand: item.brand,
+                                    code: item.code || 'S/C',
+                                    name: item.name,
+                                    qty: 0
+                                };
+                            }
+                            consolidatedMap[key].qty += parseInt(item.qty) || 1;
+                        });
+                    }
+                });
+
+                const consolidatedList = Object.values(consolidatedMap);
+
                 let linksHtml = '';
                 if (c.linkNatura) linksHtml += `<a href="${c.linkNatura}" target="_blank" class="btn btn-sm btn-outline-danger">Natura 🌸</a>`;
                 if (c.linkAvon) linksHtml += `<a href="${c.linkAvon}" target="_blank" class="btn btn-sm btn-outline-danger">Avon 💄</a>`;
                 if (c.linkCasa) linksHtml += `<a href="${c.linkCasa}" target="_blank" class="btn btn-sm btn-outline-dark">Casa & Estilo 🏠</a>`;
 
                 container.innerHTML += `
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-4">
                         <div class="card p-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="fw-bold mb-0">${c.name}</h5>
@@ -544,8 +688,41 @@
                                 </button>
                             </div>
 
-                            <div class="d-flex gap-2 flex-wrap">
+                            <div class="d-flex gap-2 flex-wrap mb-3">
                                 ${linksHtml || '<span class="text-muted small">Sin links cargados</span>'}
+                            </div>
+
+                            <!-- CONSOLIDADO DE PEDIDO PARA LA EMPRESA -->
+                            <div class="border-top pt-2">
+                                <h6 class="fw-bold small text-secondary d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#collapseConsolidated_${c.id}" style="cursor: pointer;">
+                                    <span><i class="bi bi-list-check me-1"></i> Lista para Cargar en la Web (${consolidatedList.length} ítems)</span>
+                                    <i class="bi bi-chevron-down"></i>
+                                </h6>
+                                <div class="collapse mt-2" id="collapseConsolidated_${c.id}">
+                                    <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                                        <table class="table table-sm table-bordered align-middle mb-0" style="font-size: 11px;">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Marca</th>
+                                                    <th>Cód.</th>
+                                                    <th>Producto</th>
+                                                    <th class="text-center">Cant. Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${consolidatedList.length === 0 ? '<tr><td colspan="4" class="text-center text-muted">No hay pedidos cargados en esta campaña.</td></tr>' : 
+                                                  consolidatedList.map(item => `
+                                                    <tr>
+                                                        <td><span class="badge ${item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa')}">${item.brand}</span></td>
+                                                        <td><strong>${item.code}</strong></td>
+                                                        <td>${item.name}</td>
+                                                        <td class="text-center fw-bold text-danger">${item.qty}</td>
+                                                    </tr>
+                                                  `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>`;
@@ -626,6 +803,140 @@
             document.getElementById('modalCampaignTitle').textContent = 'Configurar Campaña';
         }
 
+        // --- MEMORIA DE CÓDIGOS DE PRODUCTOS ---
+        async function upsertProductMemory(brand, code, name, price) {
+            if (!code || !name) return;
+            code = code.trim();
+            name = name.trim();
+
+            const existing = productMemory.find(p => p.code === code && p.brand === brand);
+            if (existing) {
+                await db.collection('product_memory').doc(existing.id).update({
+                    name: name,
+                    price: price > 0 ? price : (existing.price || 0),
+                    timesOrdered: (existing.timesOrdered || 1) + 1
+                });
+            } else {
+                await db.collection('product_memory').add({
+                    brand, code, name, price: price || 0, timesOrdered: 1
+                });
+            }
+        }
+
+        function renderProductMemory() {
+            const tbody = document.getElementById('productMemoryTableBody');
+            const search = document.getElementById('memorySearchInput').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = productMemory.filter(p => 
+                p.code.toLowerCase().includes(search) || 
+                p.name.toLowerCase().includes(search) || 
+                p.brand.toLowerCase().includes(search)
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No hay productos guardados en memoria.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const badgeClass = p.brand === 'Natura' ? 'badge-natura' : (p.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge ${badgeClass}">${p.brand}</span></td>
+                        <td><strong>${p.code}</strong></td>
+                        <td>${p.name}</td>
+                        <td>$${(p.price || 0).toFixed(2)}</td>
+                        <td><span class="badge bg-secondary">${p.timesOrdered || 1} veces</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="useMemoryProduct('${p.brand}', '${p.code}', '${p.name}', ${p.price || 0})"><i class="bi bi-plus-lg"></i> Usar en Pedido</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteMemoryProduct('${p.id}')"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function renderModalMemoryList() {
+            const tbody = document.getElementById('modalMemoryTableBody');
+            const search = document.getElementById('modalMemorySearch').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = productMemory.filter(p => 
+                p.code.toLowerCase().includes(search) || 
+                p.name.toLowerCase().includes(search) || 
+                p.brand.toLowerCase().includes(search)
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No se encontraron productos guardados.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const badgeClass = p.brand === 'Natura' ? 'badge-natura' : (p.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge ${badgeClass}">${p.brand}</span></td>
+                        <td><strong>${p.code}</strong></td>
+                        <td>${p.name}</td>
+                        <td>$${(p.price || 0).toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="selectFromModal('${p.brand}', '${p.code}', '${p.name}', ${p.price || 0})"><i class="bi bi-check-lg"></i> Elegir</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function selectFromModal(brand, code, name, price) {
+            document.getElementById('itemBrand').value = brand;
+            document.getElementById('itemCode').value = code;
+            document.getElementById('itemName').value = name;
+            if(price > 0) document.getElementById('itemPrice').value = price;
+            calculateItemPreview();
+
+            bootstrap.Modal.getInstance(document.getElementById('selectSavedProductModal')).hide();
+        }
+
+        function useMemoryProduct(brand, code, name, price) {
+            selectFromModal(brand, code, name, price);
+            const tabEl = document.querySelector('button[data-bs-target="#ordersTab"]');
+            new bootstrap.Tab(tabEl).show();
+        }
+
+        async function saveMemoryProduct() {
+            const id = document.getElementById('memId').value;
+            const brand = document.getElementById('memBrand').value;
+            const code = document.getElementById('memCode').value.trim();
+            const name = document.getElementById('memName').value.trim();
+            const price = parseFloat(document.getElementById('memPrice').value) || 0;
+
+            if (!code || !name) {
+                alert('Completá el código y la descripción.');
+                return;
+            }
+
+            if (id) {
+                await db.collection('product_memory').doc(id).update({ brand, code, name, price });
+            } else {
+                await db.collection('product_memory').add({ brand, code, name, price, timesOrdered: 1 });
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('productMemoryModal')).hide();
+            resetProductMemoryForm();
+        }
+
+        function resetProductMemoryForm() {
+            document.getElementById('memoryProductForm').reset();
+            document.getElementById('memId').value = '';
+            document.getElementById('memoryModalTitle').textContent = 'Guardar Producto en Memoria';
+        }
+
+        async function deleteMemoryProduct(id) {
+            if (confirm('¿Eliminar este producto de la memoria?')) {
+                await db.collection('product_memory').doc(id).delete();
+            }
+        }
+
         // --- GESTIÓN DE PEDIDOS Y EDICIÓN ---
         function addItemToOrder() {
             const brand = document.getElementById('itemBrand').value;
@@ -640,6 +951,9 @@
                 alert('Ingresá el nombre del producto y un precio de catálogo válido.');
                 return;
             }
+
+            // Guardar automáticamente en la memoria de códigos
+            upsertProductMemory(brand, code, name, price);
 
             const wholesaleDiscountPct = getWholesaleDiscountForBrand(brand);
             const finalClientPriceUnit = price * (1 - (clientDiscountPct / 100));
@@ -772,10 +1086,8 @@
             document.getElementById('cancelEditOrderBtn').classList.remove('d-none');
             document.getElementById('saveOrderBtn').textContent = 'Guardar Cambios del Pedido';
 
-            // Cambiar a la pestaña de carga de pedidos
             const tabEl = document.querySelector('button[data-bs-target="#ordersTab"]');
-            const tab = new bootstrap.Tab(tabEl);
-            tab.show();
+            new bootstrap.Tab(tabEl).show();
         }
 
         function cancelOrderEdit() {
@@ -788,7 +1100,7 @@
             document.getElementById('saveOrderBtn').innerHTML = '<i class="bi bi-whatsapp me-2"></i> Guardar Pedido y Enviar Comprobante';
         }
 
-        // --- MÓDULO 3: COBRANZAS Y CUENTAS ---
+        // --- MÓDULO 4: COBRANZAS Y CUENTAS ---
         function renderCollections() {
             const tbody = document.getElementById('collectionsTable');
             tbody.innerHTML = '';
