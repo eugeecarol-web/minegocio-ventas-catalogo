@@ -1,3 +1,4 @@
+<html>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -116,6 +117,16 @@
 
                         <div class="card p-3">
                             <h5 class="card-title mb-3">Agregar Artículo del Folleto</h5>
+                            
+                            <!-- Opción de Regalo de la Compañía -->
+                            <div class="form-check form-switch mb-3 p-2 bg-warning bg-opacity-10 border border-warning rounded ps-5">
+                                <input class="form-check-input" type="checkbox" role="switch" id="itemIsGift" onchange="calculateItemPreview()">
+                                <label class="form-check-label fw-bold text-dark" for="itemIsGift">
+                                    🎁 Es un regalo de la compañía (100% Ganancia)
+                                </label>
+                                <div class="form-text small mt-0">Costo $0 y no se suma al pedido online.</div>
+                            </div>
+
                             <div class="mb-2">
                                 <label class="form-label">Marca</label>
                                 <select id="itemBrand" class="form-select" onchange="calculateItemPreview()">
@@ -144,7 +155,7 @@
                                     <input type="number" id="itemQty" class="form-control" value="1" min="1">
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label">Precio Catálogo ($)</label>
+                                    <label class="form-label">Precio de Venta / Catálogo ($)</label>
                                     <input type="number" id="itemPrice" class="form-control" placeholder="0.00" step="0.01" oninput="calculateItemPreview()">
                                 </div>
                             </div>
@@ -190,7 +201,7 @@
                                             <th>Marca</th>
                                             <th>Artículo</th>
                                             <th>Cant.</th>
-                                            <th>P. Catálogo</th>
+                                            <th>P. Base</th>
                                             <th>Desc.</th>
                                             <th>A Cobrar</th>
                                             <th>Ganancia</th>
@@ -466,16 +477,17 @@
         }
 
         function calculateItemPreview() {
+            const isGift = document.getElementById('itemIsGift').checked;
             const brand = document.getElementById('itemBrand').value;
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
             const clientDiscountPct = parseFloat(document.getElementById('itemClientDiscount').value) || 0;
-            const wholesaleDiscountPct = getWholesaleDiscountForBrand(brand);
+            const wholesaleDiscountPct = isGift ? 100 : getWholesaleDiscountForBrand(brand);
 
             const finalClientPrice = price * (1 - (clientDiscountPct / 100));
-            const wholesaleCost = price * (1 - (wholesaleDiscountPct / 100));
+            const wholesaleCost = isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100));
             const profit = finalClientPrice - wholesaleCost;
 
-            document.getElementById('previewWholesaleDiscount').textContent = `${wholesaleDiscountPct}%`;
+            document.getElementById('previewWholesaleDiscount').textContent = isGift ? '100% (Regalo)' : `${wholesaleDiscountPct}%`;
             document.getElementById('previewProfit').textContent = `$${profit.toFixed(2)}`;
             document.getElementById('previewCost').textContent = `$${wholesaleCost.toFixed(2)}`;
             document.getElementById('previewFinalClientPrice').textContent = `$${finalClientPrice.toFixed(2)}`;
@@ -492,7 +504,7 @@
             db.collection('orders').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
                 orders = [];
                 snapshot.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
-                renderCampaigns(); // Para actualizar los consolidados de las campañas
+                renderCampaigns();
                 renderCollections();
             });
         }
@@ -516,13 +528,14 @@
                 const badge = c.status === 'Activa' ? 'bg-success' : 'bg-secondary';
                 const invoicePaid = c.invoicePaid || 0;
 
-                // Consolidar productos de esta campaña agrupados por marca y código
+                // Consolidar productos de esta campaña agrupados por marca y código (excluyendo regalos de compañía)
                 const campOrders = orders.filter(o => o.campaign === c.name);
                 const consolidatedMap = {};
 
                 campOrders.forEach(o => {
                     if (o.items && Array.isArray(o.items)) {
                         o.items.forEach(item => {
+                            if (item.isGift) return; // Los regalos ya los tenés en stock, no se encargan en la web
                             const brandKey = item.brand || 'Natura';
                             const codeKey = item.code ? item.code.trim() : 'S/C';
                             const key = `${brandKey}_${codeKey}_${item.name.toLowerCase().trim()}`;
@@ -591,7 +604,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                ${consolidatedList.length === 0 ? '<tr><td colspan="4" class="text-center text-muted">No hay pedidos cargados en esta campaña.</td></tr>' : 
+                                                ${consolidatedList.length === 0 ? '<tr><td colspan="4" class="text-center text-muted">No hay pedidos para encargar en esta campaña.</td></tr>' : 
                                                   consolidatedList.map(item => `
                                                     <tr>
                                                         <td><span class="badge ${item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa')}">${item.brand}</span></td>
@@ -686,6 +699,7 @@
 
         // --- GESTIÓN DE PEDIDOS Y EDICIÓN ---
         function addItemToOrder() {
+            const isGift = document.getElementById('itemIsGift').checked;
             const brand = document.getElementById('itemBrand').value;
             const code = document.getElementById('itemCode').value.trim();
             const page = document.getElementById('itemPage').value.trim();
@@ -695,17 +709,17 @@
             const clientDiscountPct = parseFloat(document.getElementById('itemClientDiscount').value) || 0;
 
             if (!name || price <= 0) {
-                alert('Ingresá el nombre del producto y un precio de catálogo válido.');
+                alert('Ingresá el nombre del producto y un precio de venta válido.');
                 return;
             }
 
-            const wholesaleDiscountPct = getWholesaleDiscountForBrand(brand);
+            const wholesaleDiscountPct = isGift ? 100 : getWholesaleDiscountForBrand(brand);
             const finalClientPriceUnit = price * (1 - (clientDiscountPct / 100));
-            const wholesaleCostUnit = price * (1 - (wholesaleDiscountPct / 100));
+            const wholesaleCostUnit = isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100));
             const unitProfit = finalClientPriceUnit - wholesaleCostUnit;
 
             currentOrderItems.push({ 
-                brand, code, page, name, qty, 
+                isGift, brand, code, page, name, qty, 
                 price, clientDiscountPct, wholesaleDiscountPct,
                 finalClientPrice: finalClientPriceUnit * qty,
                 profit: unitProfit * qty, 
@@ -714,6 +728,7 @@
 
             renderOrderTable();
             
+            document.getElementById('itemIsGift').checked = false;
             document.getElementById('itemCode').value = '';
             document.getElementById('itemPage').value = '';
             document.getElementById('itemName').value = '';
@@ -744,10 +759,12 @@
                 totalCost += item.cost;
 
                 const badgeClass = item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
+                const giftBadge = item.isGift ? `<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : '';
+
                 tbody.innerHTML += `
                     <tr>
                         <td><span class="badge ${badgeClass}">${item.brand}</span></td>
-                        <td>${item.name}</td>
+                        <td>${item.name} ${giftBadge}</td>
                         <td>${item.qty}</td>
                         <td>$${(item.price * item.qty).toFixed(2)}</td>
                         <td>${item.clientDiscountPct > 0 ? `<span class="text-danger fw-bold">${item.clientDiscountPct}%</span>` : 'Sin desc.'}</td>
@@ -800,7 +817,7 @@
 
                 let text = `*¡Hola ${clientName}!* 🌸 Registré tu pedido para la campaña *${campaign}*:\n`;
                 currentOrderItems.forEach(i => {
-                    text += `\n• *[${i.brand}]* ${i.name} (Cód: ${i.code || '-'}) x${i.qty} - $${i.finalClientPrice.toFixed(2)}`;
+                    text += `\n• *[${i.brand}]* ${i.name} ${i.code ? `(Cód: ${i.code})` : ''} x${i.qty} - $${i.finalClientPrice.toFixed(2)}`;
                 });
                 text += `\n\n💳 *TOTAL A ABONAR: $${total.toFixed(2)}*\n¡Muchas gracias por confiar en mí! ✨`;
 
