@@ -13,44 +13,92 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         :root {
-            --natura-color: #FF6B00;
-            --avon-color: #E50046;
-            --casa-color: #6B4E71;
-            --bg-light: #FAF7F5;
+            --natura-color: #bf3c1e;
+            --avon-color: #f2682c;
+            --casa-color: #d99a28;
+            --bg-light: #f4e1db;
+            --ink: #211815;
+            --cream: #fff8f4;
+            --sun: #eba52d;
+            --terracotta: #bf3c1e;
+            --orange: #f2682c;
         }
 
         body {
-            background-color: var(--bg-light);
+            background: var(--bg-light);
+            color: var(--ink);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .card {
-            border: none;
-            border-radius: 14px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        .container.my-4 { max-width: 1440px; }
+        h2, h4, h5, h6 { color: var(--ink); }
+        .card, .modal-content {
+            border: 1px solid rgba(92, 48, 34, .08);
+            border-radius: 18px;
+            background-color: var(--cream);
+            box-shadow: 0 6px 22px rgba(91, 48, 32, .07);
         }
-
-        .nav-pills .nav-link.active {
-            background-color: #FF6B00;
-            color: #ffffff;
+        .nav-pills {
+            border: 1px solid rgba(92, 48, 34, .08);
         }
-
+        .nav-pills .nav-link.active, .btn-primary {
+            background-color: var(--terracotta);
+            border-color: var(--terracotta);
+            color: #fff;
+        }
+        .btn-primary:hover, .nav-pills .nav-link.active:hover {
+            background-color: #9f3018;
+            border-color: #9f3018;
+        }
         .nav-pills .nav-link {
-            color: #4A3E3D;
-            font-weight: 600;
+            color: #4A3028;
+            font-weight: 650;
+            border-radius: 12px;
         }
-
+        .btn-outline-primary {
+            color: var(--terracotta);
+            border-color: var(--terracotta);
+        }
+        .btn-outline-primary:hover {
+            background: var(--terracotta);
+            border-color: var(--terracotta);
+        }
+        .btn-success { background-color: #526c42; border-color: #526c42; }
+        .btn-outline-success { color: #526c42; border-color: #526c42; }
+        .form-control, .form-select {
+            border-radius: 10px;
+            border-color: #e7c9bd;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--orange);
+            box-shadow: 0 0 0 .2rem rgba(242, 104, 44, .14);
+        }
         .badge-natura { background-color: var(--natura-color); color: #fff; }
         .badge-avon { background-color: var(--avon-color); color: #fff; }
-        .badge-casa { background-color: var(--casa-color); color: #fff; }
+        .badge-casa { background-color: var(--casa-color); color: #211815; }
+        .brand-header {
+            background: var(--cream);
+            border-radius: 18px;
+            padding: 16px 20px;
+            border: 1px solid rgba(92,48,34,.08);
+            box-shadow: 0 6px 22px rgba(91,48,32,.06);
+        }
+        .brand-mark {
+            display: inline-flex; align-items: center; gap: 8px;
+            color: var(--terracotta); font-weight: 800; letter-spacing: .04em;
+        }
+        .campaign-dates { background: #fff0e6; border: 1px solid #f2d2bd; }
+        @media print {
+            body { background: #fff !important; }
+        }
     </style>
 </head>
 <body>
 
     <div class="container my-4">
         <!-- Header Principal -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2><span class="text-danger">🌸</span> Mi Negocio por Catálogo</h2>
+        <div class="brand-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div><div class="brand-mark mb-1">NATURA · AVON · CASA & ESTILO</div><h2 class="mb-0">Mi Negocio por Catálogo</h2><small class="text-muted">Pedidos, campañas y clientes en un solo lugar</small></div>
             <div class="d-flex align-items-center gap-3">
                 <div class="bg-white px-3 py-1.5 rounded-pill shadow-sm border d-flex align-items-center gap-2">
                     <span class="small fw-bold text-secondary">Tu Nivel:</span>
@@ -270,6 +318,12 @@
                         <div class="card p-4 mb-4">
                             <h5 class="card-title mb-3 text-primary"><i class="bi bi-robot me-2"></i>Generador de Mensajes IA</h5>
                             <p class="text-muted small">Crea mensajes atractivos y profesionales para difundir en tus grupos y estados de WhatsApp.</p>
+                            <div class="mb-3 p-3 rounded campaign-dates">
+                                <label class="form-label fw-bold" for="geminiApiKey">Clave propia de Google Gemini (opcional)</label>
+                                <input type="password" id="geminiApiKey" class="form-control" placeholder="Pegá tu API key de Gemini">
+                                <div class="form-text">La clave de Firebase no sirve para Gemini. Si no cargás una clave, se arma un mensaje automático sin conexión. Para publicar la web, lo más seguro es conectar Gemini desde un servidor y no exponer la clave en el navegador.</div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="saveGeminiKey()">Guardar clave en este navegador</button>
+                            </div>
                             
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Campaña Objetivo</label>
@@ -459,8 +513,130 @@
         let currentOrderItems = [];
         let currentRevellerDiscount = parseInt(localStorage.getItem('reveller_tier')) || 25;
 
+        // --- FECHAS ARGENTINAS Y TICKET DE CLIENTE ---
+        function parseLocalDate(value) {
+            if (!value) return null;
+            const parts = value.split('-').map(Number);
+            if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return null;
+            return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+        }
+
+        function toISODate(date) {
+            if (!date) return null;
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatDate(value) {
+            const date = value instanceof Date ? value : parseLocalDate(value);
+            return date ? date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'A confirmar';
+        }
+
+        function easterSunday(year) {
+            const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+            const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            const month = Math.floor((h + l - 7 * m + 114) / 31);
+            const day = ((h + l - 7 * m + 114) % 31) + 1;
+            return new Date(year, month - 1, day, 12);
+        }
+
+        function isArgentineBusinessDay(date) {
+            const day = date.getDay();
+            if (day === 0 || day === 6) return false;
+            const y = date.getFullYear();
+            const easter = easterSunday(y);
+            const carnivalMonday = new Date(easter); carnivalMonday.setDate(easter.getDate() - 48);
+            const carnivalTuesday = new Date(easter); carnivalTuesday.setDate(easter.getDate() - 47);
+            const goodFriday = new Date(easter); goodFriday.setDate(easter.getDate() - 2);
+            const key = toISODate(date);
+            const fixed = [
+                `${y}-01-01`, `${y}-03-24`, `${y}-04-02`, `${y}-05-01`,
+                `${y}-05-25`, `${y}-06-17`, `${y}-06-20`, `${y}-07-09`,
+                `${y}-08-17`, `${y}-10-12`, `${y}-11-20`, `${y}-12-08`,
+                `${y}-12-25`
+            ];
+            const movable = [carnivalMonday, carnivalTuesday, goodFriday].map(toISODate);
+            return !fixed.includes(key) && !movable.includes(key);
+        }
+
+        function calculateDeliveryDate(campaignEndDate) {
+            const date = parseLocalDate(campaignEndDate);
+            if (!date) return null;
+            let count = 0;
+            while (count < 3) {
+                date.setDate(date.getDate() + 1);
+                if (isArgentineBusinessDay(date)) count++;
+            }
+            return toISODate(date);
+        }
+
+        function addCalendarDays(dateValue, days) {
+            const date = dateValue instanceof Date ? new Date(dateValue) : parseLocalDate(dateValue);
+            if (!date) return null;
+            date.setDate(date.getDate() + days);
+            return toISODate(date);
+        }
+
+        function printOrderTicket(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return alert('No se encontró el pedido.');
+            const campaign = campaigns.find(c => c.name === order.campaign);
+            const delivery = order.estimatedDeliveryDate || (campaign ? calculateDeliveryDate(campaign.endDate) : null);
+            const due = order.paymentDueDate || (delivery ? addCalendarDays(delivery, 20) : null);
+            const money = n => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const rows = (order.items || []).map(item => `
+                <tr>
+                    <td>${escapeTicketText(item.brand || '')}<br><small>${escapeTicketText(item.name || '')}${item.code ? ' · Cód. ' + escapeTicketText(item.code) : ''}</small></td>
+                    <td class="qty">${Number(item.qty || 0)}</td>
+                    <td class="price">${money(item.finalClientPrice)}</td>
+                </tr>`).join('');
+            const paid = Number(order.paidAmount || 0);
+            const total = Number(order.total || 0);
+            const htmlTicket = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Comprobante de pedido</title>
+            <style>
+                *{box-sizing:border-box}body{margin:0;padding:24px;background:#f4e1db;color:#211815;font:14px Arial,sans-serif}
+                .ticket{max-width:620px;margin:0 auto;background:#fff8f4;padding:34px;border-radius:18px;border:1px solid #edd1c6}
+                .art{height:12px;margin:-34px -34px 26px;background:linear-gradient(110deg,#eba52d 0 35%,#f2682c 35% 70%,#bf3c1e 70%)}
+                .brand{text-align:right;font-size:12px;letter-spacing:2px;font-weight:bold;color:#bf3c1e}
+                h1{text-align:center;font-family:Georgia,serif;font-size:30px;margin:28px 0 4px}
+                .sub{text-align:center;font-size:16px;margin:0 0 26px}
+                .meta{line-height:1.8;margin-bottom:22px}.meta strong{display:inline-block;min-width:120px}
+                table{width:100%;border-collapse:collapse;margin:12px 0 18px}th{font-size:11px;text-transform:uppercase;color:#78584c;text-align:left;border-bottom:1px solid #d9b9ac;padding:9px 5px}
+                td{padding:11px 5px;border-bottom:1px solid #f0ddd5;vertical-align:top}.qty,.price{text-align:right;white-space:nowrap}
+                .total{display:flex;justify-content:space-between;font-size:21px;font-weight:bold;border-top:2px solid #bf3c1e;padding-top:15px;margin-top:15px}
+                .dates{background:#fff0e6;border-radius:12px;padding:13px;margin-top:20px;line-height:1.8}
+                .thanks{text-align:center;font-size:17px;font-weight:bold;margin:28px 0 5px}.contact{text-align:center;color:#6e554c;font-size:12px}
+                .actions{text-align:center;margin:18px auto}.actions button{padding:10px 18px;background:#bf3c1e;color:white;border:0;border-radius:8px;font-weight:bold}
+                @media print{body{background:white;padding:0}.ticket{border:0;box-shadow:none;max-width:none}.actions{display:none}}
+            </style></head><body><main class="ticket"><div class="art"></div>
+                <div class="brand">NATURA · AVON</div><h1>¡Gracias por tu compra!</h1><p class="sub">Comprobante de pedido</p>
+                <div class="meta"><div><strong>Cliente:</strong> ${escapeTicketText(order.clientName || '')}</div>
+                <div><strong>Campaña:</strong> ${escapeTicketText(order.campaign || '')}</div>
+                <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div></div>
+                <table><thead><tr><th>Detalle del pedido</th><th class="qty">Cant.</th><th class="price">Importe</th></tr></thead><tbody>${rows}</tbody></table>
+                <div class="total"><span>TOTAL A PAGAR</span><span>${money(total)}</span></div>
+                <div class="meta" style="margin-top:12px"><strong>Seña / abonado:</strong> ${money(paid)}<br><strong>Saldo pendiente:</strong> ${money(Math.max(0,total-paid))}</div>
+                <div class="dates"><strong>📦 Entrega estimada:</strong> ${formatDate(delivery)}<br><strong>💳 Límite de pago:</strong> ${formatDate(due)}<br><small>Entrega estimada: 3 días hábiles argentinos luego del cierre de campaña. Pago: hasta 20 días corridos después de la entrega.</small></div>
+                <p class="thanks">¡Que lo disfrutes!</p><p class="contact">M. Eugenia Carol · WhatsApp 381-519-3109</p>
+                <div class="actions"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div>
+            </main></body></html>`;
+            const win = window.open('', '_blank');
+            if (!win) return alert('El navegador bloqueó la ventana del ticket. Permití las ventanas emergentes para esta página.');
+            win.document.open(); win.document.write(htmlTicket); win.document.close();
+        }
+
+        function escapeTicketText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('globalRevellerTier').value = currentRevellerDiscount;
+            document.getElementById('geminiApiKey').value = localStorage.getItem('gemini_api_key') || '';
             initFirebaseListeners();
             calculateItemPreview();
         });
@@ -571,6 +747,11 @@
                                 </div>
                             </div>
                             <small class="text-muted mb-2">📅 Del ${c.startDate || '-'} al ${c.endDate || '-'}</small>
+                            ${c.endDate ? `<div class="campaign-dates rounded p-2 my-2 small">
+                                <div><strong>Entrega estimada de pedidos:</strong> ${formatDate(calculateDeliveryDate(c.endDate))}</div>
+                                <div><strong>Fecha límite de pago:</strong> ${formatDate(addCalendarDays(calculateDeliveryDate(c.endDate), 20))}</div>
+                                <span class="text-muted">3 días hábiles argentinos después del cierre · pago a 20 días corridos de la entrega</span>
+                            </div>` : ''}
                             
                             <div class="p-2 bg-light rounded border mb-2 d-flex justify-content-between align-items-center">
                                 <div>
@@ -794,8 +975,15 @@
             let totalProfit = currentOrderItems.reduce((acc, item) => acc + item.profit, 0);
             let totalCost = currentOrderItems.reduce((acc, item) => acc + item.cost, 0);
 
+            const campaignData = campaigns.find(c => c.name === campaign);
+            const estimatedDeliveryDate = campaignData ? calculateDeliveryDate(campaignData.endDate) : null;
+            const paymentDueDate = estimatedDeliveryDate ? addCalendarDays(estimatedDeliveryDate, 20) : null;
+
             const orderData = {
                 campaign,
+                campaignEndDate: campaignData ? (campaignData.endDate || null) : null,
+                estimatedDeliveryDate,
+                paymentDueDate,
                 clientName,
                 clientPhone,
                 items: currentOrderItems,
@@ -819,7 +1007,10 @@
                 currentOrderItems.forEach(i => {
                     text += `\n• *[${i.brand}]* ${i.name} ${i.code ? `(Cód: ${i.code})` : ''} x${i.qty} - $${i.finalClientPrice.toFixed(2)}`;
                 });
-                text += `\n\n💳 *TOTAL A ABONAR: $${total.toFixed(2)}*\n¡Muchas gracias por confiar en mí! ✨`;
+                text += `\n\n💳 *TOTAL A ABONAR: $${total.toFixed(2)}*`;
+                if (estimatedDeliveryDate) text += `\n📦 *Entrega estimada:* ${formatDate(estimatedDeliveryDate)}`;
+                if (paymentDueDate) text += `\n🗓️ *Fecha límite de pago:* ${formatDate(paymentDueDate)}`;
+                text += `\n¡Muchas gracias por confiar en mí! ✨`;
 
                 if (clientPhone) {
                     window.open(`https://wa.me/${clientPhone}?text=${encodeURIComponent(text)}`, '_blank');
@@ -900,6 +1091,7 @@
                         <td><span class="badge ${badgeClass}">${statusText}</span></td>
                         <td>
                             <button class="btn btn-sm btn-outline-success me-1" onclick="openPaymentModal('${o.id}', '${o.clientName}', ${saldo})"><i class="bi bi-cash"></i> Cobrar</button>
+                            <button class="btn btn-sm btn-outline-dark me-1" onclick="printOrderTicket('${o.id}')" title="Imprimir ticket"><i class="bi bi-printer"></i> Ticket</button>
                             <button class="btn btn-sm btn-outline-primary me-1" onclick="editOrder('${o.id}')" title="Editar Pedido"><i class="bi bi-pencil"></i></button>
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder('${o.id}')"><i class="bi bi-trash"></i></button>
                         </td>
@@ -939,12 +1131,46 @@
             }
         }
 
-        // --- ASISTENTE IA WHATSAPP ---
+        // --- ASISTENTE DE MENSAJES PARA WHATSAPP ---
+        function saveGeminiKey() {
+            const key = document.getElementById('geminiApiKey').value.trim();
+            if (!key) {
+                localStorage.removeItem('gemini_api_key');
+                alert('Se quitó la clave guardada. El generador seguirá funcionando con mensajes automáticos.');
+                return;
+            }
+            localStorage.setItem('gemini_api_key', key);
+            alert('Clave guardada en este navegador.');
+        }
+
+        function buildFallbackMessage(campaignName, messageType, brand, extraNotes, camp) {
+            const close = camp && camp.endDate ? formatDate(camp.endDate) : 'próximamente';
+            const brands = brand === 'Todas' ? 'Natura, Avon y Casa & Estilo' : brand;
+            const links = [];
+            if (brand === 'Todas' || brand === 'Natura') if (camp?.linkNatura) links.push('🌿 Natura: ' + camp.linkNatura);
+            if (brand === 'Todas' || brand === 'Avon') if (camp?.linkAvon) links.push('🧡 Avon: ' + camp.linkAvon);
+            if (brand === 'Todas' || brand === 'Casa & Estilo') if (camp?.linkCasa) links.push('🏡 Casa & Estilo: ' + camp.linkCasa);
+
+            let intro = '';
+            if (messageType === 'Inicio de Ciclo') {
+                intro = `🌸 ¡Ya está abierta la campaña ${campaignName}!\nLlegaron nuevas propuestas de ${brands}.`;
+            } else if (messageType === 'Cierre Inminente') {
+                intro = `⏳ ¡Últimos días para hacer tu pedido!\nLa campaña ${campaignName} cierra el ${close}.`;
+            } else {
+                intro = `🔥 ¡Hay propuestas para aprovechar en ${brands}!\nConsultame por los productos y promociones de la campaña ${campaignName}.`;
+            }
+            const notes = extraNotes ? `\n\n✨ Para tener en cuenta: ${extraNotes}` : '';
+            const linkText = links.length ? '\n\n📖 Mirá los catálogos:\n' + links.join('\n') : '';
+            return `${intro}${notes}${linkText}\n\n📲 Escribime y te ayudo a elegir.\n¡Gracias por acompañar mi emprendimiento! 🧡`;
+        }
+
         async function generateAIMessage() {
             const campaignName = document.getElementById('aiCampaignSelect').value;
             const messageType = document.getElementById('aiMessageType').value;
             const brand = document.getElementById('aiBrandSelect').value;
             const extraNotes = document.getElementById('aiExtraNotes').value.trim();
+            const output = document.getElementById('aiResultOutput');
+            const button = document.querySelector('button[onclick="generateAIMessage()"]');
 
             if (!campaignName) {
                 alert('Seleccioná una campaña.');
@@ -952,29 +1178,40 @@
             }
 
             const camp = campaigns.find(c => c.name === campaignName);
-            const linkInfo = camp ? `Links:\n- Natura: ${camp.linkNatura || 'N/A'}\n- Avon: ${camp.linkAvon || 'N/A'}\n- Casa & Estilo: ${camp.linkCasa || 'N/A'}` : '';
+            const prompt = `Actuá como asistente de ventas de Natura, Avon y Casa & Estilo en Argentina. Escribí un mensaje cálido, natural, breve y atractivo para WhatsApp, con emojis moderados. Devolvé únicamente el mensaje listo para copiar.\nCampaña: ${campaignName}. Cierre: ${camp?.endDate || 'a confirmar'}.\nTipo: ${messageType}. Marca: ${brand}.\nNotas: ${extraNotes || 'ninguna'}.\nCatálogos: Natura ${camp?.linkNatura || 'sin link'}, Avon ${camp?.linkAvon || 'sin link'}, Casa & Estilo ${camp?.linkCasa || 'sin link'}.`;
 
-            const prompt = `Actúa como vendedora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp atractivo con emojis para difundir.
-            - Campaña: ${campaignName} (Cierra el: ${camp ? camp.endDate : 'próximamente'})
-            - Tipo: ${messageType}
-            - Marca: ${brand}
-            - Notas: ${extraNotes}
-            ${linkInfo}
-            Devuelve únicamente el texto listo para copiar.`;
-
-            document.getElementById('aiResultOutput').value = "Generando mensaje con la IA... 🤖✨";
-
+            output.value = 'Preparando tu mensaje…';
+            if (button) button.disabled = true;
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyD6nfEiJ8Rkka4sWKzHweZ6tvFZu6BsI-0`, {
+                const apiKey = document.getElementById('geminiApiKey').value.trim() || localStorage.getItem('gemini_api_key') || '';
+                if (!apiKey) {
+                    output.value = buildFallbackMessage(campaignName, messageType, brand, extraNotes, camp);
+                    output.value += '\n\n(Generado automáticamente: agregá una clave Gemini propia si querés usar IA generativa.)';
+                    return;
+                }
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 0.8, maxOutputTokens: 700 }
+                    })
                 });
 
-                const data = await response.json();
-                document.getElementById('aiResultOutput').value = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error al generar.";
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    const detail = data?.error?.message || `HTTP ${response.status}`;
+                    throw new Error(detail);
+                }
+                const generated = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('\n').trim();
+                if (!generated) throw new Error(data?.promptFeedback?.blockReason || 'La respuesta de Gemini llegó vacía.');
+                output.value = generated;
             } catch (error) {
-                document.getElementById('aiResultOutput').value = "Error al conectar con la IA.";
+                output.value = buildFallbackMessage(campaignName, messageType, brand, extraNotes, camp)
+                    + `\n\n⚠️ No se pudo usar Gemini (${error.message}). Se preparó este mensaje automático para que puedas continuar.`;
+            } finally {
+                if (button) button.disabled = false;
             }
         }
 
