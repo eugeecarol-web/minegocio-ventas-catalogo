@@ -117,10 +117,58 @@
         }
 
         .ticket-brands-box {
-            width: 112px;
+            width: 148px;
             margin-left: auto;
             margin-bottom: 18px;
             text-align: center;
+        }
+
+        /* Logotipos fieles basados en la imagen de referencia de Natura y AVON */
+        .brand-logo-pair {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #111111;
+            user-select: none;
+        }
+
+        .brand-logo-natura {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+        }
+
+        .brand-logo-natura-word {
+            font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+            font-weight: 700;
+            font-size: 0.78rem;
+            letter-spacing: 0.02em;
+            color: #111111;
+            margin-top: 1px;
+        }
+
+        .brand-logo-avon-word {
+            font-family: 'Arial Black', 'Montserrat', Impact, sans-serif;
+            font-weight: 900;
+            font-size: 0.88rem;
+            letter-spacing: 0.14em;
+            color: #111111;
+            line-height: 1;
+        }
+
+        .ticket-brands-box .brand-logo-pair {
+            gap: 12px;
+        }
+
+        .ticket-brands-box .brand-logo-natura-word {
+            font-size: 0.92rem;
+        }
+
+        .ticket-brands-box .brand-logo-avon-word {
+            font-size: 1.02rem;
+            letter-spacing: 0.15em;
         }
 
         .ticket-thanks-title {
@@ -169,10 +217,17 @@
             </div>
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <div class="consultora-header-badge d-flex align-items-center gap-2">
-                    <svg width="24" height="20" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M18 24C18 24 6 16 4 9C2.8 4.8 6.5 2 9.8 4.2C12.2 5.8 13.5 9.5 14 12C13.5 7.5 15.2 2.5 18 2.5C20.8 2.5 22.5 7.5 22 12C22.5 9.5 23.8 5.8 26.2 4.2C29.5 2 33.2 4.8 32 9C30 16 18 24 18 24Z" stroke="#1F1815" stroke-width="2.4" stroke-linejoin="round"/>
-                    </svg>
-                    <div class="lh-1">
+                    <div class="brand-logo-pair" aria-label="Natura y AVON">
+                        <span class="brand-logo-natura">
+                            <svg width="26" height="19" viewBox="0 0 44 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M22 29C22 29 7 19.5 4.2 11.2C2.6 6.4 6.8 2.8 10.5 5.4C13.2 7.3 14.8 11.4 15.6 14.2C14.8 9.2 16.4 2.5 22 2.5C27.6 2.5 29.2 9.2 28.4 14.2C29.2 11.4 30.8 7.3 33.5 5.4C37.2 2.8 41.4 6.4 39.8 11.2C37 19.5 22 29 22 29Z" fill="#111111"/>
+                                <path d="M22 25.5C22 25.5 11.5 18.2 9.2 12.2C8.1 9.4 10.5 7.2 12.8 8.8C14.8 10.2 16 13.4 16.7 15.8C16.3 12.2 17.7 7.2 22 7.2C26.3 7.2 27.7 12.2 27.3 15.8C28 13.4 29.2 10.2 31.2 8.8C33.5 7.2 35.9 9.4 34.8 12.2C32.5 18.2 22 25.5 22 25.5Z" fill="#F4E6E1"/>
+                            </svg>
+                            <span class="brand-logo-natura-word">natura</span>
+                        </span>
+                        <span class="brand-logo-avon-word">AVON</span>
+                    </div>
+                    <div class="lh-1 border-start ps-2">
                         <div class="small fw-bold" style="color: #1F1815;">M. EUGENIA CAROL</div>
                         <div style="font-size: 11px; color: #6E5A52;"><i class="bi bi-whatsapp text-success"></i> 381-519-3109</div>
                     </div>
@@ -244,7 +299,13 @@
                         </div>
 
                         <div class="card p-3">
-                            <h5 class="card-title mb-3">Agregar Artículo del Folleto</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0" id="itemFormTitle">Agregar Artículo del Folleto</h5>
+                                <button type="button" id="cancelEditItemBtn" class="btn btn-sm btn-outline-secondary d-none" onclick="cancelItemEdit()">
+                                    Cancelar Item
+                                </button>
+                            </div>
+                            <input type="hidden" id="editingItemIndex" value="-1">
 
                             <!-- Opción de Regalo de la Compañía -->
                             <div class="form-check form-switch mb-3 p-2 bg-warning bg-opacity-10 border border-warning rounded ps-5">
@@ -312,7 +373,7 @@
                                 </div>
                             </div>
 
-                            <button class="btn btn-outline-primary w-100" onclick="addItemToOrder()"><i class="bi bi-plus-lg me-1"></i> Añadir Artículo</button>
+                            <button id="saveItemBtn" class="btn btn-outline-primary w-100" onclick="addItemToOrder()"><i class="bi bi-plus-lg me-1"></i> Añadir Artículo</button>
                         </div>
                     </div>
 
@@ -580,11 +641,16 @@
                         <div class="ticket-inner">
                             <!-- Encabezado Natura & Avon -->
                             <div class="ticket-brands-box">
-                                <svg width="42" height="32" viewBox="0 0 42 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="mb-1">
-                                    <path d="M21 28C21 28 7 18.5 4.5 10C3 5 7.5 1.5 11.2 4.2C14.2 6.4 15.8 11 16.5 14C16 8.5 18 2.5 21 2.5C24 2.5 26 8.5 25.5 14C26.2 11 27.8 6.4 30.8 4.2C34.5 1.5 39 5 37.5 10C35 18.5 21 28 21 28Z" stroke="#1F1815" stroke-width="2.6" stroke-linejoin="round"/>
-                                </svg>
-                                <div style="font-family: 'Trebuchet MS', sans-serif; font-weight: 700; font-size: 1.05rem; letter-spacing: 0.04em; line-height: 1; color: #1F1815;">natura</div>
-                                <div style="font-family: 'Arial Black', Impact, sans-serif; font-weight: 900; font-size: 1.15rem; letter-spacing: 0.08em; line-height: 1.25; color: #1F1815;">AVON</div>
+                                <div class="brand-logo-pair" aria-label="Natura y AVON">
+                                    <span class="brand-logo-natura">
+                                        <svg width="34" height="25" viewBox="0 0 44 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path d="M22 29C22 29 7 19.5 4.2 11.2C2.6 6.4 6.8 2.8 10.5 5.4C13.2 7.3 14.8 11.4 15.6 14.2C14.8 9.2 16.4 2.5 22 2.5C27.6 2.5 29.2 9.2 28.4 14.2C29.2 11.4 30.8 7.3 33.5 5.4C37.2 2.8 41.4 6.4 39.8 11.2C37 19.5 22 29 22 29Z" fill="#111111"/>
+                                            <path d="M22 25.5C22 25.5 11.5 18.2 9.2 12.2C8.1 9.4 10.5 7.2 12.8 8.8C14.8 10.2 16 13.4 16.7 15.8C16.3 12.2 17.7 7.2 22 7.2C26.3 7.2 27.7 12.2 27.3 15.8C28 13.4 29.2 10.2 31.2 8.8C33.5 7.2 35.9 9.4 34.8 12.2C32.5 18.2 22 25.5 22 25.5Z" fill="#F4E6E1"/>
+                                        </svg>
+                                        <span class="brand-logo-natura-word">natura</span>
+                                    </span>
+                                    <span class="brand-logo-avon-word">AVON</span>
+                                </div>
                             </div>
 
                             <!-- Detalle del Pedido y Total a Pagar -->
@@ -1078,7 +1144,64 @@
         }
 
         // --- GESTIÓN DE PEDIDOS Y EDICIÓN ---
+        function resetItemFormFields() {
+            document.getElementById('editingItemIndex').value = '-1';
+            document.getElementById('itemFormTitle').textContent = 'Agregar Artículo del Folleto';
+            document.getElementById('cancelEditItemBtn').classList.add('d-none');
+            document.getElementById('saveItemBtn').className = 'btn btn-outline-primary w-100';
+            document.getElementById('saveItemBtn').innerHTML = '<i class="bi bi-plus-lg me-1"></i> Añadir Artículo';
+
+            document.getElementById('itemIsGift').checked = false;
+            document.getElementById('itemBrand').value = 'Natura';
+            document.getElementById('itemCode').value = '';
+            document.getElementById('itemPage').value = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQty').value = '1';
+            document.getElementById('itemPrice').value = '';
+            document.getElementById('itemClientDiscount').value = '0';
+            calculateItemPreview();
+        }
+
+        function editOrderItem(index) {
+            const item = currentOrderItems[index];
+            if (!item) return;
+
+            document.getElementById('editingItemIndex').value = String(index);
+            document.getElementById('itemFormTitle').textContent = `Editando Artículo #${index + 1}`;
+            document.getElementById('cancelEditItemBtn').classList.remove('d-none');
+            document.getElementById('saveItemBtn').className = 'btn btn-primary w-100 fw-bold';
+            document.getElementById('saveItemBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Guardar Cambios del Artículo';
+
+            document.getElementById('itemIsGift').checked = Boolean(item.isGift);
+            document.getElementById('itemBrand').value = item.brand || 'Natura';
+            document.getElementById('itemCode').value = item.code || '';
+            document.getElementById('itemPage').value = item.page || '';
+            document.getElementById('itemName').value = item.name || '';
+            document.getElementById('itemQty').value = item.qty || 1;
+            document.getElementById('itemPrice').value = item.price || '';
+            document.getElementById('itemClientDiscount').value = item.clientDiscountPct || 0;
+
+            calculateItemPreview();
+            document.getElementById('itemName').focus();
+        }
+
+        function cancelItemEdit() {
+            resetItemFormFields();
+        }
+
+        function removeOrderItem(index) {
+            const editingIndex = parseInt(document.getElementById('editingItemIndex').value, 10);
+            currentOrderItems.splice(index, 1);
+            if (editingIndex === index) {
+                resetItemFormFields();
+            } else if (editingIndex > index) {
+                document.getElementById('editingItemIndex').value = String(editingIndex - 1);
+            }
+            renderOrderTable();
+        }
+
         function addItemToOrder() {
+            const editingIndex = parseInt(document.getElementById('editingItemIndex').value, 10);
             const isGift = document.getElementById('itemIsGift').checked;
             const brand = document.getElementById('itemBrand').value;
             const code = document.getElementById('itemCode').value.trim();
@@ -1098,23 +1221,23 @@
             const wholesaleCostUnit = isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100));
             const unitProfit = finalClientPriceUnit - wholesaleCostUnit;
 
-            currentOrderItems.push({
+            const newItem = {
                 isGift, brand, code, page, name, qty,
                 price, clientDiscountPct, wholesaleDiscountPct,
                 finalClientPrice: finalClientPriceUnit * qty,
                 profit: unitProfit * qty,
                 cost: wholesaleCostUnit * qty
-            });
+            };
+
+            if (!isNaN(editingIndex) && editingIndex >= 0 && editingIndex < currentOrderItems.length) {
+                currentOrderItems[editingIndex] = newItem;
+                showToastMessage('¡Artículo actualizado en el pedido!');
+            } else {
+                currentOrderItems.push(newItem);
+            }
 
             renderOrderTable();
-
-            document.getElementById('itemIsGift').checked = false;
-            document.getElementById('itemCode').value = '';
-            document.getElementById('itemPage').value = '';
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemPrice').value = '';
-            document.getElementById('itemClientDiscount').value = '0';
-            calculateItemPreview();
+            resetItemFormFields();
         }
 
         function renderOrderTable() {
@@ -1152,7 +1275,10 @@
                         <td>${(Number(item.clientDiscountPct) || 0) > 0 ? `<span class="text-danger fw-bold">${item.clientDiscountPct}%</span>` : 'Sin desc.'}</td>
                         <td class="fw-bold">$${subtotal.toFixed(2)}</td>
                         <td class="text-success fw-bold">+$${itemProfit.toFixed(2)}</td>
-                        <td><button class="btn btn-sm btn-link text-danger" onclick="currentOrderItems.splice(${index},1); renderOrderTable()"><i class="bi bi-x-circle"></i></button></td>
+                        <td class="text-nowrap">
+                            <button type="button" class="btn btn-sm btn-link text-primary p-0 me-1" onclick="editOrderItem(${index})" title="Editar producto"><i class="bi bi-pencil-square"></i></button>
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeOrderItem(${index})" title="Quitar producto"><i class="bi bi-x-circle"></i></button>
+                        </td>
                     </tr>`;
             });
 
@@ -1316,6 +1442,7 @@
             document.getElementById('clientName').value = '';
             document.getElementById('clientPhone').value = '';
             currentOrderItems = [];
+            resetItemFormFields();
             renderOrderTable();
             document.getElementById('cancelEditOrderBtn').classList.add('d-none');
             document.getElementById('saveOrderBtn').innerHTML = '<i class="bi bi-whatsapp me-2"></i> Guardar Pedido y Generar Ticket';
@@ -1404,6 +1531,54 @@
         }
 
         // --- ASISTENTE IA WHATSAPP ---
+        function buildFallbackWhatsAppMessage(campaignName, camp, messageType, brand, extraNotes) {
+            const closeFormatted = camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente';
+            const arrivalFormatted = camp && camp.endDate ? formatDateAR(getEstimatedArrivalDate(camp.endDate)) : '';
+            const dueFormatted = camp && camp.endDate ? formatDateAR(getPaymentDueDate(camp.endDate)) : '';
+
+            let headerLine = `🌸 *¡Hola! Arrancamos la campaña ${campaignName}* 🌸`;
+            if (messageType === 'Cierre Inminente') {
+                headerLine = `⏳ *¡Últimos días para pedir en ${campaignName}!* ⏳`;
+            } else if (messageType === 'Promos Destacadas') {
+                headerLine = `🔥 *¡Ofertas destacadas de ${campaignName}!* 🔥`;
+            }
+
+            let brandLine = 'Marcas disponibles: *Natura 🌸, Avon 💄 y Casa & Estilo 🏠*';
+            if (brand === 'Natura') brandLine = 'Destacados de *Natura 🌸*';
+            else if (brand === 'Avon') brandLine = 'Destacados de *Avon 💄*';
+            else if (brand === 'Casa & Estilo') brandLine = 'Destacados de *Casa & Estilo 🏠*';
+
+            let msg = `${headerLine}\n${brandLine}\n\n📅 *Cierre de pedidos:* ${closeFormatted}`;
+            if (arrivalFormatted) {
+                msg += `\n🚚 *Entrega estimada:* ${arrivalFormatted}`;
+            }
+            if (dueFormatted) {
+                msg += `\n💳 *Límite de pago:* ${dueFormatted}`;
+            }
+
+            const links = [];
+            if (camp?.linkNatura && (brand === 'Todas' || brand === 'Natura')) {
+                links.push(`• 🌸 Revista Natura: ${camp.linkNatura}`);
+            }
+            if (camp?.linkAvon && (brand === 'Todas' || brand === 'Avon')) {
+                links.push(`• 💄 Revista Avon: ${camp.linkAvon}`);
+            }
+            if (camp?.linkCasa && (brand === 'Todas' || brand === 'Casa & Estilo')) {
+                links.push(`• 🏠 Casa & Estilo: ${camp.linkCasa}`);
+            }
+
+            if (links.length > 0) {
+                msg += `\n\n📖 *Catálogos interactivos:*\n${links.join('\n')}`;
+            }
+
+            if (extraNotes) {
+                msg += `\n\n✨ *Novedades:* ${extraNotes}`;
+            }
+
+            msg += `\n\nEscribime por acá y armamos tu pedido con gusto 😊\n*M. Eugenia Carol* • 📱 381-519-3109`;
+            return msg;
+        }
+
         async function generateAIMessage() {
             const campaignName = document.getElementById('aiCampaignSelect').value;
             const messageType = document.getElementById('aiMessageType').value;
@@ -1444,15 +1619,19 @@ Devuelve únicamente el texto listo para copiar y enviar.`;
                 const data = await response.json();
                 if (!response.ok) {
                     const apiErrMsg = data?.error?.message || `Error HTTP ${response.status}`;
-                    outputEl.value = `No se pudo generar el mensaje con la IA (${apiErrMsg}).`;
+                    outputEl.value = buildFallbackWhatsAppMessage(campaignName, camp, messageType, brand, extraNotes);
+                    showToastMessage(`Aviso IA (${apiErrMsg}): se generó un borrador listo para WhatsApp.`, 'info');
                     return;
                 }
 
                 const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                outputEl.value = generatedText ? generatedText.trim() : "La IA no devolvió contenido. Intentá nuevamente.";
+                outputEl.value = generatedText
+                    ? generatedText.trim()
+                    : buildFallbackWhatsAppMessage(campaignName, camp, messageType, brand, extraNotes);
             } catch (error) {
                 console.error('Error en generateAIMessage:', error);
-                outputEl.value = `Error de conexión con la IA: ${error?.message || 'Verificá tu conexión a internet.'}`;
+                outputEl.value = buildFallbackWhatsAppMessage(campaignName, camp, messageType, brand, extraNotes);
+                showToastMessage('Sin conexión con IA externa: se generó un borrador listo para WhatsApp.', 'info');
             }
         }
 
