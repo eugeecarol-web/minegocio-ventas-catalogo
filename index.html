@@ -72,6 +72,7 @@
             color: #4A3E3D;
             font-weight: 600;
             border-radius: 10px;
+            font-size: 0.92rem;
         }
 
         .btn-primary {
@@ -123,7 +124,6 @@
             text-align: center;
         }
 
-        /* Logotipos de Natura y AVON */
         .brand-logo-pair {
             display: inline-flex;
             align-items: center;
@@ -162,10 +162,6 @@
 
         .ticket-brands-box .brand-logo-pair {
             gap: 14px;
-        }
-
-        .ticket-brands-box .brand-logo-natura-word {
-            font-size: 0.92rem;
         }
 
         .ticket-brands-box .brand-logo-avon-word {
@@ -222,7 +218,7 @@
                     <div class="brand-logo-pair" aria-label="Natura y AVON">
                         <span class="brand-logo-natura">
                             <img src="logoNatura.png" alt="natura" class="brand-logo-natura-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                            <span class="brand-logo-natura-word" style="display:none;">natura</span>
+                            <span class="brand-logo-natura-word fw-bold" style="display:none;">natura</span>
                         </span>
                         <span class="brand-logo-avon-word">AVON</span>
                     </div>
@@ -251,16 +247,19 @@
         <!-- Pestañas de Navegación -->
         <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 rounded shadow-sm" id="mainTabs" role="tablist">
             <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#campaignsTab" type="button"><i class="bi bi-journal-bookmark me-2"></i>1. Campañas y Facturas</button>
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#campaignsTab" type="button"><i class="bi bi-journal-bookmark me-1"></i>1. Campañas y Facturas</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ordersTab" type="button"><i class="bi bi-cart-plus me-2"></i>2. Cargar Pedido</button>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ordersTab" type="button"><i class="bi bi-cart-plus me-1"></i>2. Cargar Pedido</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#collectionsTab" type="button"><i class="bi bi-wallet2 me-2"></i>3. Cobranzas y Cuentas</button>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#collectionsTab" type="button"><i class="bi bi-wallet2 me-1"></i>3. Cobranzas y Cuentas</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#aiAssistantTab" type="button"><i class="bi bi-robot me-2"></i>4. Asistente IA WhatsApp</button>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#stockTab" type="button"><i class="bi bi-box-seam me-1"></i>4. Mi Stock <span class="badge bg-warning text-dark ms-1" id="stockCountBadge">0</span></button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#aiAssistantTab" type="button"><i class="bi bi-robot me-1"></i>5. Asistente IA</button>
             </li>
         </ul>
 
@@ -289,7 +288,7 @@
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Nombre del Cliente</label>
-                                <input type="text" id="clientName" class="form-control" placeholder="Ej: Sofía Benítez" required>
+                                <input type="text" id="clientName" class="form-control" placeholder="Ej: Sofía Benítez (o Stock Propio)" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">WhatsApp del Cliente (sin 0 y sin 15)</label>
@@ -306,9 +305,18 @@
                             </div>
                             <input type="hidden" id="editingItemIndex" value="-1">
 
+                            <!-- Opción de Compra para Stock Propio -->
+                            <div class="form-check form-switch mb-2 p-2 bg-info bg-opacity-10 border border-info rounded ps-5">
+                                <input class="form-check-input" type="checkbox" role="switch" id="itemIsOwnStock" onchange="handleItemModeSwitch('stock')">
+                                <label class="form-check-label fw-bold text-dark" for="itemIsOwnStock">
+                                    📦 Compra para Stock Propio (Sin cliente todavía)
+                                </label>
+                                <div class="form-text small mt-0">Se encarga en la campaña y suma costo, pero no genera deuda ($0 a cobrar) hasta que lo vendas desde "4. Mi Stock".</div>
+                            </div>
+
                             <!-- Opción de Regalo de la Compañía -->
                             <div class="form-check form-switch mb-3 p-2 bg-warning bg-opacity-10 border border-warning rounded ps-5">
-                                <input class="form-check-input" type="checkbox" role="switch" id="itemIsGift" onchange="calculateItemPreview()">
+                                <input class="form-check-input" type="checkbox" role="switch" id="itemIsGift" onchange="handleItemModeSwitch('gift')">
                                 <label class="form-check-label fw-bold text-dark" for="itemIsGift">
                                     🎁 Es un regalo de la compañía (100% Ganancia)
                                 </label>
@@ -325,8 +333,8 @@
                             </div>
                             <div class="row g-2 mb-2">
                                 <div class="col-6">
-                                    <label class="form-label">Código Producto</label>
-                                    <input type="text" id="itemCode" class="form-control" placeholder="Ej: 45892">
+                                    <label class="form-label">Código Producto (SKU)</label>
+                                    <input type="text" id="itemCode" class="form-control" placeholder="Ej: 282850">
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label">Pág. Folleto</label>
@@ -335,7 +343,7 @@
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Descripción del Producto</label>
-                                <input type="text" id="itemName" class="form-control" placeholder="Ej: Perfume Humor Proprio 75ml">
+                                <input type="text" id="itemName" class="form-control" placeholder="Ej: Kaiak clásico femenino">
                             </div>
                             <div class="row g-2 mb-2">
                                 <div class="col-6">
@@ -451,7 +459,39 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 4: Asistente IA WhatsApp -->
+            <!-- MÓDULO 4: Mi Stock Propio (Entrega Inmediata) -->
+            <div class="tab-pane fade" id="stockTab">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div>
+                        <h4 class="mb-0 fw-bold">📦 Mi Stock Propio (Entrega Inmediata)</h4>
+                        <small class="text-muted">Productos comprados sin cliente asignado. Al venderlos con 1 clic, pasan directo a Cobranzas y Cuentas.</small>
+                    </div>
+                    <button class="btn btn-primary btn-sm fw-bold" onclick="goToQuickStockLoad()">
+                        <i class="bi bi-plus-circle me-1"></i> Cargar Producto a Stock
+                    </button>
+                </div>
+
+                <div class="card p-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Marca / SKU</th>
+                                    <th>Producto</th>
+                                    <th>Campaña Origen</th>
+                                    <th class="text-center">Unidades</th>
+                                    <th>Costo Pagado</th>
+                                    <th>Precio Sugerido</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ownStockTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 5: Asistente IA WhatsApp -->
             <div class="tab-pane fade" id="aiAssistantTab">
                 <div class="row">
                     <div class="col-md-5">
@@ -470,6 +510,7 @@
                                     <option value="Inicio de Ciclo">🌸 Apertura / Inicio de Ciclo</option>
                                     <option value="Cierre Inminente">⏳ ¡Últimos días! Cierre de Pedidos</option>
                                     <option value="Promos Destacadas">🔥 Ofertas Imperdibles</option>
+                                    <option value="Entrega Inmediata">📦 Stock Disponible (Entrega Inmediata)</option>
                                 </select>
                             </div>
 
@@ -506,6 +547,53 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Vender Artículo desde Stock Propio con 1 Clic -->
+    <div class="modal fade" id="sellStockModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="bi bi-bag-check me-2"></i>Vender Producto de Mi Stock</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="sellStockOrderId">
+                    <input type="hidden" id="sellStockItemIndex">
+                    <div class="p-2 bg-light rounded border mb-3">
+                        <div class="small text-muted">Producto seleccionado:</div>
+                        <div id="sellStockProductLabel" class="fw-bold"></div>
+                        <div class="small text-secondary mt-1">Disponibles en stock: <strong id="sellStockMaxQty">1</strong></div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Nombre del Cliente</label>
+                        <input type="text" id="sellStockClientName" class="form-control" placeholder="Ej: Laura Gómez" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">WhatsApp del Cliente (opcional)</label>
+                        <input type="text" id="sellStockClientPhone" class="form-control" placeholder="Ej: 3815000000">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label class="form-label fw-bold">Cantidad</label>
+                            <input type="number" id="sellStockQty" class="form-control" value="1" min="1">
+                        </div>
+                        <div class="col-8">
+                            <label class="form-label fw-bold">Precio Final por Unidad ($)</label>
+                            <input type="number" id="sellStockUnitPrice" class="form-control" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="sellStockMarkPaid">
+                        <label class="form-check-label fw-semibold" for="sellStockMarkPaid">Marcar como pagado en el momento</label>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success fw-bold" onclick="confirmSellFromStock()"><i class="bi bi-check2-circle me-1"></i> Confirmar Venta</button>
                 </div>
             </div>
         </div>
@@ -630,7 +718,6 @@
             <div class="modal-content border-0 bg-transparent shadow-none">
                 <div class="modal-body p-2">
                     <div id="ticketCaptureArea" class="ticket-card-canvas">
-                        <!-- Ondas superiores idénticas a la tarjeta -->
                         <svg class="ticket-wave-top" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M15 -10C18 65 65 100 105 135C145 170 120 220 185 235C215 242 245 225 255 215V-10H15Z" fill="#E39D34"/>
                             <path d="M85 -10C82 48 125 80 135 128C145 172 110 198 155 218C190 234 235 210 255 198V-10H85Z" fill="#E45E27"/>
@@ -638,18 +725,16 @@
                         </svg>
 
                         <div class="ticket-inner">
-                            <!-- Encabezado Natura & Avon -->
                             <div class="ticket-brands-box">
                                 <div class="brand-logo-pair" aria-label="Natura y AVON">
                                     <span class="brand-logo-natura">
                                         <img src="logoNatura.png" alt="natura" class="brand-logo-natura-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                                        <span class="brand-logo-natura-word" style="display:none;">natura</span>
+                                        <span class="brand-logo-natura-word fw-bold" style="display:none;">natura</span>
                                     </span>
                                     <span class="brand-logo-avon-word">AVON</span>
                                 </div>
                             </div>
 
-                            <!-- Detalle del Pedido y Total a Pagar -->
                             <div class="ticket-details-box">
                                 <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-2" style="border-color: rgba(31,24,21,0.14) !important;">
                                     <div>
@@ -676,12 +761,10 @@
                                 </div>
                             </div>
 
-                            <!-- Mensaje de Gracias -->
                             <div class="ticket-thanks-title">GRACIAS</div>
                             <div class="text-center fw-semibold" style="font-size: 0.92rem; color: #1F1815;">por tu compra</div>
                             <div class="text-center fw-bold mt-1 mb-3" style="font-size: 1.05rem; color: #1F1815;">¡Que la disfrutes!</div>
 
-                            <!-- Pie con QR y Datos de M. Eugenia Carol -->
                             <div class="row align-items-center g-2 pt-2 border-top" style="border-color: rgba(31,24,21,0.15) !important;">
                                 <div class="col-5 text-center" style="font-size: 9px; line-height: 1.25; font-weight: 600;">
                                     <div class="mb-1">ESCANEA EL QR Y ACCEDE A LAS REVISTAS INTERACTIVAS</div>
@@ -695,7 +778,6 @@
                         </div>
                     </div>
 
-                    <!-- Botones de Acción del Ticket -->
                     <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
                         <button type="button" class="btn btn-dark btn-sm fw-bold px-3 rounded-pill" onclick="downloadTicketPNG()">
                             <i class="bi bi-download me-1"></i> Descargar Ticket (PNG)
@@ -730,12 +812,11 @@
         }
         const db = firebase.firestore();
 
-        // Feriados nacionales de Argentina para cálculo de días hábiles
         const ARGENTINA_HOLIDAYS = new Set([
-            '2026-11-23', // Día de la Soberanía Nacional (trasladado)
-            '2026-12-07', // Feriado con fines turísticos
-            '2026-12-08', // Inmaculada Concepción de María
-            '2026-12-25'  // Navidad
+            '2026-11-23',
+            '2026-12-07',
+            '2026-12-08',
+            '2026-12-25'
         ]);
 
         function showToastMessage(msg, type = 'success') {
@@ -798,12 +879,10 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // Llegada estimada: 3 días hábiles después del cierre
         function getEstimatedArrivalDate(closeDateStr) {
             return addBusinessDaysAR(closeDateStr, 3);
         }
 
-        // Límite de pago: 20 días corridos desde la fecha de entrega estimada
         function getPaymentDueDate(closeDateStr) {
             const arrivalDate = getEstimatedArrivalDate(closeDateStr);
             if (!arrivalDate) return '';
@@ -833,7 +912,23 @@
             return currentRevellerDiscount;
         }
 
+        function handleItemModeSwitch(source) {
+            const stockEl = document.getElementById('itemIsOwnStock');
+            const giftEl = document.getElementById('itemIsGift');
+            if (source === 'stock' && stockEl.checked) {
+                giftEl.checked = false;
+                const clientInput = document.getElementById('clientName');
+                if (!clientInput.value.trim()) {
+                    clientInput.value = 'Stock Propio';
+                }
+            } else if (source === 'gift' && giftEl.checked) {
+                stockEl.checked = false;
+            }
+            calculateItemPreview();
+        }
+
         function calculateItemPreview() {
+            const isOwnStock = document.getElementById('itemIsOwnStock').checked;
             const isGift = document.getElementById('itemIsGift').checked;
             const brand = document.getElementById('itemBrand').value;
             const qty = Math.max(1, parseInt(document.getElementById('itemQty').value) || 1);
@@ -841,17 +936,16 @@
             const clientDiscountPct = parseFloat(document.getElementById('itemClientDiscount').value) || 0;
             const wholesaleDiscountPct = isGift ? 100 : getWholesaleDiscountForBrand(brand);
 
-            const finalClientPrice = price * (1 - (clientDiscountPct / 100)) * qty;
             const wholesaleCost = (isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100))) * qty;
-            const profit = finalClientPrice - wholesaleCost;
+            const finalClientPrice = isOwnStock ? 0 : (price * (1 - (clientDiscountPct / 100)) * qty);
+            const profit = isOwnStock ? 0 : (finalClientPrice - wholesaleCost);
 
             document.getElementById('previewWholesaleDiscount').textContent = isGift ? '100% (Regalo)' : `${wholesaleDiscountPct}%`;
-            document.getElementById('previewProfit').textContent = `$${profit.toFixed(2)}`;
+            document.getElementById('previewProfit').textContent = isOwnStock ? '$0.00 (Al venderse)' : `$${profit.toFixed(2)}`;
             document.getElementById('previewCost').textContent = `$${wholesaleCost.toFixed(2)}`;
-            document.getElementById('previewFinalClientPrice').textContent = `$${finalClientPrice.toFixed(2)}`;
+            document.getElementById('previewFinalClientPrice').textContent = isOwnStock ? '$0.00 (Stock Propio)' : `$${finalClientPrice.toFixed(2)}`;
         }
 
-        // Normaliza los montos de un pedido para evitar que figuren en $0.00
         function normalizeOrderData(rawOrder) {
             const o = rawOrder && typeof rawOrder === 'object' ? rawOrder : {};
             const items = Array.isArray(o.items) ? o.items : [];
@@ -862,43 +956,53 @@
                 const clientDisc = Number(item?.clientDiscountPct ?? item?.discountPct ?? 0) || 0;
                 const brand = item?.brand || 'Natura';
                 const isGift = Boolean(item?.isGift ?? item?.isCompanyGift);
+                const isOwnStock = Boolean(item?.isOwnStock);
                 const wholesaleDisc = isGift ? 100 : (Number(item?.wholesaleDiscountPct) || getWholesaleDiscountForBrand(brand));
-
-                const itemFinal = item?.finalClientPrice !== undefined && Number(item.finalClientPrice) > 0
-                    ? Number(item.finalClientPrice)
-                    : (basePrice * (1 - (clientDisc / 100)) * qty);
 
                 const itemCost = item?.cost !== undefined && (Number(item.cost) > 0 || isGift)
                     ? Number(item.cost)
                     : ((isGift ? 0 : basePrice * (1 - (wholesaleDisc / 100))) * qty);
 
-                const itemProfit = item?.profit !== undefined && Number(item.profit) !== 0
-                    ? Number(item.profit)
-                    : (itemFinal - itemCost);
+                const itemFinal = isOwnStock
+                    ? 0
+                    : (item?.finalClientPrice !== undefined && Number(item.finalClientPrice) > 0
+                        ? Number(item.finalClientPrice)
+                        : (basePrice * (1 - (clientDisc / 100)) * qty));
+
+                const itemProfit = isOwnStock
+                    ? 0
+                    : (item?.profit !== undefined && Number(item.profit) !== 0
+                        ? Number(item.profit)
+                        : (itemFinal - itemCost));
 
                 acc.total += itemFinal;
                 acc.cost += itemCost;
                 acc.profit += itemProfit;
+                if (isOwnStock) acc.hasOwnStock = true;
+                else acc.hasClientItems = true;
                 return acc;
-            }, { total: 0, cost: 0, profit: 0 });
+            }, { total: 0, cost: 0, profit: 0, hasOwnStock: false, hasClientItems: false });
+
+            const isPureOwnStock = Boolean(o.isPureOwnStock) || (calcItems.hasOwnStock && !calcItems.hasClientItems);
 
             const savedTotal = Number(o.total ?? o.totalClient ?? 0) || 0;
-            const total = savedTotal > 0 ? savedTotal : calcItems.total;
+            const total = isPureOwnStock ? 0 : (savedTotal > 0 ? savedTotal : calcItems.total);
 
             const savedCost = Number(o.totalCost ?? o.cost ?? 0) || 0;
             const totalCost = savedCost > 0 ? savedCost : calcItems.cost;
 
             const savedProfit = Number(o.totalProfit ?? o.netProfit ?? o.profit ?? 0) || 0;
-            const totalProfit = savedProfit !== 0 ? savedProfit : (total - totalCost);
+            const totalProfit = isPureOwnStock ? 0 : (savedProfit !== 0 ? savedProfit : (total - totalCost));
 
             const paidAmount = Number(o.paidAmount ?? o.paid ?? 0) || 0;
 
             return {
                 ...o,
                 campaign: o.campaign || (campaigns[0]?.name || 'Campaña'),
-                clientName: o.clientName || o.client || 'Cliente',
+                clientName: o.clientName || o.client || (isPureOwnStock ? 'Stock Propio' : 'Cliente'),
                 clientPhone: o.clientPhone || o.phone || '',
                 items,
+                isPureOwnStock,
                 total,
                 totalCost,
                 totalProfit,
@@ -913,6 +1017,7 @@
                 renderCampaigns();
                 updateCampaignSelects();
                 renderCollections();
+                renderOwnStock();
             }, err => {
                 console.error('Error escuchando campañas:', err);
             });
@@ -924,6 +1029,7 @@
                 });
                 renderCampaigns();
                 renderCollections();
+                renderOwnStock();
             }, err => {
                 console.error('Error escuchando pedidos:', err);
             });
@@ -952,10 +1058,19 @@
                 const arrivalIso = getEstimatedArrivalDate(c.endDate);
                 const dueIso = getPaymentDueDate(c.endDate);
 
-                const campOrders = orders.filter(o => o.campaign === c.name);
+                const campOrders = orders.map(normalizeOrderData).filter(o => o.campaign === c.name);
                 const consolidatedMap = {};
 
+                // Resumen financiero de la campaña descontando pagos recibidos
+                let totalSold = 0;
+                let totalPaidByClients = 0;
+                let estimatedWholesaleCost = 0;
+
                 campOrders.forEach(o => {
+                    totalSold += Number(o.total) || 0;
+                    totalPaidByClients += Number(o.paidAmount) || 0;
+                    estimatedWholesaleCost += Number(o.totalCost) || 0;
+
                     if (o.items && Array.isArray(o.items)) {
                         o.items.forEach(item => {
                             if (item.isGift || item.isCompanyGift) return;
@@ -975,6 +1090,10 @@
                         });
                     }
                 });
+
+                const pendingFromClients = Math.max(0, totalSold - totalPaidByClients);
+                const companyReference = invoicePaid > 0 ? invoicePaid : estimatedWholesaleCost;
+                const netCampaignBalance = totalPaidByClients - companyReference;
 
                 const consolidatedList = Object.values(consolidatedMap);
 
@@ -1006,9 +1125,29 @@
                                 </div>
                             </div>
 
+                            <!-- Balance financiero de la campaña (descontando pagos recibidos) -->
+                            <div class="p-2 bg-white rounded border mb-2 small">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Total Vendido en Campaña:</span>
+                                    <strong class="text-dark">$${totalSold.toFixed(2)}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between text-success">
+                                    <span>Pagos Recibidos de Clientes:</span>
+                                    <strong>-$${totalPaidByClients.toFixed(2)}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between border-top pt-1 mt-1">
+                                    <span class="fw-bold">Saldo Pendiente por Cobrar:</span>
+                                    <strong class="text-danger">$${pendingFromClients.toFixed(2)}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between border-top pt-1 mt-1">
+                                    <span class="text-muted">Balance Neto (Cobrado vs. Empresa):</span>
+                                    <strong class="${netCampaignBalance >= 0 ? 'text-success' : 'text-danger'}">${netCampaignBalance >= 0 ? '+' : ''}$${netCampaignBalance.toFixed(2)}</strong>
+                                </div>
+                            </div>
+
                             <div class="p-2 bg-light rounded border mb-2 d-flex justify-content-between align-items-center">
                                 <div>
-                                    <span class="small text-muted d-block">Factura Pagada (Costo Mayorista):</span>
+                                    <span class="small text-muted d-block">Factura Pagada (Costo Est.: $${estimatedWholesaleCost.toFixed(2)}):</span>
                                     <strong class="text-danger">-$${invoicePaid.toFixed(2)}</strong>
                                 </div>
                                 <button class="btn btn-sm btn-outline-danger" onclick="openInvoiceModal('${c.id}', '${c.name}', ${invoicePaid})">
@@ -1140,6 +1279,20 @@
         }
 
         // --- GESTIÓN DE PEDIDOS Y EDICIÓN ---
+        function goToQuickStockLoad() {
+            const tabEl = document.querySelector('button[data-bs-target="#ordersTab"]');
+            if (tabEl) new bootstrap.Tab(tabEl).show();
+            cancelOrderEdit();
+            const activeCamp = campaigns.find(c => c.status === 'Activa') || campaigns[0];
+            if (activeCamp) {
+                document.getElementById('orderCampaignSelect').value = activeCamp.name;
+            }
+            document.getElementById('clientName').value = 'Stock Propio';
+            document.getElementById('itemIsOwnStock').checked = true;
+            calculateItemPreview();
+            document.getElementById('itemCode').focus();
+        }
+
         function resetItemFormFields() {
             document.getElementById('editingItemIndex').value = '-1';
             document.getElementById('itemFormTitle').textContent = 'Agregar Artículo del Folleto';
@@ -1147,6 +1300,7 @@
             document.getElementById('saveItemBtn').className = 'btn btn-outline-primary w-100';
             document.getElementById('saveItemBtn').innerHTML = '<i class="bi bi-plus-lg me-1"></i> Añadir Artículo';
 
+            document.getElementById('itemIsOwnStock').checked = false;
             document.getElementById('itemIsGift').checked = false;
             document.getElementById('itemBrand').value = 'Natura';
             document.getElementById('itemCode').value = '';
@@ -1168,6 +1322,7 @@
             document.getElementById('saveItemBtn').className = 'btn btn-primary w-100 fw-bold';
             document.getElementById('saveItemBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Guardar Cambios del Artículo';
 
+            document.getElementById('itemIsOwnStock').checked = Boolean(item.isOwnStock);
             document.getElementById('itemIsGift').checked = Boolean(item.isGift);
             document.getElementById('itemBrand').value = item.brand || 'Natura';
             document.getElementById('itemCode').value = item.code || '';
@@ -1198,7 +1353,8 @@
 
         function addItemToOrder() {
             const editingIndex = parseInt(document.getElementById('editingItemIndex').value, 10);
-            const isGift = document.getElementById('itemIsGift').checked;
+            const isOwnStock = document.getElementById('itemIsOwnStock').checked;
+            const isGift = !isOwnStock && document.getElementById('itemIsGift').checked;
             const brand = document.getElementById('itemBrand').value;
             const code = document.getElementById('itemCode').value.trim();
             const page = document.getElementById('itemPage').value.trim();
@@ -1213,12 +1369,12 @@
             }
 
             const wholesaleDiscountPct = isGift ? 100 : getWholesaleDiscountForBrand(brand);
-            const finalClientPriceUnit = price * (1 - (clientDiscountPct / 100));
             const wholesaleCostUnit = isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100));
-            const unitProfit = finalClientPriceUnit - wholesaleCostUnit;
+            const finalClientPriceUnit = isOwnStock ? 0 : (price * (1 - (clientDiscountPct / 100)));
+            const unitProfit = isOwnStock ? 0 : (finalClientPriceUnit - wholesaleCostUnit);
 
             const newItem = {
-                isGift, brand, code, page, name, qty,
+                isOwnStock, isGift, brand, code, page, name, qty,
                 price, clientDiscountPct, wholesaleDiscountPct,
                 finalClientPrice: finalClientPriceUnit * qty,
                 profit: unitProfit * qty,
@@ -1252,20 +1408,22 @@
             }
 
             currentOrderItems.forEach((item, index) => {
-                const subtotal = Number(item.finalClientPrice) || 0;
-                const itemProfit = Number(item.profit) || 0;
+                const subtotal = item.isOwnStock ? 0 : (Number(item.finalClientPrice) || 0);
+                const itemProfit = item.isOwnStock ? 0 : (Number(item.profit) || 0);
                 const itemCost = Number(item.cost) || 0;
                 totalCatalog += subtotal;
                 totalProfit += itemProfit;
                 totalCost += itemCost;
 
                 const badgeClass = item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
-                const giftBadge = item.isGift ? `<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : '';
+                const specialBadge = item.isOwnStock
+                    ? `<span class="badge bg-info text-dark ms-1">📦 Stock</span>`
+                    : (item.isGift ? `<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : '');
 
                 tbody.innerHTML += `
                     <tr>
                         <td><span class="badge ${badgeClass}">${item.brand}</span></td>
-                        <td>${item.name} ${giftBadge}</td>
+                        <td>${item.name} ${specialBadge}</td>
                         <td>${item.qty}</td>
                         <td>$${((Number(item.price) || 0) * (Number(item.qty) || 1)).toFixed(2)}</td>
                         <td>${(Number(item.clientDiscountPct) || 0) > 0 ? `<span class="text-danger fw-bold">${item.clientDiscountPct}%</span>` : 'Sin desc.'}</td>
@@ -1286,6 +1444,7 @@
         function buildOrderWhatsAppText(order) {
             let text = `*¡Hola ${order.clientName}!* 🌸 Registré tu pedido para la campaña *${order.campaign}*:\n`;
             (order.items || []).forEach(i => {
+                if (i.isOwnStock) return;
                 const linePrice = Number(i.finalClientPrice ?? ((Number(i.price) || 0) * (Number(i.qty) || 1))) || 0;
                 text += `\n• *[${i.brand || 'Natura'}]* ${i.name} ${i.code ? `(Cód: ${i.code})` : ''} x${i.qty || 1} - $${linePrice.toFixed(2)}`;
             });
@@ -1305,10 +1464,11 @@
             document.getElementById('ticketCampaignName').textContent = o.campaign;
 
             const itemsContainer = document.getElementById('ticketItemsList');
-            if (!o.items || o.items.length === 0) {
-                itemsContainer.innerHTML = `<div class="text-muted">Sin detalle de artículos.</div>`;
+            const billableItems = (o.items || []).filter(i => !i.isOwnStock);
+            if (billableItems.length === 0) {
+                itemsContainer.innerHTML = `<div class="text-muted">Sin detalle de artículos facturables.</div>`;
             } else {
-                itemsContainer.innerHTML = o.items.map(i => {
+                itemsContainer.innerHTML = billableItems.map(i => {
                     const linePrice = Number(i.finalClientPrice ?? ((Number(i.price) || 0) * (Number(i.qty) || 1))) || 0;
                     const giftTag = i.isGift ? ' <span class="badge bg-warning text-dark">🎁 Regalo</span>' : '';
                     return `
@@ -1370,7 +1530,9 @@
         async function saveOrderAndSendWhatsApp() {
             const editingId = document.getElementById('editingOrderId').value;
             const campaign = document.getElementById('orderCampaignSelect').value;
-            const clientName = document.getElementById('clientName').value.trim();
+            const isAllStock = currentOrderItems.length > 0 && currentOrderItems.every(i => i.isOwnStock);
+            const clientNameInput = document.getElementById('clientName').value.trim();
+            const clientName = clientNameInput || (isAllStock ? 'Stock Propio' : '');
             const clientPhone = document.getElementById('clientPhone').value.trim();
 
             if (!campaign || !clientName || currentOrderItems.length === 0) {
@@ -1378,8 +1540,8 @@
                 return;
             }
 
-            const total = currentOrderItems.reduce((acc, item) => acc + (Number(item.finalClientPrice) || 0), 0);
-            const totalProfit = currentOrderItems.reduce((acc, item) => acc + (Number(item.profit) || 0), 0);
+            const total = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.finalClientPrice) || 0)), 0);
+            const totalProfit = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.profit) || 0)), 0);
             const totalCost = currentOrderItems.reduce((acc, item) => acc + (Number(item.cost) || 0), 0);
 
             const orderData = {
@@ -1387,6 +1549,7 @@
                 clientName,
                 clientPhone,
                 items: currentOrderItems,
+                isPureOwnStock: isAllStock,
                 total,
                 totalProfit,
                 totalCost,
@@ -1399,7 +1562,7 @@
                 cancelOrderEdit();
             } else {
                 orderData.paidAmount = 0;
-                orderData.paymentStatus = 'Pendiente';
+                orderData.paymentStatus = isAllStock ? 'Stock Propio' : 'Pendiente';
                 orderData.lastPaymentMethod = '-';
                 const docRef = await db.collection('orders').add(orderData);
 
@@ -1408,10 +1571,14 @@
                 document.getElementById('clientName').value = '';
                 document.getElementById('clientPhone').value = '';
                 renderOrderTable();
-                showToastMessage('¡Pedido guardado con éxito!');
 
-                orders.unshift(createdOrder);
-                openClientTicket(createdOrder.id);
+                if (isAllStock) {
+                    showToastMessage('¡Productos guardados en Mi Stock Propio y sumados a la campaña!');
+                } else {
+                    showToastMessage('¡Pedido guardado con éxito!');
+                    orders.unshift(createdOrder);
+                    openClientTicket(createdOrder.id);
+                }
             }
         }
 
@@ -1480,10 +1647,11 @@
 
             const filtered = orders
                 .map(normalizeOrderData)
+                .filter(o => !o.isPureOwnStock)
                 .filter(o => !filterCamp || o.campaign === filterCamp);
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No hay pedidos registrados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No hay pedidos de clientes registrados.</td></tr>`;
                 return;
             }
 
@@ -1525,6 +1693,192 @@
                         </td>
                     </tr>`;
             });
+        }
+
+        // --- MÓDULO 4: MI STOCK PROPIO (ENTREGA INMEDIATA) ---
+        function renderOwnStock() {
+            const tbody = document.getElementById('ownStockTable');
+            const badge = document.getElementById('stockCountBadge');
+            if (!tbody) return;
+
+            const stockEntries = [];
+            orders.map(normalizeOrderData).forEach(o => {
+                (o.items || []).forEach((item, idx) => {
+                    if (item.isOwnStock && (parseInt(item.qty, 10) || 0) > 0) {
+                        stockEntries.push({
+                            orderId: o.id,
+                            campaign: o.campaign,
+                            itemIndex: idx,
+                            item
+                        });
+                    }
+                });
+            });
+
+            const totalUnits = stockEntries.reduce((acc, e) => acc + (parseInt(e.item.qty, 10) || 0), 0);
+            if (badge) badge.textContent = String(totalUnits);
+
+            if (stockEntries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No tenés productos cargados en Stock Propio todavía.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = stockEntries.map(entry => {
+                const it = entry.item;
+                const qty = parseInt(it.qty, 10) || 1;
+                const unitCost = (Number(it.cost) || 0) / qty;
+                const suggestedPrice = Number(it.price) || 0;
+                const brandBadge = it.brand === 'Natura' ? 'badge-natura' : (it.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
+
+                return `
+                    <tr>
+                        <td>
+                            <span class="badge ${brandBadge}">${it.brand || 'Natura'}</span>
+                            <div class="small fw-bold text-secondary mt-1">SKU: ${it.code || 'S/C'}</div>
+                        </td>
+                        <td class="fw-bold">${it.name}</td>
+                        <td><span class="badge bg-light text-dark border">${entry.campaign}</span></td>
+                        <td class="text-center"><span class="badge bg-dark fs-6">${qty}</span></td>
+                        <td class="text-danger fw-semibold">$${unitCost.toFixed(2)} c/u</td>
+                        <td class="text-success fw-bold">$${suggestedPrice.toFixed(2)} c/u</td>
+                        <td class="text-nowrap">
+                            <button class="btn btn-sm btn-success fw-bold me-1" onclick="openSellStockModal('${entry.orderId}', ${entry.itemIndex})">
+                                <i class="bi bi-bag-check me-1"></i> Vender a Cliente
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editOrder('${entry.orderId}')" title="Editar en pedido">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openSellStockModal(orderId, itemIndex) {
+            const o = orders.find(item => item.id === orderId);
+            if (!o || !Array.isArray(o.items) || !o.items[itemIndex]) return;
+            const it = o.items[itemIndex];
+            const maxQty = parseInt(it.qty, 10) || 1;
+
+            document.getElementById('sellStockOrderId').value = orderId;
+            document.getElementById('sellStockItemIndex').value = String(itemIndex);
+            document.getElementById('sellStockProductLabel').textContent = `[${it.brand || 'Natura'}] ${it.name} (SKU: ${it.code || 'S/C'})`;
+            document.getElementById('sellStockMaxQty').textContent = String(maxQty);
+            document.getElementById('sellStockClientName').value = '';
+            document.getElementById('sellStockClientPhone').value = '';
+
+            const qtyInput = document.getElementById('sellStockQty');
+            qtyInput.max = String(maxQty);
+            qtyInput.value = '1';
+
+            document.getElementById('sellStockUnitPrice').value = Number(it.price) || '';
+            document.getElementById('sellStockMarkPaid').checked = false;
+
+            new bootstrap.Modal(document.getElementById('sellStockModal')).show();
+        }
+
+        async function confirmSellFromStock() {
+            const orderId = document.getElementById('sellStockOrderId').value;
+            const itemIndex = parseInt(document.getElementById('sellStockItemIndex').value, 10);
+            const clientName = document.getElementById('sellStockClientName').value.trim();
+            const clientPhone = document.getElementById('sellStockClientPhone').value.trim();
+            const sellQty = Math.max(1, parseInt(document.getElementById('sellStockQty').value, 10) || 1);
+            const unitPrice = parseFloat(document.getElementById('sellStockUnitPrice').value) || 0;
+            const markPaid = document.getElementById('sellStockMarkPaid').checked;
+
+            const stockOrder = orders.find(o => o.id === orderId);
+            if (!stockOrder || !stockOrder.items[itemIndex]) return;
+            const stockItem = stockOrder.items[itemIndex];
+            const availableQty = parseInt(stockItem.qty, 10) || 1;
+
+            if (!clientName || unitPrice <= 0) {
+                showToastMessage('Completá el nombre del cliente y un precio válido.', 'warning');
+                return;
+            }
+            if (sellQty > availableQty) {
+                showToastMessage(`Solo tenés ${availableQty} unidad(es) disponibles en stock.`, 'warning');
+                return;
+            }
+
+            const unitCost = (Number(stockItem.cost) || 0) / availableQty;
+            const saleTotal = unitPrice * sellQty;
+            const saleCost = unitCost * sellQty;
+            const saleProfit = saleTotal - saleCost;
+
+            const soldItem = {
+                isOwnStock: false,
+                isGift: false,
+                brand: stockItem.brand || 'Natura',
+                code: stockItem.code || '',
+                page: stockItem.page || '',
+                name: stockItem.name,
+                qty: sellQty,
+                price: unitPrice,
+                clientDiscountPct: 0,
+                wholesaleDiscountPct: stockItem.wholesaleDiscountPct || getWholesaleDiscountForBrand(stockItem.brand),
+                finalClientPrice: saleTotal,
+                cost: saleCost,
+                profit: saleProfit
+            };
+
+            // Crear pedido para el cliente comprador (sin volver a duplicar costo en la campaña)
+            const newOrderRef = await db.collection('orders').add({
+                campaign: stockOrder.campaign,
+                clientName,
+                clientPhone,
+                items: [soldItem],
+                isPureOwnStock: false,
+                fromOwnStock: true,
+                total: saleTotal,
+                totalProfit: saleProfit,
+                totalCost: 0,
+                paidAmount: markPaid ? saleTotal : 0,
+                paymentStatus: markPaid ? 'Pagado' : 'Pendiente',
+                lastPaymentMethod: markPaid ? 'Efectivo' : '-',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Descontar unidades vendidas del stock propio
+            const updatedItems = [...stockOrder.items];
+            if (sellQty >= availableQty) {
+                updatedItems.splice(itemIndex, 1);
+            } else {
+                const remainingQty = availableQty - sellQty;
+                updatedItems[itemIndex] = {
+                    ...stockItem,
+                    qty: remainingQty,
+                    cost: unitCost * remainingQty
+                };
+            }
+
+            if (updatedItems.length === 0) {
+                await db.collection('orders').doc(orderId).delete();
+            } else {
+                const updatedTotal = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.finalClientPrice) || 0)), 0);
+                const updatedProfit = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.profit) || 0)), 0);
+                const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
+                await db.collection('orders').doc(orderId).update({
+                    items: updatedItems,
+                    total: updatedTotal,
+                    totalProfit: updatedProfit,
+                    totalCost: updatedCost
+                });
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('sellStockModal')).hide();
+            showToastMessage(`¡Vendido a ${clientName}! Ya figura en Cobranzas.`);
+
+            const createdSale = normalizeOrderData({
+                id: newOrderRef.id,
+                campaign: stockOrder.campaign,
+                clientName,
+                clientPhone,
+                items: [soldItem],
+                total: saleTotal,
+                paidAmount: markPaid ? saleTotal : 0
+            });
+            orders.unshift(createdSale);
+            openClientTicket(createdSale.id);
         }
 
         function openPaymentModal(orderId, clientName, currentSaldo) {
@@ -1569,6 +1923,8 @@
                 headerLine = `⏳ *¡Últimos días para pedir en ${campaignName}!* ⏳`;
             } else if (messageType === 'Promos Destacadas') {
                 headerLine = `🔥 *¡Ofertas destacadas de ${campaignName}!* 🔥`;
+            } else if (messageType === 'Entrega Inmediata') {
+                headerLine = `📦 *¡Stock disponible para ENTREGA INMEDIATA!* 📦`;
             }
 
             let brandLine = 'Marcas disponibles: *Natura 🌸, Avon 💄 y Casa & Estilo 🏠*';
@@ -1576,12 +1932,24 @@
             else if (brand === 'Avon') brandLine = 'Destacados de *Avon 💄*';
             else if (brand === 'Casa & Estilo') brandLine = 'Destacados de *Casa & Estilo 🏠*';
 
-            let msg = `${headerLine}\n${brandLine}\n\n📅 *Cierre de pedidos:* ${closeFormatted}`;
-            if (arrivalFormatted) {
-                msg += `\n🚚 *Entrega estimada:* ${arrivalFormatted}`;
-            }
-            if (dueFormatted) {
-                msg += `\n💳 *Límite de pago:* ${dueFormatted}`;
+            let msg = `${headerLine}\n${brandLine}`;
+
+            if (messageType === 'Entrega Inmediata') {
+                const stockLines = [];
+                orders.map(normalizeOrderData).forEach(o => {
+                    (o.items || []).forEach(it => {
+                        if (it.isOwnStock && (parseInt(it.qty, 10) || 0) > 0) {
+                            stockLines.push(`• *[${it.brand || 'Natura'}]* ${it.name} - $${(Number(it.price) || 0).toFixed(2)}`);
+                        }
+                    });
+                });
+                if (stockLines.length > 0) {
+                    msg += `\n\n🎁 *Productos disponibles hoy:*\n${stockLines.join('\n')}`;
+                }
+            } else {
+                msg += `\n\n📅 *Cierre de pedidos:* ${closeFormatted}`;
+                if (arrivalFormatted) msg += `\n🚚 *Entrega estimada:* ${arrivalFormatted}`;
+                if (dueFormatted) msg += `\n💳 *Límite de pago:* ${dueFormatted}`;
             }
 
             const links = [];
@@ -1595,7 +1963,7 @@
                 links.push(`• 🏠 Casa & Estilo: ${camp.linkCasa}`);
             }
 
-            if (links.length > 0) {
+            if (links.length > 0 && messageType !== 'Entrega Inmediata') {
                 msg += `\n\n📖 *Catálogos interactivos:*\n${links.join('\n')}`;
             }
 
@@ -1603,7 +1971,7 @@
                 msg += `\n\n✨ *Novedades:* ${extraNotes}`;
             }
 
-            msg += `\n\nEscribime por acá y armamos tu pedido con gusto 😊\n*M. Eugenia Carol* • 📱 381-519-3109`;
+            msg += `\n\nEscribime por acá y coordinamos con gusto 😊\n*M. Eugenia Carol* • 📱 381-519-3109`;
             return msg;
         }
 
@@ -1613,7 +1981,7 @@
             const brand = document.getElementById('aiBrandSelect').value;
             const extraNotes = document.getElementById('aiExtraNotes').value.trim();
 
-            if (!campaignName) {
+            if (!campaignName && messageType !== 'Entrega Inmediata') {
                 showToastMessage('Seleccioná una campaña.', 'warning');
                 return;
             }
@@ -1624,7 +1992,7 @@
                 : '';
 
             const prompt = `Actúa como M. Eugenia Carol (WhatsApp 381-519-3109), consultora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp cálido, claro y atractivo con emojis para difundir.
-- Campaña: ${campaignName} (Cierra el: ${camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente'})
+- Campaña: ${campaignName || 'Entrega Inmediata'} (Cierra el: ${camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente'})
 - Tipo: ${messageType}
 - Marca: ${brand}
 - Notas extra: ${extraNotes || 'Ninguna'}
