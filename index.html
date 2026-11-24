@@ -144,7 +144,6 @@
             height: 28px;
             width: auto;
             object-fit: contain;
-            //filter: brightness(0);
             display: block;
         }
 
@@ -1445,6 +1444,33 @@
             document.getElementById('saveOrderBtn').innerHTML = '<i class="bi bi-whatsapp me-2"></i> Guardar Pedido y Generar Ticket';
         }
 
+        function sendPaymentReminder(orderId) {
+            const found = orders.find(o => o.id === orderId);
+            if (!found) return;
+            const o = normalizeOrderData(found);
+            const total = Number(o.total) || 0;
+            const paid = Number(o.paidAmount) || 0;
+            const saldo = Math.max(0, total - paid);
+            if (saldo <= 0) return;
+
+            const campObj = campaigns.find(c => c.name === o.campaign);
+            const dueIso = campObj?.endDate ? getPaymentDueDate(campObj.endDate) : '';
+            const dueLine = dueIso ? `\n📅 *Fecha límite de pago:* ${formatDateAR(dueIso)}` : '';
+
+            let text = `¡Hola *${o.clientName}*! 🌸 ¿Cómo estás?\nTe escribo con mucho cariño para recordarte que tenés un saldo pendiente de tu pedido de la campaña *${o.campaign}*:\n`;
+            if (paid > 0) {
+                text += `\n• Total del pedido: $${total.toFixed(2)}\n• Abonado: $${paid.toFixed(2)}`;
+            }
+            text += `\n• *Saldo pendiente: $${saldo.toFixed(2)}*${dueLine}`;
+            text += `\n\nCuando puedas realizar el pago (en efectivo o transferencia), avisame por acá. ¡Muchas gracias por tu confianza! ✨\n*M. Eugenia Carol* • 📱 381-519-3109`;
+
+            const phoneClean = String(o.clientPhone || '').replace(/\D/g, '');
+            const url = phoneClean
+                ? `https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`
+                : `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
         // --- MÓDULO 3: COBRANZAS Y CUENTAS ---
         function renderCollections() {
             const tbody = document.getElementById('collectionsTable');
@@ -1477,6 +1503,11 @@
                     statusText = 'Parcial ⚠️';
                 }
 
+                const pendingActionsHtml = saldo > 0
+                    ? `<button class="btn btn-sm btn-outline-warning text-dark me-1" onclick="sendPaymentReminder('${o.id}')" title="Enviar recordatorio amable por WhatsApp"><i class="bi bi-bell"></i> Recordar pago</button>
+                       <button class="btn btn-sm btn-outline-success me-1" onclick="openPaymentModal('${o.id}', '${o.clientName}', ${saldo})"><i class="bi bi-cash"></i> Cobrar</button>`
+                    : '';
+
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${o.clientName}</strong><br><small class="text-muted">${o.clientPhone || ''}</small></td>
@@ -1488,7 +1519,7 @@
                         <td><span class="badge ${badgeClass}">${statusText}</span></td>
                         <td class="text-nowrap">
                             <button class="btn btn-sm btn-outline-dark me-1" onclick="openClientTicket('${o.id}')" title="Ver / Descargar Ticket"><i class="bi bi-ticket-perforated"></i> Ticket</button>
-                            <button class="btn btn-sm btn-outline-success me-1" onclick="openPaymentModal('${o.id}', '${o.clientName}', ${saldo})"><i class="bi bi-cash"></i> Cobrar</button>
+                            ${pendingActionsHtml}
                             <button class="btn btn-sm btn-outline-primary me-1" onclick="editOrder('${o.id}')" title="Editar Pedido"><i class="bi bi-pencil"></i></button>
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder('${o.id}')"><i class="bi bi-trash"></i></button>
                         </td>
