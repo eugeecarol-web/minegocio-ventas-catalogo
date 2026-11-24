@@ -1,70 +1,1715 @@
-<!-- ... existing code ... -->
-function formatDateAR(dateStr) {
-    if (!dateStr) return '-';
-    const parts = String(dateStr).split('-');
-    if (parts.length !== 3) return dateStr;
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
-}
-
-// Feriados nacionales de Argentina (YYYY-MM-DD) para días hábiles
-const ARG_HOLIDAYS = new Set([
-    '2026-11-23',
-    '2026-12-07',
-    '2026-12-08',
-    '2026-12-25'
-]);
-
-function isBusinessDayAR(dateObj) {
-    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return false;
-    const day = dateObj.getDay();
-    if (day === 0 || day === 6) return false;
-    const yyyy = dateObj.getFullYear();
-    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const dd = String(dateObj.getDate()).padStart(2, '0');
-    return !ARG_HOLIDAYS.has(`${yyyy}-${mm}-${dd}`);
-}
-
-function addBusinessDaysAR(dateStr, businessDaysToAdd) {
-    if (!dateStr) return '';
-    const parts = String(dateStr).split('-');
-    if (parts.length !== 3) return '';
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1;
-    const day = parseInt(parts[2], 10);
-    const current = new Date(year, month, day);
-    if (isNaN(current.getTime())) return '';
-
-    let added = 0;
-    let safetyCounter = 0;
-    while (added < businessDaysToAdd && safetyCounter < 365) {
-        current.setDate(current.getDate() + 1);
-        if (isBusinessDayAR(current)) {
-            added++;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Negocio por Catálogo — M. Eugenia Carol</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- html2canvas para descargar el ticket digital en PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Firebase Compat SDKs para sincronización en tiempo real -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <!-- Google Fonts: Inter + Pacifico/Dancing Script para el toque artesanal de la tarjeta -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-cream: #F4E6E1;
+            --accent-ochre: #E39D34;
+            --accent-orange: #E45E27;
+            --accent-terracotta: #AE3820;
+            --ink-dark: #2B1A14;
         }
-        safetyCounter++;
-    }
 
-    const yyyy = current.getFullYear();
-    const mm = String(current.getMonth() + 1).padStart(2, '0');
-    const dd = String(current.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-}
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-cream);
+            color: var(--ink-dark);
+            overflow-x: hidden;
+        }
 
-function getEstimatedArrivalDate(closeDateStr) {
-    if (!closeDateStr) return '';
-    return addBusinessDaysAR(String(closeDateStr).slice(0, 10), 3);
-}
+        .font-script {
+            font-family: 'Dancing Script', cursive;
+        }
 
-function getPaymentDueDate(closeDateStr) {
-    if (!closeDateStr) return '';
-    return addBusinessDaysAR(String(closeDateStr).slice(0, 10), 20);
-}
+        /* Ondas decorativas inspiradas en la tarjeta de consultora */
+        .brand-waves-bg {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            max-width: 640px;
+            height: 320px;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.9;
+        }
 
-// Captura global de errores no controlados para diagnóstico rápido
-window.addEventListener('error', (event) => {
-    console.error('Error detectado en catálogo_app:', event.message, event.filename, event.lineno);
-});
+        /* Estilo visual del Ticket Digital de Cliente */
+        .ticket-card {
+            background: linear-gradient(165deg, #F7ECE8 0%, #F2DFD8 55%, #EED5CC 100%);
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative selection:bg-[#E45E27]/20">
 
-window.addEventListener('unhandledrejection', (event) => {
-    console.error('Promesa rechazada en catálogo_app:', event.reason);
-});
+    <!-- Ondas decorativas superiores derechas inspiradas en la tarjeta -->
+    <svg class="brand-waves-bg" viewBox="0 0 600 320" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M220 -20C210 75 295 110 345 165C395 220 465 235 620 215V-20H220Z" fill="#E39D34" fill-opacity="0.85"/>
+        <path d="M335 -20C330 55 395 85 435 125C475 165 535 170 620 155V-20H335Z" fill="#E45E27" fill-opacity="0.9"/>
+        <path d="M445 -20C445 30 490 55 520 82C550 110 585 115 620 110V-20H445Z" fill="#AE3820" fill-opacity="0.92"/>
+    </svg>
+
+    <!-- ENCABEZADO PRINCIPAL -->
+    <header class="sticky top-0 z-30 bg-[#F4E6E1]/90 backdrop-blur-md border-b border-[#AE3820]/15 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <!-- Branding de Consultora -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E39D34] via-[#E45E27] to-[#AE3820] text-white flex flex-col items-center justify-center shadow-md">
+                        <span class="text-[11px] font-black tracking-tighter leading-none">natura</span>
+                        <span class="text-[9px] font-extrabold tracking-widest uppercase mt-0.5 border-t border-white/40 pt-0.5">AVON</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h1 class="font-script text-2xl font-bold text-[#2B1A14] leading-none">M. Eugenia Carol</h1>
+                            <span id="sync-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Local + Nube
+                            </span>
+                        </div>
+                        <p class="text-xs text-[#6B4E44] font-medium mt-0.5 flex items-center gap-2 flex-wrap">
+                            <span>Gestión de Catálogos, Pedidos y Cobranzas</span>
+                            <span class="text-[#AE3820] font-semibold">• WhatsApp 381-519-3109</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navegación por Pestañas -->
+            <nav class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+                <button onclick="switchTab('campaigns')" id="nav-campaigns" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 bg-[#E45E27] text-white shadow-sm">
+                    <i data-lucide="calendar-range" class="w-4 h-4"></i>
+                    <span>1. Campañas y Web</span>
+                </button>
+                <button onclick="switchTab('orders')" id="nav-orders" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 bg-white/80 text-[#2B1A14] hover:bg-white border border-[#AE3820]/15">
+                    <i data-lucide="shopping-bag" class="w-4 h-4 text-[#E45E27]"></i>
+                    <span>2. Cargar Pedido</span>
+                </button>
+                <button onclick="switchTab('billing')" id="nav-billing" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 bg-white/80 text-[#2B1A14] hover:bg-white border border-[#AE3820]/15">
+                    <i data-lucide="wallet" class="w-4 h-4 text-[#AE3820]"></i>
+                    <span>3. Cobranzas y Cuentas</span>
+                </button>
+                <button onclick="switchTab('ai')" id="nav-ai" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 bg-white/80 text-[#2B1A14] hover:bg-white border border-[#AE3820]/15">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-[#E39D34]"></i>
+                    <span>4. Asistente IA WhatsApp</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- RESUMEN EJECUTIVO SUPERIOR -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white/90 backdrop-blur-xs p-4 rounded-2xl border border-[#AE3820]/15 shadow-xs">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A5B50]">Total Vendido (Bruto)</p>
+                <p id="summary-gross-sales" class="text-2xl font-black text-[#2B1A14] mt-1">$0.00</p>
+                <p id="summary-orders-count" class="text-xs text-[#6B4E44] mt-0.5">0 pedidos registrados</p>
+            </div>
+            <div class="bg-white/90 backdrop-blur-xs p-4 rounded-2xl border border-[#AE3820]/15 shadow-xs">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A5B50]">Costo Mayorista Empresa</p>
+                <p id="summary-wholesale-cost" class="text-2xl font-black text-[#AE3820] mt-1">$0.00</p>
+                <p class="text-xs text-[#6B4E44] mt-0.5">Regalos de compañía = $0 costo</p>
+            </div>
+            <div class="bg-white/90 backdrop-blur-xs p-4 rounded-2xl border border-[#AE3820]/15 shadow-xs">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A5B50]">Ganancia Neta Estimada</p>
+                <p id="summary-net-profit" class="text-2xl font-black text-emerald-700 mt-1">$0.00</p>
+                <p class="text-xs text-emerald-700/80 mt-0.5">Incluye 100% ganancia en regalos</p>
+            </div>
+            <div class="bg-white/90 backdrop-blur-xs p-4 rounded-2xl border border-[#AE3820]/15 shadow-xs">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-[#7A5B50]">Por Cobrar a Clientes</p>
+                <p id="summary-pending-balance" class="text-2xl font-black text-[#E45E27] mt-1">$0.00</p>
+                <p id="summary-collected-amount" class="text-xs text-[#6B4E44] mt-0.5">Cobrado: $0.00</p>
+            </div>
+        </section>
+
+        <!-- ================= PESTAÑA 1: CAMPAÑAS Y CONSOLIDADO WEB ================= -->
+        <section id="section-campaigns" class="space-y-6">
+            <div class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-[#AE3820]/15 shadow-xs">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                    <div>
+                        <h2 id="campaign-form-title" class="text-xl font-extrabold text-[#2B1A14]">Nueva Campaña / Ciclo</h2>
+                        <p class="text-xs text-[#6B4E44]">Al ingresar la fecha de cierre, se calculan automáticamente la llegada estimada (+3 días hábiles) y el límite de pago (+20 días hábiles en Argentina).</p>
+                    </div>
+                    <button type="button" onclick="resetCampaignForm()" id="btn-cancel-edit-campaign" class="hidden text-xs font-bold text-[#AE3820] hover:underline">
+                        Cancelar edición
+                    </button>
+                </div>
+
+                <form id="campaign-form" onsubmit="saveCampaign(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                    <input type="hidden" id="campaign-edit-id">
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#2B1A14] mb-1">Nombre / Ciclo *</label>
+                        <input type="text" id="campaign-name" required placeholder="Ej: Campaña 16" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#E45E27]">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#2B1A14] mb-1">Nivel de Ganancia (%)</label>
+                        <select id="campaign-tier" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E45E27]">
+                            <option value="25">Bronce (25%)</option>
+                            <option value="30" selected>Plata (30%)</option>
+                            <option value="35">Oro (35%)</option>
+                            <option value="37">Platino (37%)</option>
+                            <option value="40">Diamante (40%)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#2B1A14] mb-1">Fecha de Cierre *</label>
+                        <input type="date" id="campaign-close-date" required onchange="previewCampaignDates()" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#E45E27]">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#2B1A14] mb-1">Link Catálogo Digital</label>
+                        <input type="url" id="campaign-catalog-url" placeholder="https://..." class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#E45E27]">
+                    </div>
+
+                    <div>
+                        <button type="submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-[#E45E27] to-[#AE3820] hover:opacity-95 text-white font-bold rounded-xl text-sm shadow-md transition flex items-center justify-center gap-1.5">
+                            <i data-lucide="save" class="w-4 h-4"></i>
+                            <span id="campaign-submit-label">Guardar Campaña</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Previsualización automática de fechas hábiles -->
+                <div id="campaign-date-preview" class="mt-4 pt-3 border-t border-[#AE3820]/10 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div class="bg-[#F9F2EF] px-3.5 py-2 rounded-xl flex items-center justify-between">
+                        <span class="text-[#6B4E44] font-semibold">📦 Llegada aprox. (+3 días hábiles):</span>
+                        <span id="preview-arrival-date" class="font-extrabold text-[#2B1A14]">-</span>
+                    </div>
+                    <div class="bg-[#F9F2EF] px-3.5 py-2 rounded-xl flex items-center justify-between">
+                        <span class="text-[#6B4E44] font-semibold">💳 Límite de pago (+20 días hábiles):</span>
+                        <span id="preview-due-date" class="font-extrabold text-[#AE3820]">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Listado de Campañas + Lista Consolidada para Cargar en la Web -->
+            <div id="campaigns-list-container" class="space-y-4">
+                <!-- Renderizado dinámicamente por JS -->
+            </div>
+        </section>
+
+        <!-- ================= PESTAÑA 2: CARGAR PEDIDO ================= -->
+        <section id="section-orders" class="space-y-6 hidden">
+            <div class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-[#AE3820]/15 shadow-xs space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-[#AE3820]/10 pb-4">
+                    <div>
+                        <h2 id="order-form-title" class="text-xl font-extrabold text-[#2B1A14]">Cargar Nuevo Pedido de Cliente</h2>
+                        <p class="text-xs text-[#6B4E44]">Agregá productos por marca y código. Podés aplicar descuento al cliente o marcar un artículo como regalo de la compañía (100% ganancia).</p>
+                    </div>
+                    <button type="button" onclick="resetOrderForm()" id="btn-cancel-edit-order" class="hidden px-3 py-1.5 rounded-xl bg-rose-50 text-[#AE3820] text-xs font-bold hover:bg-rose-100">
+                        Cancelar edición
+                    </button>
+                </div>
+
+                <form id="order-form" onsubmit="saveOrder(event)" class="space-y-6">
+                    <input type="hidden" id="order-edit-id">
+
+                    <!-- Datos generales del pedido -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-[#2B1A14] mb-1">Campaña / Ciclo *</label>
+                            <select id="order-campaign-id" required onchange="recalculateOrderTotals()" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E45E27]">
+                                <!-- Opciones cargadas por JS -->
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-[#2B1A14] mb-1">Nombre del Cliente *</label>
+                            <input type="text" id="order-client-name" required placeholder="Ej: Vir" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#E45E27]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-[#2B1A14] mb-1">WhatsApp / Teléfono</label>
+                            <input type="text" id="order-client-phone" placeholder="Ej: 3815551234" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#E45E27]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-[#2B1A14] mb-1">Descuento al Cliente (%)</label>
+                            <input type="number" id="order-discount-pct" min="0" max="100" step="0.5" value="0" oninput="recalculateOrderTotals()" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E45E27]">
+                        </div>
+                    </div>
+
+                    <!-- Agregar Ítem al Pedido -->
+                    <div class="bg-[#F9F2EF] p-4 rounded-2xl border border-[#AE3820]/15 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <h3 class="text-sm font-extrabold text-[#2B1A14]">Agregar Producto al Pedido</h3>
+                            <!-- Interruptor Regalo de la Compañía -->
+                            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-100/90 border border-[#E39D34] text-[#2B1A14] text-xs font-extrabold cursor-pointer select-none">
+                                <input type="checkbox" id="item-is-company-gift" onchange="handleGiftToggle()" class="w-4 h-4 accent-[#E45E27] rounded">
+                                <span>🎁 Es un regalo de la compañía (100% Ganancia)</span>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+                            <div>
+                                <label class="block text-[11px] font-bold text-[#6B4E44] mb-1">Marca *</label>
+                                <select id="item-brand" class="w-full px-3 py-2 bg-white border border-[#AE3820]/20 rounded-xl text-xs font-bold">
+                                    <option value="Natura">Natura</option>
+                                    <option value="Avon">Avon</option>
+                                    <option value="Casa & Estilo">Casa & Estilo</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-[#6B4E44] mb-1">Código *</label>
+                                <input type="text" id="item-code" placeholder="Ej: 10452" class="w-full px-3 py-2 bg-white border border-[#AE3820]/20 rounded-xl text-xs font-mono font-bold">
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label class="block text-[11px] font-bold text-[#6B4E44] mb-1">Descripción del Producto *</label>
+                                <input type="text" id="item-name" placeholder="Ej: Pulpa Castaña 75g" class="w-full px-3 py-2 bg-white border border-[#AE3820]/20 rounded-xl text-xs">
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-[#6B4E44] mb-1">Cantidad *</label>
+                                <input type="number" id="item-qty" min="1" step="1" value="1" class="w-full px-3 py-2 bg-white border border-[#AE3820]/20 rounded-xl text-xs font-bold">
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-[#6B4E44] mb-1">Precio Venta Cliente ($) *</label>
+                                <input type="number" id="item-sale-price" min="0" step="0.01" placeholder="0.00" class="w-full px-3 py-2 bg-white border border-[#AE3820]/20 rounded-xl text-xs font-bold">
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
+                            <div class="flex items-center gap-3">
+                                <label id="label-item-cost" class="text-[11px] font-bold text-[#6B4E44]">Costo Mayorista c/u ($):</label>
+                                <input type="number" id="item-cost-price" min="0" step="0.01" placeholder="0.00" class="w-36 px-3 py-1.5 bg-white border border-[#AE3820]/20 rounded-xl text-xs font-bold">
+                                <span id="gift-badge-hint" class="hidden text-[11px] font-bold text-[#AE3820]">Costo fijado en $0.00 por ser regalo</span>
+                            </div>
+
+                            <button type="button" onclick="addOrderItem()" class="px-4 py-2 bg-[#2B1A14] hover:bg-[#472C22] text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                                <i data-lucide="plus-circle" class="w-4 h-4 text-[#E39D34]"></i>
+                                <span>Agregar al Pedido</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de productos agregados al pedido actual -->
+                    <div class="space-y-2">
+                        <h3 class="text-sm font-extrabold text-[#2B1A14]">Productos en este Pedido</h3>
+                        <div class="overflow-x-auto rounded-2xl border border-[#AE3820]/15">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-[#F9F2EF] text-[#6B4E44] uppercase font-bold">
+                                    <tr>
+                                        <th class="p-3">Marca / Cód.</th>
+                                        <th class="p-3">Producto</th>
+                                        <th class="p-3 text-center">Cant.</th>
+                                        <th class="p-3 text-right">Precio Venta</th>
+                                        <th class="p-3 text-right">Costo Unit.</th>
+                                        <th class="p-3 text-right">Subtotal</th>
+                                        <th class="p-3 text-center">Quitar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="order-items-tbody" class="divide-y divide-[#AE3820]/10 bg-white">
+                                    <tr>
+                                        <td colspan="7" class="p-5 text-center text-[#7A5B50]">Aún no agregaste productos a este pedido.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Totales del Pedido + Pago Inicial -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                        <div class="bg-[#F9F2EF] p-4 rounded-2xl border border-[#AE3820]/15 space-y-3">
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-[#6B4E44]">Cobro y Observaciones</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-[#2B1A14] mb-1">Monto Abonado Hoy ($)</label>
+                                    <input type="number" id="order-paid-amount" min="0" step="0.01" value="0" oninput="recalculateOrderTotals()" class="w-full px-3 py-2 bg-white border border-[#AE3820]/20 rounded-xl text-sm font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-[#2B1A14] mb-1">Medio de Pago</label>
+                                    <select id="order-payment-method" class="w-full px-3 py-2 bg-white border border-[#AE3820]/20 rounded-xl text-sm font-semibold">
+                                        <option value="Efectivo">Efectivo</option>
+                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="Mercado Pago">Mercado Pago</option>
+                                        <option value="Tarjeta / Cuotas">Tarjeta / Cuotas</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-[#2B1A14] mb-1">Notas del Pedido</label>
+                                <input type="text" id="order-notes" placeholder="Ej: Entrega en domicilio, paga en dos cuotas..." class="w-full px-3 py-2 bg-white border border-[#AE3820]/20 rounded-xl text-xs">
+                            </div>
+                        </div>
+
+                        <div class="bg-[#2B1A14] text-white p-5 rounded-2xl space-y-2.5 shadow-sm">
+                            <div class="flex justify-between text-xs text-white/75">
+                                <span>Subtotal Productos:</span>
+                                <span id="calc-subtotal" class="font-bold">$0.00</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-[#E39D34]">
+                                <span>Descuento al Cliente:</span>
+                                <span id="calc-discount" class="font-bold">-$0.00</span>
+                            </div>
+                            <div class="flex justify-between text-base font-extrabold border-t border-white/15 pt-2">
+                                <span>Total a Pagar Cliente:</span>
+                                <span id="calc-total-client" class="text-[#E39D34]">$0.00</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-white/75">
+                                <span>Costo Mayorista Total:</span>
+                                <span id="calc-total-cost" class="font-semibold">$0.00</span>
+                            </div>
+                            <div class="flex justify-between text-sm font-extrabold text-emerald-400">
+                                <span>Tu Ganancia Neta:</span>
+                                <span id="calc-net-profit">$0.00</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-amber-300 pt-1 border-t border-white/10">
+                                <span>Saldo Pendiente de Cobro:</span>
+                                <span id="calc-remaining-balance" class="font-bold">$0.00</span>
+                            </div>
+
+                            <button type="submit" class="w-full mt-3 py-3 bg-gradient-to-r from-[#E39D34] via-[#E45E27] to-[#AE3820] text-white font-extrabold rounded-xl text-sm shadow-md hover:opacity-95 transition flex items-center justify-center gap-2">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                <span id="order-submit-label">Guardar Pedido y Generar Ticket</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= PESTAÑA 3: COBRANZAS Y CUENTAS ================= -->
+        <section id="section-billing" class="space-y-6 hidden">
+            <div class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-[#AE3820]/15 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-[#2B1A14]">Cobranzas, Cuentas de Clientes y Tickets</h2>
+                        <p class="text-xs text-[#6B4E44]">Registrá pagos parciales o totales, editá pedidos y generá el ticket digital en formato tarjeta para cada clienta.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select id="billing-campaign-filter" onchange="renderOrdersTable()" class="px-3 py-2 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-xs font-bold">
+                            <option value="ALL">Todas las campañas</option>
+                        </select>
+                        <select id="billing-status-filter" onchange="renderOrdersTable()" class="px-3 py-2 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-xs font-bold">
+                            <option value="ALL">Todos los estados</option>
+                            <option value="PENDIENTE">Con saldo pendiente</option>
+                            <option value="PAGADO">Pagados completos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-2xl border border-[#AE3820]/15">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-[#F9F2EF] text-[#6B4E44] uppercase font-bold">
+                            <tr>
+                                <th class="p-3.5">Cliente / Campaña</th>
+                                <th class="p-3.5">Detalle del Pedido</th>
+                                <th class="p-3.5 text-right">Total</th>
+                                <th class="p-3.5 text-right">Abonado</th>
+                                <th class="p-3.5 text-right">Saldo</th>
+                                <th class="p-3.5 text-right">Ganancia</th>
+                                <th class="p-3.5 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billing-orders-tbody" class="divide-y divide-[#AE3820]/10 bg-white">
+                            <!-- Renderizado por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PESTAÑA 4: ASISTENTE IA WHATSAPP ================= -->
+        <section id="section-ai" class="space-y-6 hidden">
+            <div class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-[#AE3820]/15 shadow-xs space-y-5">
+                <div>
+                    <h2 class="text-xl font-extrabold text-[#2B1A14]">Asistente IA para Mensajes de WhatsApp</h2>
+                    <p class="text-xs text-[#6B4E44]">Generá mensajes cordiales para recordar cierre de campaña, avisar llegada de pedidos o enviar recordatorios de pago.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-[#2B1A14] mb-1">Tipo de Mensaje</label>
+                        <select id="ai-message-type" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm font-semibold">
+                            <option value="cierre">Cierre de campaña y promo</option>
+                            <option value="llegada">Llegada de pedido y coordinación</option>
+                            <option value="cobranza">Recordatorio amable de saldo/pago</option>
+                            <option value="posventa">Agradecimiento y consulta posventa</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#2B1A14] mb-1">Clienta / Pedido (Opcional)</label>
+                        <select id="ai-order-select" onchange="prefillAiFromOrder()" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm font-semibold">
+                            <option value="">-- Seleccionar pedido cargado --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#2B1A14] mb-1">Contexto Extra</label>
+                        <input type="text" id="ai-extra-context" placeholder="Ej: Hoy es el último día para encargar" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm">
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <button type="button" onclick="generateAIMessage()" id="btn-generate-ai" class="px-5 py-2.5 bg-gradient-to-r from-[#E39D34] to-[#E45E27] hover:opacity-95 text-white font-bold rounded-xl text-sm shadow-sm transition flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <span>Generar Mensaje con IA</span>
+                    </button>
+                    <button type="button" onclick="copyAIMessage()" class="px-4 py-2.5 bg-[#F9F2EF] hover:bg-[#EFE2DD] text-[#2B1A14] font-bold rounded-xl text-sm border border-[#AE3820]/20 transition flex items-center gap-2">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span>Copiar Texto</span>
+                    </button>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-[#2B1A14] mb-1.5">Mensaje Listo para WhatsApp</label>
+                    <textarea id="ai-output-text" rows="7" placeholder="Aquí aparecerá el mensaje generado..." class="w-full p-4 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-2xl text-sm text-[#2B1A14] leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#E45E27]"></textarea>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL: REGISTRAR PAGO PARCIAL O TOTAL -->
+    <div id="payment-modal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 border border-[#AE3820]/20 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-extrabold text-[#2B1A14]">Registrar Cobro de Cliente</h3>
+                <button onclick="closePaymentModal()" class="p-1.5 rounded-lg bg-[#F9F2EF] text-[#2B1A14]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <input type="hidden" id="payment-order-id">
+            <p id="payment-modal-summary" class="text-xs text-[#6B4E44] bg-[#F9F2EF] p-3 rounded-xl"></p>
+
+            <div>
+                <label class="block text-xs font-bold text-[#2B1A14] mb-1">Monto a Sumar al Pago ($)</label>
+                <input type="number" id="payment-add-amount" min="0.01" step="0.01" class="w-full px-3.5 py-2.5 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm font-bold">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-[#2B1A14] mb-1">Medio de Pago</label>
+                <select id="payment-modal-method" class="w-full px-3.5 py-2 bg-[#F9F2EF] border border-[#AE3820]/20 rounded-xl text-sm font-semibold">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Mercado Pago">Mercado Pago</option>
+                    <option value="Tarjeta / Cuotas">Tarjeta / Cuotas</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closePaymentModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">Cancelar</button>
+                <button type="button" onclick="confirmPaymentUpdate()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold">Confirmar Pago</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: TICKET DIGITAL DE CLIENTE CON ESTILO DE TARJETA -->
+    <div id="ticket-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-md w-full p-4 sm:p-5 shadow-2xl border border-[#AE3820]/20 space-y-4 my-auto">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-[#AE3820]">Comprobante Digital para Cliente</span>
+                <button onclick="closeTicketModal()" class="p-1.5 rounded-full bg-[#F9F2EF] text-[#2B1A14] hover:bg-[#EAD8D2]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Tarjeta Exportable a PNG -->
+            <div id="printable-ticket" class="ticket-card rounded-3xl border border-[#AE3820]/20 shadow-md p-6 text-[#2B1A14] relative">
+                <!-- Ondas superiores derechas en el ticket -->
+                <svg class="absolute top-0 right-0 w-48 h-36 pointer-events-none" viewBox="0 0 220 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M40 -10C35 45 80 65 110 95C140 125 180 135 230 120V-10H40Z" fill="#E39D34"/>
+                    <path d="M100 -10C98 30 135 48 160 72C185 95 210 100 230 92V-10H100Z" fill="#E45E27"/>
+                    <path d="M155 -10C155 15 180 28 198 44C215 60 225 62 230 58V-10H155Z" fill="#AE3820"/>
+                </svg>
+
+                <!-- Encabezado con Marcas -->
+                <div class="relative z-10 flex items-start justify-between mb-4">
+                    <div>
+                        <p class="text-[11px] font-extrabold uppercase tracking-widest text-[#AE3820]">Detalle de Pedido</p>
+                        <p id="ticket-campaign-label" class="text-xs font-bold text-[#6B4E44]">Campaña</p>
+                    </div>
+                    <div class="text-right pr-12">
+                        <div class="font-bold text-base tracking-tight text-[#2B1A14] leading-none">natura</div>
+                        <div class="font-black text-xs tracking-widest text-[#2B1A14] mt-0.5">AVON</div>
+                    </div>
+                </div>
+
+                <!-- Caja translúcida central con cliente, detalle y montos -->
+                <div class="relative z-10 bg-white/75 backdrop-blur-xs rounded-2xl p-4 border border-[#AE3820]/15 space-y-3">
+                    <div class="flex items-center justify-between border-b border-[#AE3820]/10 pb-2">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase text-[#7A5B50] block">Cliente</span>
+                            <span id="ticket-client-name" class="text-sm font-extrabold text-[#2B1A14]">-</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] font-bold uppercase text-[#7A5B50] block">Fecha</span>
+                            <span id="ticket-date-label" class="text-xs font-bold text-[#6B4E44]">-</span>
+                        </div>
+                    </div>
+
+                    <div id="ticket-items-list" class="space-y-1.5 text-xs max-h-44 overflow-y-auto pr-1">
+                        <!-- Ítems del pedido -->
+                    </div>
+
+                    <div class="border-t border-dashed border-[#AE3820]/25 pt-2.5 space-y-1 text-xs">
+                        <div id="ticket-discount-row" class="hidden justify-between text-[#AE3820] font-bold">
+                            <span>Descuento aplicado</span>
+                            <span id="ticket-discount-val">-$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center text-base font-black text-[#2B1A14] pt-1">
+                            <span>TOTAL A PAGAR</span>
+                            <span id="ticket-total-val" class="text-[#AE3820]">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-[11px] font-semibold text-[#6B4E44]">
+                            <span>Abonado: <strong id="ticket-paid-val" class="text-emerald-700">$0.00</strong></span>
+                            <span>Saldo: <strong id="ticket-balance-val" class="text-[#E45E27]">$0.00</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje central de agradecimiento -->
+                <div class="relative z-10 text-center my-4">
+                    <p class="font-serif text-xl font-bold tracking-wide text-[#2B1A14]">GRACIAS</p>
+                    <p class="text-xs font-semibold text-[#2B1A14]">por tu compra</p>
+                    <p class="text-sm font-extrabold text-[#2B1A14] mt-1">¡Que la disfrutes!</p>
+                </div>
+
+                <!-- Pie con QR, Consultora y WhatsApp -->
+                <div class="relative z-10 pt-3 border-t border-[#AE3820]/15 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="text-right leading-tight">
+                            <p class="text-[9px] font-bold uppercase tracking-tight text-[#2B1A14]">Escanea el QR y</p>
+                            <p class="text-[9px] font-bold uppercase tracking-tight text-[#2B1A14]">accede a las</p>
+                            <p class="text-[9px] font-extrabold uppercase tracking-tight text-[#AE3820]">revistas interactivas</p>
+                        </div>
+                        <img id="ticket-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=76x76&data=https://www.natura.com.ar" alt="QR Catálogo" class="w-16 h-16 rounded-lg border border-[#AE3820]/20 bg-white p-0.5 shrink-0">
+                    </div>
+
+                    <div class="text-right">
+                        <p class="font-script text-lg font-bold text-[#2B1A14] leading-none">M. Eugenia Carol</p>
+                        <p class="text-[11px] font-extrabold text-[#2B1A14] mt-1">381-519-3109</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción del Ticket -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button type="button" onclick="downloadTicketPNG()" class="py-2.5 px-4 bg-[#2B1A14] hover:bg-[#462B21] text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4 text-[#E39D34]"></i>
+                    <span>Descargar Ticket (PNG)</span>
+                </button>
+                <button type="button" onclick="shareTicketWhatsApp()" class="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span>Enviar Resumen WhatsApp</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST DE NOTIFICACIÓN -->
+    <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] bg-[#2B1A14] text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-xl hidden items-center gap-2">
+        <i data-lucide="check-circle-2" class="w-4 h-4 text-[#E39D34]"></i>
+        <span id="toast-message">Listo</span>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN FIREBASE (minegocio-ventas-catalogo) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6nfEiJ8Rkka4sWKzHweZ6tvFZu6BsI-0",
+            authDomain: "minegocio-ventas-catalogo.firebaseapp.com",
+            projectId: "minegocio-ventas-catalogo",
+            storageBucket: "minegocio-ventas-catalogo.firebasestorage.app",
+            messagingSenderId: "1031476884953",
+            appId: "1:1031476884953:web:33e775518b497f1d3595c8"
+        };
+
+        let db = null;
+        try {
+            if (typeof firebase !== 'undefined') {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.firestore();
+            }
+        } catch (err) {
+            console.warn('Firestore no disponible, operando en modo local:', err);
+        }
+
+        // --- ESTADO DE LA APLICACIÓN ---
+        const STORAGE_KEY_CAMPAIGNS = 'mnc_campaigns_v1';
+        const STORAGE_KEY_ORDERS = 'mnc_orders_v1';
+
+        let campaigns = [];
+        let orders = [];
+        let draftOrderItems = [];
+        let activeTicketOrder = null;
+
+        // Feriados nacionales en Argentina para cálculo de días hábiles
+        const ARG_HOLIDAYS = new Set([
+            '2026-11-23',
+            '2026-12-07',
+            '2026-12-08',
+            '2026-12-25'
+        ]);
+
+        // --- UTILIDADES DE FECHA Y DÍAS HÁBILES ---
+        function parseLocalDateAR(dateInput) {
+            if (!dateInput) return null;
+            if (dateInput instanceof Date) {
+                return isNaN(dateInput.getTime())
+                    ? null
+                    : new Date(dateInput.getFullYear(), dateInput.getMonth(), dateInput.getDate());
+            }
+            const raw = String(dateInput).trim().slice(0, 10);
+            let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+            if (m) {
+                const dt = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+                return isNaN(dt.getTime()) ? null : dt;
+            }
+            m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(raw);
+            if (m) {
+                const dt = new Date(parseInt(m[3], 10), parseInt(m[2], 10) - 1, parseInt(m[1], 10));
+                return isNaN(dt.getTime()) ? null : dt;
+            }
+            return null;
+        }
+
+        function toIsoDateAR(dateObj) {
+            if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '';
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatDateAR(dateStr) {
+            if (!dateStr) return '-';
+            const dt = parseLocalDateAR(dateStr);
+            if (!dt) return String(dateStr);
+            const d = String(dt.getDate()).padStart(2, '0');
+            const m = String(dt.getMonth() + 1).padStart(2, '0');
+            const y = dt.getFullYear();
+            return `${d}/${m}/${y}`;
+        }
+
+        function isBusinessDayAR(dateObj) {
+            if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return false;
+            const day = dateObj.getDay();
+            if (day === 0 || day === 6) return false;
+            return !ARG_HOLIDAYS.has(toIsoDateAR(dateObj));
+        }
+
+        function addBusinessDaysAR(dateStr, businessDaysToAdd) {
+            const start = parseLocalDateAR(dateStr);
+            const target = Number(businessDaysToAdd) || 0;
+            if (!start) return '';
+            if (target <= 0) return toIsoDateAR(start);
+
+            const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+            let added = 0;
+            let guard = 0;
+            while (added < target && guard < 365) {
+                current.setDate(current.getDate() + 1);
+                if (isBusinessDayAR(current)) {
+                    added++;
+                }
+                guard++;
+            }
+            return toIsoDateAR(current);
+        }
+
+        function getEstimatedArrivalDate(closeDateStr) {
+            return closeDateStr ? addBusinessDaysAR(closeDateStr, 3) : '';
+        }
+
+        function getPaymentDueDate(closeDateStr) {
+            return closeDateStr ? addBusinessDaysAR(closeDateStr, 20) : '';
+        }
+
+        function formatCurrency(val) {
+            const num = Number(val) || 0;
+            return '$' + num.toLocaleString('es-AR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notification');
+            const label = document.getElementById('toast-message');
+            if (!toast || !label) return;
+            label.textContent = msg;
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            lucide.createIcons();
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 2600);
+        }
+
+        // --- PERSISTENCIA LOCAL + FIRESTORE ---
+        function loadInitialState() {
+            try {
+                const rawC = localStorage.getItem(STORAGE_KEY_CAMPAIGNS);
+                const rawO = localStorage.getItem(STORAGE_KEY_ORDERS);
+                campaigns = rawC ? JSON.parse(rawC) : [];
+                orders = rawO ? JSON.parse(rawO) : [];
+            } catch (_) {
+                campaigns = [];
+                orders = [];
+            }
+
+            if (!Array.isArray(campaigns) || campaigns.length === 0) {
+                campaigns = [{
+                    id: 'camp-16',
+                    name: 'Campaña 16',
+                    tier: 30,
+                    closeDate: '2026-11-10',
+                    catalogUrl: 'https://www.natura.com.ar',
+                    createdAt: new Date().toISOString()
+                }];
+                saveStateLocally();
+            }
+
+            if (db) {
+                listenFirestoreCollections();
+            }
+        }
+
+        function saveStateLocally() {
+            localStorage.setItem(STORAGE_KEY_CAMPAIGNS, JSON.stringify(campaigns));
+            localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(orders));
+        }
+
+        function listenFirestoreCollections() {
+            const badge = document.getElementById('sync-status-badge');
+            try {
+                db.collection('campaigns').onSnapshot((snap) => {
+                    if (!snap.empty) {
+                        campaigns = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        saveStateLocally();
+                        renderAll();
+                    }
+                    if (badge) {
+                        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Nube Activa`;
+                    }
+                }, () => {
+                    if (badge) {
+                        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Solo Local`;
+                    }
+                });
+
+                db.collection('orders').onSnapshot((snap) => {
+                    if (!snap.empty || orders.length === 0) {
+                        orders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        saveStateLocally();
+                        renderAll();
+                    }
+                }, () => {});
+            } catch (_) {}
+        }
+
+        function syncRecord(collectionName, id, dataObj) {
+            saveStateLocally();
+            if (db) {
+                db.collection(collectionName).doc(id).set(dataObj, { merge: true }).catch(() => {});
+            }
+        }
+
+        function deleteRecord(collectionName, id) {
+            saveStateLocally();
+            if (db) {
+                db.collection(collectionName).doc(id).delete().catch(() => {});
+            }
+        }
+
+        // --- NAVEGACIÓN ENTRE PESTAÑAS ---
+        function switchTab(tabName) {
+            const tabs = ['campaigns', 'orders', 'billing', 'ai'];
+            tabs.forEach(t => {
+                const sec = document.getElementById(`section-${t}`);
+                const btn = document.getElementById(`nav-${t}`);
+                if (sec) sec.classList.toggle('hidden', t !== tabName);
+                if (btn) {
+                    if (t === tabName) {
+                        btn.className = 'tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 bg-[#E45E27] text-white shadow-sm';
+                    } else {
+                        btn.className = 'tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 bg-white/80 text-[#2B1A14] hover:bg-white border border-[#AE3820]/15';
+                    }
+                }
+            });
+
+            if (tabName === 'orders') {
+                populateCampaignSelect();
+                recalculateOrderTotals();
+            } else if (tabName === 'billing') {
+                populateBillingCampaignFilter();
+                renderOrdersTable();
+            } else if (tabName === 'ai') {
+                populateAiOrderSelect();
+            }
+            lucide.createIcons();
+        }
+
+        // --- GESTIÓN DE CAMPAÑAS Y FECHAS HÁBILES ---
+        function previewCampaignDates() {
+            const closeDate = document.getElementById('campaign-close-date').value;
+            const arrival = getEstimatedArrivalDate(closeDate);
+            const due = getPaymentDueDate(closeDate);
+            document.getElementById('preview-arrival-date').textContent = arrival ? formatDateAR(arrival) : '-';
+            document.getElementById('preview-due-date').textContent = due ? formatDateAR(due) : '-';
+        }
+
+        function resetCampaignForm() {
+            document.getElementById('campaign-edit-id').value = '';
+            document.getElementById('campaign-form').reset();
+            document.getElementById('campaign-tier').value = '30';
+            document.getElementById('campaign-form-title').textContent = 'Nueva Campaña / Ciclo';
+            document.getElementById('campaign-submit-label').textContent = 'Guardar Campaña';
+            document.getElementById('btn-cancel-edit-campaign').classList.add('hidden');
+            previewCampaignDates();
+        }
+
+        function saveCampaign(e) {
+            e.preventDefault();
+            const editId = document.getElementById('campaign-edit-id').value.trim();
+            const name = document.getElementById('campaign-name').value.trim();
+            const tier = parseFloat(document.getElementById('campaign-tier').value) || 30;
+            const closeDate = document.getElementById('campaign-close-date').value;
+            const catalogUrl = document.getElementById('campaign-catalog-url').value.trim() || 'https://www.natura.com.ar';
+
+            if (!name || !closeDate) return;
+
+            const id = editId || ('camp-' + Date.now());
+            const campaignObj = {
+                id,
+                name,
+                tier,
+                closeDate,
+                catalogUrl,
+                updatedAt: new Date().toISOString()
+            };
+
+            const idx = campaigns.findIndex(c => c.id === id);
+            if (idx >= 0) {
+                campaigns[idx] = { ...campaigns[idx], ...campaignObj };
+            } else {
+                campaigns.unshift(campaignObj);
+            }
+
+            syncRecord('campaigns', id, campaignObj);
+            resetCampaignForm();
+            renderAll();
+            showToast('Campaña guardada con fechas hábiles calculadas');
+        }
+
+        function editCampaign(id) {
+            const c = campaigns.find(item => item.id === id);
+            if (!c) return;
+            document.getElementById('campaign-edit-id').value = c.id;
+            document.getElementById('campaign-name').value = c.name || '';
+            document.getElementById('campaign-tier').value = c.tier || 30;
+            document.getElementById('campaign-close-date').value = (c.closeDate || '').slice(0, 10);
+            document.getElementById('campaign-catalog-url').value = c.catalogUrl || '';
+            document.getElementById('campaign-form-title').textContent = 'Editar Campaña';
+            document.getElementById('campaign-submit-label').textContent = 'Actualizar Campaña';
+            document.getElementById('btn-cancel-edit-campaign').classList.remove('hidden');
+            previewCampaignDates();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteCampaign(id) {
+            campaigns = campaigns.filter(c => c.id !== id);
+            deleteRecord('campaigns', id);
+            renderAll();
+            showToast('Campaña eliminada');
+        }
+
+        // Consolida los productos pedidos por marca y código para cargar en la web oficial
+        // Excluye artículos marcados como regalo de la compañía (isCompanyGift === true)
+        function buildWebConsolidatedByBrand(campaignId) {
+            const campOrders = orders.filter(o => o.campaignId === campaignId);
+            const grouped = {};
+
+            campOrders.forEach(order => {
+                const items = Array.isArray(order.items) ? order.items : [];
+                items.forEach(item => {
+                    if (item.isCompanyGift) return;
+                    const brand = (item.brand || 'Natura').trim();
+                    const code = String(item.code || '').trim() || 'S/C';
+                    const name = String(item.name || 'Producto').trim();
+                    const qty = Number(item.qty) || 0;
+                    if (qty <= 0) return;
+
+                    if (!grouped[brand]) grouped[brand] = {};
+                    const key = `${code}__${name.toLowerCase()}`;
+                    if (!grouped[brand][key]) {
+                        grouped[brand][key] = {
+                            code,
+                            name,
+                            qty: 0,
+                            clients: []
+                        };
+                    }
+                    grouped[brand][key].qty += qty;
+                    if (order.clientName && !grouped[brand][key].clients.includes(order.clientName)) {
+                        grouped[brand][key].clients.push(order.clientName);
+                    }
+                });
+            });
+
+            return grouped;
+        }
+
+        function copyWebListForCampaign(campaignId) {
+            const camp = campaigns.find(c => c.id === campaignId);
+            const grouped = buildWebConsolidatedByBrand(campaignId);
+            const brands = Object.keys(grouped);
+
+            let text = `LISTA PARA CARGAR EN LA WEB - ${(camp ? camp.name : campaignId).toUpperCase()}\n\n`;
+            if (brands.length === 0) {
+                text += 'Sin productos pendientes de cargar en la web en esta campaña.';
+            } else {
+                brands.forEach(brand => {
+                    text += `=== ${brand.toUpperCase()} ===\n`;
+                    Object.values(grouped[brand]).forEach(prod => {
+                        text += `• Cód: ${prod.code} | Cant: ${prod.qty} | ${prod.name} (${prod.clients.join(', ')})\n`;
+                    });
+                    text += '\n';
+                });
+            }
+
+            const aux = document.createElement('textarea');
+            aux.value = text.trim();
+            document.body.appendChild(aux);
+            aux.select();
+            document.execCommand('copy');
+            document.body.removeChild(aux);
+            showToast('Lista web copiada al portapapeles');
+        }
+
+        function renderCampaigns() {
+            const container = document.getElementById('campaigns-list-container');
+            if (!container) return;
+
+            if (!campaigns.length) {
+                container.innerHTML = `<div class="bg-white/90 rounded-3xl p-8 text-center text-sm text-[#6B4E44] border border-[#AE3820]/15">No hay campañas cargadas todavía.</div>`;
+                return;
+            }
+
+            container.innerHTML = campaigns.map(c => {
+                const arrivalIso = getEstimatedArrivalDate(c.closeDate);
+                const dueIso = getPaymentDueDate(c.closeDate);
+                const campOrders = orders.filter(o => o.campaignId === c.id);
+                const campGross = campOrders.reduce((acc, o) => acc + (Number(o.totalClient) || 0), 0);
+                const campProfit = campOrders.reduce((acc, o) => acc + (Number(o.netProfit) || 0), 0);
+
+                const grouped = buildWebConsolidatedByBrand(c.id);
+                const brandNames = Object.keys(grouped);
+
+                let webHtml = '';
+                if (brandNames.length === 0) {
+                    webHtml = `<p class="text-xs text-[#7A5B50] py-2">Aún no hay productos cargados para pedir en la web en esta campaña.</p>`;
+                } else {
+                    webHtml = brandNames.map(brand => {
+                        const rows = Object.values(grouped[brand]).map(p => `
+                            <tr class="border-t border-[#AE3820]/10">
+                                <td class="py-2 px-3 font-mono font-extrabold text-xs text-[#AE3820]">${p.code}</td>
+                                <td class="py-2 px-3 text-center font-black text-xs text-[#2B1A14]">x${p.qty}</td>
+                                <td class="py-2 px-3 text-xs font-semibold text-[#2B1A14]">${p.name}</td>
+                                <td class="py-2 px-3 text-[11px] text-[#6B4E44]">${p.clients.join(', ')}</td>
+                            </tr>
+                        `).join('');
+
+                        return `
+                            <div class="mb-3 last:mb-0">
+                                <div class="text-[11px] font-black uppercase tracking-wider text-[#AE3820] mb-1.5">${brand}</div>
+                                <div class="overflow-x-auto rounded-xl border border-[#AE3820]/15 bg-white">
+                                    <table class="w-full text-left">
+                                        <thead class="bg-[#F9F2EF] text-[10px] uppercase text-[#6B4E44]">
+                                            <tr>
+                                                <th class="py-1.5 px-3">Código</th>
+                                                <th class="py-1.5 px-3 text-center">Cant.</th>
+                                                <th class="py-1.5 px-3">Producto</th>
+                                                <th class="py-1.5 px-3">Clientas</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>${rows}</tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                return `
+                    <article class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-[#AE3820]/15 shadow-xs space-y-4">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-b border-[#AE3820]/10 pb-4">
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-lg font-black text-[#2B1A14]">${c.name}</h3>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#E39D34]/20 text-[#2B1A14]">Nivel ${c.tier}%</span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F9F2EF] text-[#6B4E44]">${campOrders.length} pedidos</span>
+                                </div>
+                                <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                                    <div class="bg-[#F9F2EF] px-3 py-1.5 rounded-xl">
+                                        <span class="text-[#6B4E44]">Cierre:</span>
+                                        <strong class="text-[#2B1A14] ml-1">${formatDateAR(c.closeDate)}</strong>
+                                    </div>
+                                    <div class="bg-[#F9F2EF] px-3 py-1.5 rounded-xl">
+                                        <span class="text-[#6B4E44]">Llegada aprox. (+3d háb.):</span>
+                                        <strong class="text-[#2B1A14] ml-1">${arrivalIso ? formatDateAR(arrivalIso) : '-'}</strong>
+                                    </div>
+                                    <div class="bg-[#F9F2EF] px-3 py-1.5 rounded-xl">
+                                        <span class="text-[#6B4E44]">Límite pago (+20d háb.):</span>
+                                        <strong class="text-[#AE3820] ml-1">${dueIso ? formatDateAR(dueIso) : '-'}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-2">
+                                <div class="text-right mr-2">
+                                    <div class="text-[11px] text-[#6B4E44]">Vendido: <strong class="text-[#2B1A14]">${formatCurrency(campGross)}</strong></div>
+                                    <div class="text-[11px] text-emerald-700">Ganancia: <strong>${formatCurrency(campProfit)}</strong></div>
+                                </div>
+                                <button type="button" onclick="editCampaign('${c.id}')" class="p-2 rounded-xl bg-[#F9F2EF] hover:bg-[#EAD8D2] text-[#2B1A14]" title="Editar campaña">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button type="button" onclick="deleteCampaign('${c.id}')" class="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#AE3820]" title="Eliminar campaña">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Consolidado para cargar en la web -->
+                        <div class="bg-[#F9F2EF]/80 rounded-2xl p-4 border border-[#AE3820]/15">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="globe" class="w-4 h-4 text-[#E45E27]"></i>
+                                    <h4 class="text-sm font-extrabold text-[#2B1A14]">Lista para Cargar en la Web (${c.name})</h4>
+                                </div>
+                                <button type="button" onclick="copyWebListForCampaign('${c.id}')" class="px-3 py-1.5 rounded-xl bg-white hover:bg-[#F4E6E1] border border-[#AE3820]/20 text-xs font-bold text-[#2B1A14] inline-flex items-center gap-1.5 self-start sm:self-auto">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5 text-[#E45E27]"></i>
+                                    <span>Copiar Lista Web</span>
+                                </button>
+                            </div>
+                            ${webHtml}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // --- CARGA Y EDICIÓN DE PEDIDOS ---
+        function populateCampaignSelect() {
+            const sel = document.getElementById('order-campaign-id');
+            if (!sel) return;
+            const currentVal = sel.value;
+            sel.innerHTML = campaigns.map(c => `<option value="${c.id}">${c.name} (Cierre ${formatDateAR(c.closeDate)})</option>`).join('');
+            if (currentVal && campaigns.some(c => c.id === currentVal)) {
+                sel.value = currentVal;
+            }
+        }
+
+        function handleGiftToggle() {
+            const isGift = document.getElementById('item-is-company-gift').checked;
+            const costInput = document.getElementById('item-cost-price');
+            const hint = document.getElementById('gift-badge-hint');
+            if (isGift) {
+                costInput.value = '0.00';
+                costInput.disabled = true;
+                costInput.classList.add('bg-amber-50', 'opacity-70');
+                hint.classList.remove('hidden');
+            } else {
+                costInput.disabled = false;
+                costInput.classList.remove('bg-amber-50', 'opacity-70');
+                hint.classList.add('hidden');
+            }
+        }
+
+        function addOrderItem() {
+            const brand = document.getElementById('item-brand').value;
+            const code = document.getElementById('item-code').value.trim();
+            const name = document.getElementById('item-name').value.trim();
+            const qty = parseInt(document.getElementById('item-qty').value, 10) || 0;
+            const salePrice = parseFloat(document.getElementById('item-sale-price').value) || 0;
+            const isCompanyGift = document.getElementById('item-is-company-gift').checked;
+            const costPrice = isCompanyGift ? 0 : (parseFloat(document.getElementById('item-cost-price').value) || 0);
+
+            if (!name || qty <= 0 || salePrice <= 0) {
+                showToast('Completá producto, cantidad y precio de venta');
+                return;
+            }
+
+            draftOrderItems.push({
+                id: 'itm-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                brand,
+                code: code || 'S/C',
+                name,
+                qty,
+                salePrice,
+                costPrice,
+                isCompanyGift
+            });
+
+            // Limpiar campos del ítem
+            document.getElementById('item-code').value = '';
+            document.getElementById('item-name').value = '';
+            document.getElementById('item-qty').value = '1';
+            document.getElementById('item-sale-price').value = '';
+            document.getElementById('item-cost-price').value = '';
+            document.getElementById('item-is-company-gift').checked = false;
+            handleGiftToggle();
+
+            renderDraftOrderItems();
+            recalculateOrderTotals();
+        }
+
+        function removeDraftOrderItem(itemId) {
+            draftOrderItems = draftOrderItems.filter(i => i.id !== itemId);
+            renderDraftOrderItems();
+            recalculateOrderTotals();
+        }
+
+        function renderDraftOrderItems() {
+            const tbody = document.getElementById('order-items-tbody');
+            if (!tbody) return;
+
+            if (draftOrderItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-5 text-center text-[#7A5B50]">Aún no agregaste productos a este pedido.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = draftOrderItems.map(item => {
+                const lineSubtotal = item.qty * item.salePrice;
+                return `
+                    <tr>
+                        <td class="p-3">
+                            <span class="font-bold text-[#2B1A14] block">${item.brand}</span>
+                            <span class="font-mono text-[11px] text-[#6B4E44]">${item.code}</span>
+                        </td>
+                        <td class="p-3">
+                            <span class="font-semibold text-[#2B1A14]">${item.name}</span>
+                            ${item.isCompanyGift ? `<span class="ml-1.5 inline-block px-2 py-0.5 rounded-full bg-amber-100 text-[#AE3820] text-[10px] font-extrabold">🎁 Regalo 100%</span>` : ''}
+                        </td>
+                        <td class="p-3 text-center font-bold">${item.qty}</td>
+                        <td class="p-3 text-right font-semibold">${formatCurrency(item.salePrice)}</td>
+                        <td class="p-3 text-right text-[#6B4E44]">${item.isCompanyGift ? '$0.00 (Regalo)' : formatCurrency(item.costPrice)}</td>
+                        <td class="p-3 text-right font-extrabold text-[#2B1A14]">${formatCurrency(lineSubtotal)}</td>
+                        <td class="p-3 text-center">
+                            <button type="button" onclick="removeDraftOrderItem('${item.id}')" class="p-1.5 rounded-lg bg-rose-50 text-[#AE3820] hover:bg-rose-100">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function computeOrderFinancials(items, discountPct, paidAmount) {
+            const subtotal = (items || []).reduce((acc, i) => acc + ((Number(i.qty) || 0) * (Number(i.salePrice) || 0)), 0);
+            const discountAmount = subtotal * ((Math.max(0, Math.min(100, Number(discountPct) || 0))) / 100);
+            const totalClient = Math.max(0, subtotal - discountAmount);
+            const totalCost = (items || []).reduce((acc, i) => {
+                if (i.isCompanyGift) return acc;
+                return acc + ((Number(i.qty) || 0) * (Number(i.costPrice) || 0));
+            }, 0);
+            const netProfit = totalClient - totalCost;
+            const paid = Math.max(0, Number(paidAmount) || 0);
+            const remainingBalance = Math.max(0, totalClient - paid);
+
+            return {
+                subtotal,
+                discountAmount,
+                totalClient,
+                totalCost,
+                netProfit,
+                paid,
+                remainingBalance
+            };
+        }
+
+        function recalculateOrderTotals() {
+            const discountPct = parseFloat(document.getElementById('order-discount-pct').value) || 0;
+            const paidAmount = parseFloat(document.getElementById('order-paid-amount').value) || 0;
+            const fin = computeOrderFinancials(draftOrderItems, discountPct, paidAmount);
+
+            document.getElementById('calc-subtotal').textContent = formatCurrency(fin.subtotal);
+            document.getElementById('calc-discount').textContent = '-' + formatCurrency(fin.discountAmount);
+            document.getElementById('calc-total-client').textContent = formatCurrency(fin.totalClient);
+            document.getElementById('calc-total-cost').textContent = formatCurrency(fin.totalCost);
+            document.getElementById('calc-net-profit').textContent = formatCurrency(fin.netProfit);
+            document.getElementById('calc-remaining-balance').textContent = formatCurrency(fin.remainingBalance);
+        }
+
+        function resetOrderForm() {
+            document.getElementById('order-edit-id').value = '';
+            document.getElementById('order-form').reset();
+            document.getElementById('order-discount-pct').value = '0';
+            document.getElementById('order-paid-amount').value = '0';
+            document.getElementById('item-is-company-gift').checked = false;
+            handleGiftToggle();
+            draftOrderItems = [];
+            document.getElementById('order-form-title').textContent = 'Cargar Nuevo Pedido de Cliente';
+            document.getElementById('order-submit-label').textContent = 'Guardar Pedido y Generar Ticket';
+            document.getElementById('btn-cancel-edit-order').classList.add('hidden');
+            renderDraftOrderItems();
+            recalculateOrderTotals();
+        }
+
+        function saveOrder(e) {
+            e.preventDefault();
+            if (!draftOrderItems.length) {
+                showToast('Agregá al menos un producto antes de guardar el pedido');
+                return;
+            }
+
+            const editId = document.getElementById('order-edit-id').value.trim();
+            const campaignId = document.getElementById('order-campaign-id').value;
+            const clientName = document.getElementById('order-client-name').value.trim();
+            const clientPhone = document.getElementById('order-client-phone').value.trim();
+            const discountPct = parseFloat(document.getElementById('order-discount-pct').value) || 0;
+            const paidAmount = parseFloat(document.getElementById('order-paid-amount').value) || 0;
+            const paymentMethod = document.getElementById('order-payment-method').value;
+            const notes = document.getElementById('order-notes').value.trim();
+
+            const fin = computeOrderFinancials(draftOrderItems, discountPct, paidAmount);
+            const id = editId || ('ord-' + Date.now());
+            const existing = orders.find(o => o.id === id);
+
+            const orderObj = {
+                id,
+                campaignId,
+                clientName,
+                clientPhone,
+                discountPct,
+                paymentMethod,
+                notes,
+                items: JSON.parse(JSON.stringify(draftOrderItems)),
+                subtotal: fin.subtotal,
+                discountAmount: fin.discountAmount,
+                totalClient: fin.totalClient,
+                totalCost: fin.totalCost,
+                netProfit: fin.netProfit,
+                paidAmount: fin.paid,
+                remainingBalance: fin.remainingBalance,
+                createdAt: existing ? existing.createdAt : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            if (existing) {
+                orders = orders.map(o => o.id === id ? orderObj : o);
+            } else {
+                orders.unshift(orderObj);
+            }
+
+            syncRecord('orders', id, orderObj);
+            resetOrderForm();
+            renderAll();
+            openTicketModal(orderObj.id);
+            showToast('Pedido guardado y ticket generado');
+        }
+
+        function editOrder(orderId) {
+            const ord = orders.find(o => o.id === orderId);
+            if (!ord) return;
+
+            switchTab('orders');
+            populateCampaignSelect();
+
+            document.getElementById('order-edit-id').value = ord.id;
+            document.getElementById('order-campaign-id').value = ord.campaignId;
+            document.getElementById('order-client-name').value = ord.clientName || '';
+            document.getElementById('order-client-phone').value = ord.clientPhone || '';
+            document.getElementById('order-discount-pct').value = ord.discountPct || 0;
+            document.getElementById('order-paid-amount').value = ord.paidAmount || 0;
+            document.getElementById('order-payment-method').value = ord.paymentMethod || 'Efectivo';
+            document.getElementById('order-notes').value = ord.notes || '';
+
+            draftOrderItems = JSON.parse(JSON.stringify(ord.items || []));
+            document.getElementById('order-form-title').textContent = `Editando Pedido de ${ord.clientName}`;
+            document.getElementById('order-submit-label').textContent = 'Guardar Cambios del Pedido';
+            document.getElementById('btn-cancel-edit-order').classList.remove('hidden');
+
+            renderDraftOrderItems();
+            recalculateOrderTotals();
+        }
+
+        function deleteOrder(orderId) {
+            orders = orders.filter(o => o.id !== orderId);
+            deleteRecord('orders', orderId);
+            renderAll();
+            showToast('Pedido eliminado');
+        }
+
+        // --- COBRANZAS Y CUENTAS ---
+        function populateBillingCampaignFilter() {
+            const sel = document.getElementById('billing-campaign-filter');
+            if (!sel) return;
+            const prev = sel.value;
+            sel.innerHTML = `<option value="ALL">Todas las campañas</option>` +
+                campaigns.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            if (prev) sel.value = prev;
+        }
+
+        function openPaymentModal(orderId) {
+            const ord = orders.find(o => o.id === orderId);
+            if (!ord) return;
+            document.getElementById('payment-order-id').value = ord.id;
+            document.getElementById('payment-modal-summary').innerHTML =
+                `Cliente: <strong>${ord.clientName}</strong><br>Total: <strong>${formatCurrency(ord.totalClient)}</strong> • Abonado: <strong>${formatCurrency(ord.paidAmount)}</strong> • Saldo: <strong class="text-[#AE3820]">${formatCurrency(ord.remainingBalance)}</strong>`;
+            document.getElementById('payment-add-amount').value = ord.remainingBalance > 0 ? ord.remainingBalance.toFixed(2) : '';
+            document.getElementById('payment-modal-method').value = ord.paymentMethod || 'Efectivo';
+
+            const modal = document.getElementById('payment-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closePaymentModal() {
+            const modal = document.getElementById('payment-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmPaymentUpdate() {
+            const orderId = document.getElementById('payment-order-id').value;
+            const addAmt = parseFloat(document.getElementById('payment-add-amount').value) || 0;
+            const method = document.getElementById('payment-modal-method').value;
+            if (addAmt <= 0) {
+                showToast('Ingresá un monto mayor a cero');
+                return;
+            }
+
+            const ord = orders.find(o => o.id === orderId);
+            if (!ord) return;
+
+            const newPaid = (Number(ord.paidAmount) || 0) + addAmt;
+            const fin = computeOrderFinancials(ord.items, ord.discountPct, newPaid);
+
+            const updated = {
+                ...ord,
+                paidAmount: fin.paid,
+                remainingBalance: fin.remainingBalance,
+                paymentMethod: method,
+                updatedAt: new Date().toISOString()
+            };
+
+            orders = orders.map(o => o.id === orderId ? updated : o);
+            syncRecord('orders', orderId, updated);
+            closePaymentModal();
+            renderAll();
+            showToast('Pago registrado correctamente');
+        }
+
+        function renderOrdersTable() {
+            const tbody = document.getElementById('billing-orders-tbody');
+            if (!tbody) return;
+
+            const campFilter = document.getElementById('billing-campaign-filter')?.value || 'ALL';
+            const statusFilter = document.getElementById('billing-status-filter')?.value || 'ALL';
+
+            const filtered = orders.filter(o => {
+                if (campFilter !== 'ALL' && o.campaignId !== campFilter) return false;
+                const bal = Number(o.remainingBalance) || 0;
+                if (statusFilter === 'PENDIENTE' && bal <= 0.01) return false;
+                if (statusFilter === 'PAGADO' && bal > 0.01) return false;
+                return true;
+            });
+
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-[#7A5B50]">No hay pedidos que coincidan con el filtro seleccionado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(o => {
+                const camp = campaigns.find(c => c.id === o.campaignId);
+                const itemsSummary = (o.items || []).map(i =>
+                    `${i.qty}x ${i.name}${i.isCompanyGift ? ' (🎁 Regalo)' : ''}`
+                ).join(', ');
+                const bal = Number(o.remainingBalance) || 0;
+
+                return `
+                    <tr class="hover:bg-[#F9F2EF]/60 transition">
+                        <td class="p-3.5">
+                            <div class="font-extrabold text-[#2B1A14]">${o.clientName}</div>
+                            <div class="text-[11px] text-[#6B4E44]">${camp ? camp.name : 'Campaña'} ${o.clientPhone ? '• ' + o.clientPhone : ''}</div>
+                        </td>
+                        <td class="p-3.5 max-w-xs">
+                            <p class="text-[#2B1A14] font-medium truncate" title="${itemsSummary}">${itemsSummary}</p>
+                        </td>
+                        <td class="p-3.5 text-right font-extrabold text-[#2B1A14]">${formatCurrency(o.totalClient)}</td>
+                        <td class="p-3.5 text-right font-bold text-emerald-700">${formatCurrency(o.paidAmount)}</td>
+                        <td class="p-3.5 text-right font-extrabold ${bal > 0.01 ? 'text-[#AE3820]' : 'text-emerald-700'}">${formatCurrency(bal)}</td>
+                        <td class="p-3.5 text-right font-bold text-emerald-700">${formatCurrency(o.netProfit)}</td>
+                        <td class="p-3.5">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button type="button" onclick="openTicketModal('${o.id}')" class="px-2.5 py-1.5 rounded-xl bg-[#E39D34]/25 hover:bg-[#E39D34]/40 text-[#2B1A14] font-bold text-[11px] inline-flex items-center gap-1" title="Ver Ticket">
+                                    <i data-lucide="ticket" class="w-3.5 h-3.5 text-[#AE3820]"></i>
+                                    <span>Ticket</span>
+                                </button>
+                                <button type="button" onclick="openPaymentModal('${o.id}')" class="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px]" title="Registrar cobro">
+                                    Cobrar
+                                </button>
+                                <button type="button" onclick="editOrder('${o.id}')" class="p-1.5 rounded-xl bg-[#F9F2EF] hover:bg-[#EAD8D2] text-[#2B1A14]" title="Editar pedido">
+                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button type="button" onclick="deleteOrder('${o.id}')" class="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#AE3820]" title="Eliminar pedido">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // --- TICKET DIGITAL DE CLIENTE ---
+        function openTicketModal(orderIdOrObj) {
+            const ord = typeof orderIdOrObj === 'string'
+                ? orders.find(o => o.id === orderIdOrObj)
+                : orderIdOrObj;
+            if (!ord) return;
+
+            activeTicketOrder = ord;
+            const camp = campaigns.find(c => c.id === ord.campaignId);
+
+            document.getElementById('ticket-campaign-label').textContent = camp ? camp.name : 'Catálogo';
+            document.getElementById('ticket-client-name').textContent = ord.clientName || 'Cliente';
+            document.getElementById('ticket-date-label').textContent = formatDateAR((ord.createdAt || '').slice(0, 10) || new Date().toISOString().slice(0, 10));
+
+            const itemsEl = document.getElementById('ticket-items-list');
+            itemsEl.innerHTML = (ord.items || []).map(item => {
+                const lineVal = (Number(item.qty) || 0) * (Number(item.salePrice) || 0);
+                return `
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span class="font-bold text-[#2B1A14]">${item.qty}x ${item.name}</span>
+                            <span class="block text-[10px] text-[#6B4E44]">${item.brand} • Cód. ${item.code}</span>
+                        </div>
+                        <span class="font-extrabold text-[#2B1A14] shrink-0">${formatCurrency(lineVal)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            const discRow = document.getElementById('ticket-discount-row');
+            if ((Number(ord.discountAmount) || 0) > 0) {
+                discRow.classList.remove('hidden');
+                discRow.classList.add('flex');
+                document.getElementById('ticket-discount-val').textContent = '-' + formatCurrency(ord.discountAmount);
+            } else {
+                discRow.classList.add('hidden');
+                discRow.classList.remove('flex');
+            }
+
+            document.getElementById('ticket-total-val').textContent = formatCurrency(ord.totalClient);
+            document.getElementById('ticket-paid-val').textContent = formatCurrency(ord.paidAmount);
+            document.getElementById('ticket-balance-val').textContent = formatCurrency(ord.remainingBalance);
+
+            const qrUrl = camp && camp.catalogUrl ? camp.catalogUrl : 'https://www.natura.com.ar';
+            document.getElementById('ticket-qr-img').src =
+                `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(qrUrl)}`;
+
+            const modal = document.getElementById('ticket-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeTicketModal() {
+            const modal = document.getElementById('ticket-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function downloadTicketPNG() {
+            const el = document.getElementById('printable-ticket');
+            if (!el || typeof html2canvas === 'undefined') {
+                showToast('No se pudo generar la imagen en este navegador');
+                return;
+            }
+            try {
+                const canvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: null
+                });
+                const link = document.createElement('a');
+                const safeName = (activeTicketOrder?.clientName || 'cliente').toLowerCase().replace(/[^a-z0-9]+/g, '_');
+                link.download = `ticket_${safeName}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('Ticket descargado en PNG');
+            } catch (_) {
+                showToast('Error al exportar PNG');
+            }
+        }
+
+        function shareTicketWhatsApp() {
+            if (!activeTicketOrder) return;
+            const camp = campaigns.find(c => c.id === activeTicketOrder.campaignId);
+            const lines = (activeTicketOrder.items || []).map(i =>
+                `• ${i.qty}x ${i.name} (${formatCurrency((Number(i.qty) || 0) * (Number(i.salePrice) || 0))})`
+            ).join('\n');
+
+            const text =
+`¡Hola ${activeTicketOrder.clientName}! Gracias por tu compra 💖
+*${camp ? camp.name : 'Catálogo'}*
+
+*Detalle de tu pedido:*
+${lines}
+
+*Total a pagar:* ${formatCurrency(activeTicketOrder.totalClient)}
+Abonado: ${formatCurrency(activeTicketOrder.paidAmount)}
+Saldo pendiente: ${formatCurrency(activeTicketOrder.remainingBalance)}
+
+M. Eugenia Carol — WhatsApp 381-519-3109`;
+
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        // --- ASISTENTE IA WHATSAPP ---
+        function populateAiOrderSelect() {
+            const sel = document.getElementById('ai-order-select');
+            if (!sel) return;
+            sel.innerHTML = `<option value="">-- Seleccionar pedido cargado --</option>` +
+                orders.map(o => `<option value="${o.id}">${o.clientName} — ${formatCurrency(o.totalClient)}</option>`).join('');
+        }
+
+        function prefillAiFromOrder() {
+            const orderId = document.getElementById('ai-order-select').value;
+            if (!orderId) return;
+            const ord = orders.find(o => o.id === orderId);
+            if (!ord) return;
+            const itemsText = (ord.items || []).map(i => `${i.qty}x ${i.name}`).join(', ');
+            document.getElementById('ai-extra-context').value =
+                `Clienta: ${ord.clientName}. Pedido: ${itemsText}. Total: ${formatCurrency(ord.totalClient)}. Saldo pendiente: ${formatCurrency(ord.remainingBalance)}.`;
+        }
+
+        async function generateAIMessage() {
+            const msgType = document.getElementById('ai-message-type').value;
+            const extra = document.getElementById('ai-extra-context').value.trim();
+            const output = document.getElementById('ai-output-text');
+            const btn = document.getElementById('btn-generate-ai');
+
+            const typeLabels = {
+                cierre: 'aviso amable de cierre de campaña e invitación a ver revista interactiva',
+                llegada: 'aviso de llegada de pedido para coordinar entrega',
+                cobranza: 'recordatorio cordial y respetuoso de saldo pendiente de pago',
+                posventa: 'agradecimiento por la compra y consulta para ver si gustó el producto'
+            };
+
+            const prompt = `Redactá un mensaje corto, cálido y natural por WhatsApp para una consultora de Natura y Avon llamada M. Eugenia Carol (381-519-3109).
+Objetivo: ${typeLabels[msgType] || 'mensaje de atención al cliente'}.
+Datos adicionales: ${extra || 'Sin datos adicionales'}.
+Escribí únicamente el mensaje listo para enviar en español rioplatense amable.`;
+
+            if (btn) btn.disabled = true;
+            output.value = 'Generando mensaje con IA...';
+
+            try {
+                const apiKey = "";
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }]
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData?.error?.message || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                const generated = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!generated) {
+                    throw new Error('La respuesta no contenía texto');
+                }
+                output.value = generated.trim();
+            } catch (err) {
+                output.value = `No se pudo conectar con la IA (${err.message}).\n\nMensaje sugerido:\n¡Hola! Te escribo de parte de M. Eugenia Carol (Natura & Avon). ${extra || '¡Cualquier cosita me avisás por acá!'}`;
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function copyAIMessage() {
+            const txt = document.getElementById('ai-output-text').value;
+            if (!txt.trim()) {
+                showToast('No hay mensaje para copiar');
+                return;
+            }
+            const aux = document.createElement('textarea');
+            aux.value = txt;
+            document.body.appendChild(aux);
+            aux.select();
+            document.execCommand('copy');
+            document.body.removeChild(aux);
+            showToast('Mensaje copiado para WhatsApp');
+        }
+
+        // --- RESUMEN GENERAL Y RENDERIZADO ---
+        function renderSummaryCards() {
+            const gross = orders.reduce((acc, o) => acc + (Number(o.totalClient) || 0), 0);
+            const cost = orders.reduce((acc, o) => acc + (Number(o.totalCost) || 0), 0);
+            const profit = orders.reduce((acc, o) => acc + (Number(o.netProfit) || 0), 0);
+            const paid = orders.reduce((acc, o) => acc + (Number(o.paidAmount) || 0), 0);
+            const pending = orders.reduce((acc, o) => acc + (Number(o.remainingBalance) || 0), 0);
+
+            document.getElementById('summary-gross-sales').textContent = formatCurrency(gross);
+            document.getElementById('summary-orders-count').textContent = `${orders.length} ${orders.length === 1 ? 'pedido registrado' : 'pedidos registrados'}`;
+            document.getElementById('summary-wholesale-cost').textContent = formatCurrency(cost);
+            document.getElementById('summary-net-profit').textContent = formatCurrency(profit);
+            document.getElementById('summary-pending-balance').textContent = formatCurrency(pending);
+            document.getElementById('summary-collected-amount').textContent = `Cobrado: ${formatCurrency(paid)}`;
+        }
+
+        function renderAll() {
+            renderSummaryCards();
+            renderCampaigns();
+            populateCampaignSelect();
+            populateBillingCampaignFilter();
+            renderOrdersTable();
+            populateAiOrderSelect();
+            lucide.createIcons();
+        }
+
+        // --- INICIALIZACIÓN ---
+        window.addEventListener('DOMContentLoaded', () => {
+            loadInitialState();
+            previewCampaignDates();
+            renderDraftOrderItems();
+            recalculateOrderTotals();
+            renderAll();
+        });
+    </script>
+</body>
+</html>
