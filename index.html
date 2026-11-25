@@ -89,6 +89,16 @@
         .badge-avon { background-color: var(--avon-color); color: #fff; }
         .badge-casa { background-color: var(--casa-color); color: #fff; }
 
+        .btn-icon-action {
+            width: 31px;
+            height: 31px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
         /* Estilos del Ticket Digital estilo Tarjeta de Consultora */
         .ticket-card-canvas {
             background-color: #F4E6E1;
@@ -244,6 +254,11 @@
         <!-- Notificación flotante no bloqueante -->
         <div id="appToastBox" class="alert alert-info d-none shadow-sm py-2 px-3 mb-3" role="alert"></div>
 
+        <!-- Datalists globales para autocompletado de clientes y productos -->
+        <datalist id="savedClientsDatalist"></datalist>
+        <datalist id="savedProductCodesDatalist"></datalist>
+        <datalist id="savedProductNamesDatalist"></datalist>
+
         <!-- Pestañas de Navegación -->
         <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 rounded shadow-sm" id="mainTabs" role="tablist">
             <li class="nav-item">
@@ -280,7 +295,10 @@
                 <div class="row">
                     <div class="col-md-5">
                         <div class="card p-3 mb-3">
-                            <h5 class="card-title mb-3">Datos del Cliente y Campaña</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="card-title mb-0">Datos del Cliente y Campaña</h5>
+                                <span class="badge bg-light text-secondary border" id="savedClientsCountBadge" style="font-size: 11px;">0 clientes guardados</span>
+                            </div>
                             <input type="hidden" id="editingOrderId">
                             <div class="mb-2">
                                 <label class="form-label">Campaña Actual</label>
@@ -288,7 +306,7 @@
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Nombre del Cliente</label>
-                                <input type="text" id="clientName" class="form-control" placeholder="Ej: Sofía Benítez (o Stock Propio)" required>
+                                <input type="text" id="clientName" list="savedClientsDatalist" class="form-control" placeholder="Escribí para buscar o cargar nuevo..." oninput="handleClientAutocomplete(this.value)" onchange="handleClientAutocomplete(this.value)" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">WhatsApp del Cliente (sin 0 y sin 15)</label>
@@ -299,9 +317,12 @@
                         <div class="card p-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title mb-0" id="itemFormTitle">Agregar Artículo del Folleto</h5>
-                                <button type="button" id="cancelEditItemBtn" class="btn btn-sm btn-outline-secondary d-none" onclick="cancelItemEdit()">
-                                    Cancelar Item
-                                </button>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge bg-light text-secondary border" id="savedProductsCountBadge" style="font-size: 11px;">0 prod.</span>
+                                    <button type="button" id="cancelEditItemBtn" class="btn btn-sm btn-outline-secondary d-none" onclick="cancelItemEdit()">
+                                        Cancelar
+                                    </button>
+                                </div>
                             </div>
                             <input type="hidden" id="editingItemIndex" value="-1">
 
@@ -334,7 +355,7 @@
                             <div class="row g-2 mb-2">
                                 <div class="col-6">
                                     <label class="form-label">Código Producto (SKU)</label>
-                                    <input type="text" id="itemCode" class="form-control" placeholder="Ej: 282850">
+                                    <input type="text" id="itemCode" list="savedProductCodesDatalist" class="form-control" placeholder="Ej: 282850" oninput="handleProductCodeAutocomplete(this.value)" onchange="handleProductCodeAutocomplete(this.value)">
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label">Pág. Folleto</label>
@@ -343,7 +364,7 @@
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Descripción del Producto</label>
-                                <input type="text" id="itemName" class="form-control" placeholder="Ej: Kaiak clásico femenino">
+                                <input type="text" id="itemName" list="savedProductNamesDatalist" class="form-control" placeholder="Ej: Kaiak clásico femenino" oninput="handleProductNameAutocomplete(this.value)" onchange="handleProductNameAutocomplete(this.value)">
                             </div>
                             <div class="row g-2 mb-2">
                                 <div class="col-6">
@@ -438,7 +459,17 @@
                 </div>
 
                 <div class="card p-3">
-                    <h5 class="card-title mb-3">Estado de Cuenta y Ganancias por Cliente</h5>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <h5 class="card-title mb-0">Estado de Cuenta y Ganancias por Cliente</h5>
+                        <div class="small text-muted">
+                            <span class="me-2"><i class="bi bi-ticket-perforated"></i> Ticket</span>
+                            <span class="me-2"><i class="bi bi-gift text-danger"></i> Cupón</span>
+                            <span class="me-2"><i class="bi bi-bell text-warning"></i> Recordar</span>
+                            <span class="me-2"><i class="bi bi-cash text-success"></i> Cobrar</span>
+                            <span class="me-2"><i class="bi bi-pencil text-primary"></i> Editar</span>
+                            <span><i class="bi bi-trash text-danger"></i> Eliminar</span>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
                             <thead>
@@ -497,7 +528,7 @@
                     <div class="col-md-5">
                         <div class="card p-4 mb-4">
                             <h5 class="card-title mb-3 text-primary"><i class="bi bi-robot me-2"></i>Generador de Mensajes IA</h5>
-                            <p class="text-muted small">Crea mensajes atractivos y profesionales para difundir en tus grupos y estados de WhatsApp.</p>
+                            <p class="text-muted small">Crea mensajes atractivos, recordatorios y cupones de fidelización para enviar por WhatsApp.</p>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Campaña Objetivo</label>
@@ -506,12 +537,31 @@
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Tipo de Mensaje</label>
-                                <select id="aiMessageType" class="form-select">
+                                <select id="aiMessageType" class="form-select" onchange="toggleCouponFields()">
                                     <option value="Inicio de Ciclo">🌸 Apertura / Inicio de Ciclo</option>
                                     <option value="Cierre Inminente">⏳ ¡Últimos días! Cierre de Pedidos</option>
                                     <option value="Promos Destacadas">🔥 Ofertas Imperdibles</option>
                                     <option value="Entrega Inmediata">📦 Stock Disponible (Entrega Inmediata)</option>
+                                    <option value="Cupon Fidelizacion">🎁 Cupón Fidelización (Descuento Próximo Pedido)</option>
                                 </select>
+                            </div>
+
+                            <!-- Campos específicos para Cupón de Fidelización -->
+                            <div id="aiCouponExtraFields" class="p-3 bg-warning bg-opacity-10 border border-warning rounded mb-3 d-none">
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Cliente (Opcional, para personalizar)</label>
+                                    <input type="text" id="aiCouponClientName" list="savedClientsDatalist" class="form-control form-control-sm" placeholder="Ej: Sofía (o vacío para difusión)">
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-5">
+                                        <label class="form-label small fw-bold">% Descuento</label>
+                                        <input type="number" id="aiCouponDiscountPct" class="form-control form-control-sm" value="10" min="1" max="50">
+                                    </div>
+                                    <div class="col-7">
+                                        <label class="form-label small fw-bold">Código Cupón</label>
+                                        <input type="text" id="aiCouponCode" class="form-control form-control-sm" value="MIMO10">
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="mb-3">
@@ -552,6 +602,45 @@
         </div>
     </div>
 
+    <!-- Modal Cupón de Fidelización Rápido para Cliente -->
+    <div class="modal fade" id="loyaltyCouponModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--ocre-color), var(--avon-color));">
+                    <h5 class="modal-title"><i class="bi bi-gift me-2"></i>Enviar Cupón de Fidelización</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="couponModalClientPhone">
+                    <div class="mb-2">
+                        <label class="form-label small text-muted mb-0">Cliente beneficiado:</label>
+                        <input type="text" id="couponModalClientName" class="form-control fw-bold" oninput="refreshLoyaltyCouponPreview()">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Descuento (%)</label>
+                            <input type="number" id="couponModalDiscount" class="form-control" value="10" min="1" max="50" oninput="refreshLoyaltyCouponPreview()">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Código</label>
+                            <input type="text" id="couponModalCode" class="form-control" value="MIMO10" oninput="refreshLoyaltyCouponPreview()">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Válido hasta</label>
+                            <input type="text" id="couponModalValidity" class="form-control" value="Próximo ciclo" oninput="refreshLoyaltyCouponPreview()">
+                        </div>
+                    </div>
+                    <label class="form-label small fw-bold text-secondary">Vista previa del mensaje:</label>
+                    <textarea id="couponModalPreviewText" class="form-control bg-light small" rows="7"></textarea>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" onclick="copyLoyaltyCouponText()"><i class="bi bi-clipboard me-1"></i> Copiar</button>
+                    <button type="button" class="btn btn-success fw-bold" onclick="sendLoyaltyCouponWhatsApp()"><i class="bi bi-whatsapp me-1"></i> Enviar Cupón</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para Vender Artículo desde Stock Propio con 1 Clic -->
     <div class="modal fade" id="sellStockModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -570,7 +659,7 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label fw-bold">Nombre del Cliente</label>
-                        <input type="text" id="sellStockClientName" class="form-control" placeholder="Ej: Laura Gómez" required>
+                        <input type="text" id="sellStockClientName" list="savedClientsDatalist" class="form-control" placeholder="Ej: Laura Gómez" oninput="handleSellStockClientAutocomplete(this.value)" onchange="handleSellStockClientAutocomplete(this.value)" required>
                     </div>
                     <div class="mb-2">
                         <label class="form-label">WhatsApp del Cliente (opcional)</label>
@@ -812,6 +901,9 @@
         }
         const db = firebase.firestore();
 
+        const LOCAL_CATALOG_KEY = 'catalogo_saved_products_v1';
+        const LOCAL_CLIENTS_KEY = 'catalogo_saved_clients_v1';
+
         const ARGENTINA_HOLIDAYS = new Set([
             '2026-11-23',
             '2026-12-07',
@@ -891,15 +983,169 @@
 
         let campaigns = [];
         let orders = [];
+        let savedCatalogProducts = [];
+        let savedClients = [];
         let currentOrderItems = [];
         let currentRevellerDiscount = parseInt(localStorage.getItem('reveller_tier')) || 25;
         let activeTicketOrder = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('globalRevellerTier').value = currentRevellerDiscount;
+            loadLocalCaches();
+            rebuildAutocompleteLists();
             initFirebaseListeners();
             calculateItemPreview();
         });
+
+        function loadLocalCaches() {
+            try {
+                const rawP = localStorage.getItem(LOCAL_CATALOG_KEY);
+                const rawC = localStorage.getItem(LOCAL_CLIENTS_KEY);
+                savedCatalogProducts = rawP ? JSON.parse(rawP) : [];
+                savedClients = rawC ? JSON.parse(rawC) : [];
+            } catch (_) {
+                savedCatalogProducts = [];
+                savedClients = [];
+            }
+        }
+
+        function persistLocalCaches() {
+            try {
+                localStorage.setItem(LOCAL_CATALOG_KEY, JSON.stringify(savedCatalogProducts));
+                localStorage.setItem(LOCAL_CLIENTS_KEY, JSON.stringify(savedClients));
+            } catch (_) {}
+        }
+
+        function rememberClientEntry(name, phone) {
+            const cleanName = String(name || '').trim();
+            const cleanPhone = String(phone || '').trim();
+            if (!cleanName || cleanName.toLowerCase() === 'stock propio' || cleanName.toLowerCase() === 'cliente') return;
+
+            const key = cleanName.toLowerCase();
+            const existingIdx = savedClients.findIndex(c => c.name.toLowerCase() === key);
+            if (existingIdx >= 0) {
+                savedClients[existingIdx].name = cleanName;
+                if (cleanPhone) savedClients[existingIdx].phone = cleanPhone;
+            } else {
+                savedClients.push({ name: cleanName, phone: cleanPhone });
+            }
+        }
+
+        function rememberProductEntry(item) {
+            const cleanName = String(item?.name || '').trim();
+            if (!cleanName) return;
+            const cleanCode = String(item?.code || '').trim();
+            const cleanBrand = String(item?.brand || 'Natura').trim();
+            const cleanPage = String(item?.page || '').trim();
+            const cleanPrice = Number(item?.price) || 0;
+
+            const existingIdx = savedCatalogProducts.findIndex(p =>
+                (cleanCode && p.code && p.code.toLowerCase() === cleanCode.toLowerCase()) ||
+                (p.name.toLowerCase() === cleanName.toLowerCase() && p.brand.toLowerCase() === cleanBrand.toLowerCase())
+            );
+
+            const record = {
+                code: cleanCode,
+                name: cleanName,
+                brand: cleanBrand,
+                page: cleanPage,
+                price: cleanPrice
+            };
+
+            if (existingIdx >= 0) {
+                savedCatalogProducts[existingIdx] = {
+                    ...savedCatalogProducts[existingIdx],
+                    ...record,
+                    code: cleanCode || savedCatalogProducts[existingIdx].code,
+                    page: cleanPage || savedCatalogProducts[existingIdx].page,
+                    price: cleanPrice > 0 ? cleanPrice : savedCatalogProducts[existingIdx].price
+                };
+            } else {
+                savedCatalogProducts.push(record);
+            }
+        }
+
+        function rebuildAutocompleteLists() {
+            // Sincronizar con todos los pedidos históricos cargados en Firestore
+            orders.forEach(o => {
+                rememberClientEntry(o.clientName, o.clientPhone);
+                (o.items || []).forEach(it => rememberProductEntry(it));
+            });
+            persistLocalCaches();
+
+            const clientsDl = document.getElementById('savedClientsDatalist');
+            if (clientsDl) {
+                clientsDl.innerHTML = savedClients
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map(c => `<option value="${c.name.replace(/"/g, '&quot;')}">${c.phone ? `WhatsApp: ${c.phone}` : 'Cliente guardado'}</option>`)
+                    .join('');
+            }
+            const clientsBadge = document.getElementById('savedClientsCountBadge');
+            if (clientsBadge) clientsBadge.textContent = `${savedClients.length} clientes`;
+
+            const codesDl = document.getElementById('savedProductCodesDatalist');
+            if (codesDl) {
+                codesDl.innerHTML = savedCatalogProducts
+                    .filter(p => p.code)
+                    .map(p => `<option value="${p.code.replace(/"/g, '&quot;')}">${p.brand} - ${p.name}${p.price > 0 ? ` ($${p.price})` : ''}</option>`)
+                    .join('');
+            }
+
+            const namesDl = document.getElementById('savedProductNamesDatalist');
+            if (namesDl) {
+                namesDl.innerHTML = savedCatalogProducts
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map(p => `<option value="${p.name.replace(/"/g, '&quot;')}">${p.brand}${p.code ? ` • Cód: ${p.code}` : ''}${p.price > 0 ? ` • $${p.price}` : ''}</option>`)
+                    .join('');
+            }
+
+            const prodBadge = document.getElementById('savedProductsCountBadge');
+            if (prodBadge) prodBadge.textContent = `${savedCatalogProducts.length} prod.`;
+        }
+
+        function handleClientAutocomplete(val) {
+            const clean = String(val || '').trim().toLowerCase();
+            if (!clean) return;
+            const match = savedClients.find(c => c.name.toLowerCase() === clean);
+            if (match && match.phone) {
+                document.getElementById('clientPhone').value = match.phone;
+            }
+        }
+
+        function handleSellStockClientAutocomplete(val) {
+            const clean = String(val || '').trim().toLowerCase();
+            if (!clean) return;
+            const match = savedClients.find(c => c.name.toLowerCase() === clean);
+            if (match && match.phone) {
+                document.getElementById('sellStockClientPhone').value = match.phone;
+            }
+        }
+
+        function handleProductCodeAutocomplete(codeVal) {
+            const clean = String(codeVal || '').trim().toLowerCase();
+            if (!clean) return;
+            const match = savedCatalogProducts.find(p => p.code && p.code.toLowerCase() === clean);
+            if (!match) return;
+
+            if (match.brand) document.getElementById('itemBrand').value = match.brand;
+            if (match.name) document.getElementById('itemName').value = match.name;
+            if (match.page && !document.getElementById('itemPage').value) document.getElementById('itemPage').value = match.page;
+            if (match.price > 0) document.getElementById('itemPrice').value = match.price;
+            calculateItemPreview();
+        }
+
+        function handleProductNameAutocomplete(nameVal) {
+            const clean = String(nameVal || '').trim().toLowerCase();
+            if (!clean) return;
+            const match = savedCatalogProducts.find(p => p.name.toLowerCase() === clean);
+            if (!match) return;
+
+            if (match.brand) document.getElementById('itemBrand').value = match.brand;
+            if (match.code && !document.getElementById('itemCode').value) document.getElementById('itemCode').value = match.code;
+            if (match.page && !document.getElementById('itemPage').value) document.getElementById('itemPage').value = match.page;
+            if (match.price > 0) document.getElementById('itemPrice').value = match.price;
+            calculateItemPreview();
+        }
 
         function updateRevellerTier(val) {
             currentRevellerDiscount = parseInt(val);
@@ -1027,6 +1273,7 @@
                 snapshot.forEach(doc => {
                     orders.push(normalizeOrderData({ id: doc.id, ...doc.data() }));
                 });
+                rebuildAutocompleteLists();
                 renderCampaigns();
                 renderCollections();
                 renderOwnStock();
@@ -1061,7 +1308,6 @@
                 const campOrders = orders.map(normalizeOrderData).filter(o => o.campaign === c.name);
                 const consolidatedMap = {};
 
-                // Resumen financiero de la campaña descontando pagos recibidos
                 let totalSold = 0;
                 let totalPaidByClients = 0;
                 let estimatedWholesaleCost = 0;
@@ -1381,6 +1627,10 @@
                 cost: wholesaleCostUnit * qty
             };
 
+            // Guardar automáticamente el producto (SKU, nombre, marca, precio) para futuros autocompletados
+            rememberProductEntry(newItem);
+            rebuildAutocompleteLists();
+
             if (!isNaN(editingIndex) && editingIndex >= 0 && editingIndex < currentOrderItems.length) {
                 currentOrderItems[editingIndex] = newItem;
                 showToastMessage('¡Artículo actualizado en el pedido!');
@@ -1540,6 +1790,11 @@
                 return;
             }
 
+            // Recordar datos del cliente y de todos los productos para autocompletado futuro
+            rememberClientEntry(clientName, clientPhone);
+            currentOrderItems.forEach(it => rememberProductEntry(it));
+            rebuildAutocompleteLists();
+
             const total = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.finalClientPrice) || 0)), 0);
             const totalProfit = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.profit) || 0)), 0);
             const totalCost = currentOrderItems.reduce((acc, item) => acc + (Number(item.cost) || 0), 0);
@@ -1638,6 +1893,68 @@
             window.open(url, '_blank');
         }
 
+        // --- CUPÓN DE FIDELIZACIÓN ---
+        function buildLoyaltyCouponMessage(clientName, discountPct, couponCode, validityText, campObj) {
+            const cleanName = String(clientName || '').trim();
+            const greeting = cleanName ? `¡Hola *${cleanName}*! 🌸` : `¡Hola! 🌸`;
+            const pct = Math.max(1, parseInt(discountPct, 10) || 10);
+            const code = String(couponCode || `MIMO${pct}`).trim().toUpperCase();
+            const validity = String(validityText || 'tu próximo pedido').trim();
+
+            let catalogLine = '';
+            const activeCamp = campObj || campaigns.find(c => c.status === 'Activa') || campaigns[0];
+            if (activeCamp) {
+                const links = [];
+                if (activeCamp.linkNatura) links.push(`🌸 Natura: ${activeCamp.linkNatura}`);
+                if (activeCamp.linkAvon) links.push(`💄 Avon: ${activeCamp.linkAvon}`);
+                if (activeCamp.linkCasa) links.push(`🏠 Casa & Estilo: ${activeCamp.linkCasa}`);
+                if (links.length > 0) {
+                    catalogLine = `\n\n📖 *Mirá las revistas vigentes (${activeCamp.name}):*\n${links.join('\n')}`;
+                }
+            }
+
+            return `${greeting} ¡Muchas gracias por elegirme y confiar en mí en cada compra! 💖\n\nPor ser cliente especial, te regalo un *CUPÓN DE FIDELIZACIÓN* para mimarte en tu próxima compra:\n\n🎟️ *CUPÓN:* *${code}*\n🎁 *BENEFICIO:* *${pct}% OFF* en tu siguiente pedido (Natura, Avon o Casa & Estilo)\n⏳ *VÁLIDO PARA:* ${validity}\n\nSolo tenés que enviarme este mensajito o mencionarme el código *${code}* cuando hagas tu próximo encargo ✨${catalogLine}\n\n¡Te espero con mucho gusto!\n*M. Eugenia Carol* • 📱 381-519-3109`;
+        }
+
+        function openLoyaltyCouponModal(orderId) {
+            const found = orders.find(o => o.id === orderId);
+            const o = found ? normalizeOrderData(found) : { clientName: '', clientPhone: '' };
+
+            document.getElementById('couponModalClientName').value = o.clientName || '';
+            document.getElementById('couponModalClientPhone').value = o.clientPhone || '';
+            document.getElementById('couponModalDiscount').value = '10';
+            document.getElementById('couponModalCode').value = 'MIMO10';
+            document.getElementById('couponModalValidity').value = 'Tu próximo pedido';
+
+            refreshLoyaltyCouponPreview();
+            new bootstrap.Modal(document.getElementById('loyaltyCouponModal')).show();
+        }
+
+        function refreshLoyaltyCouponPreview() {
+            const clientName = document.getElementById('couponModalClientName').value;
+            const discountPct = document.getElementById('couponModalDiscount').value;
+            const code = document.getElementById('couponModalCode').value;
+            const validity = document.getElementById('couponModalValidity').value;
+            document.getElementById('couponModalPreviewText').value = buildLoyaltyCouponMessage(clientName, discountPct, code, validity, null);
+        }
+
+        function copyLoyaltyCouponText() {
+            const textarea = document.getElementById('couponModalPreviewText');
+            textarea.select();
+            document.execCommand('copy');
+            showToastMessage('¡Cupón copiado al portapapeles!');
+        }
+
+        function sendLoyaltyCouponWhatsApp() {
+            const text = document.getElementById('couponModalPreviewText').value;
+            if (!text) return;
+            const phoneClean = String(document.getElementById('couponModalClientPhone').value || '').replace(/\D/g, '');
+            const url = phoneClean
+                ? `https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`
+                : `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
         // --- MÓDULO 3: COBRANZAS Y CUENTAS ---
         function renderCollections() {
             const tbody = document.getElementById('collectionsTable');
@@ -1671,9 +1988,11 @@
                     statusText = 'Parcial ⚠️';
                 }
 
+                const safeClientEscaped = String(o.clientName || '').replace(/'/g, "\\'");
+
                 const pendingActionsHtml = saldo > 0
-                    ? `<button class="btn btn-sm btn-outline-warning text-dark me-1" onclick="sendPaymentReminder('${o.id}')" title="Enviar recordatorio amable por WhatsApp"><i class="bi bi-bell"></i> Recordar pago</button>
-                       <button class="btn btn-sm btn-outline-success me-1" onclick="openPaymentModal('${o.id}', '${o.clientName}', ${saldo})"><i class="bi bi-cash"></i> Cobrar</button>`
+                    ? `<button class="btn btn-sm btn-outline-warning text-dark btn-icon-action" onclick="sendPaymentReminder('${o.id}')" title="Recordar pago por WhatsApp" aria-label="Recordar pago"><i class="bi bi-bell"></i></button>
+                       <button class="btn btn-sm btn-outline-success btn-icon-action" onclick="openPaymentModal('${o.id}', '${safeClientEscaped}', ${saldo})" title="Registrar cobro" aria-label="Cobrar"><i class="bi bi-cash"></i></button>`
                     : '';
 
                 tbody.innerHTML += `
@@ -1686,10 +2005,13 @@
                         <td class="text-danger fw-bold">$${saldo.toFixed(2)}</td>
                         <td><span class="badge ${badgeClass}">${statusText}</span></td>
                         <td class="text-nowrap">
-                            <button class="btn btn-sm btn-outline-dark me-1" onclick="openClientTicket('${o.id}')" title="Ver / Descargar Ticket"><i class="bi bi-ticket-perforated"></i> Ticket</button>
-                            ${pendingActionsHtml}
-                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editOrder('${o.id}')" title="Editar Pedido"><i class="bi bi-pencil"></i></button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder('${o.id}')"><i class="bi bi-trash"></i></button>
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <button class="btn btn-sm btn-outline-dark btn-icon-action" onclick="openClientTicket('${o.id}')" title="Ver / Descargar Ticket" aria-label="Ticket"><i class="bi bi-ticket-perforated"></i></button>
+                                <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="openLoyaltyCouponModal('${o.id}')" title="Enviar Cupón de Fidelización" aria-label="Cupón"><i class="bi bi-gift"></i></button>
+                                ${pendingActionsHtml}
+                                <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${o.id}')" title="Editar Pedido" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteOrder('${o.id}')" title="Eliminar Pedido" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
+                            </div>
                         </td>
                     </tr>`;
             });
@@ -1745,7 +2067,7 @@
                             <button class="btn btn-sm btn-success fw-bold me-1" onclick="openSellStockModal('${entry.orderId}', ${entry.itemIndex})">
                                 <i class="bi bi-bag-check me-1"></i> Vender a Cliente
                             </button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="editOrder('${entry.orderId}')" title="Editar en pedido">
+                            <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar en pedido">
                                 <i class="bi bi-pencil"></i>
                             </button>
                         </td>
@@ -1800,6 +2122,9 @@
                 return;
             }
 
+            rememberClientEntry(clientName, clientPhone);
+            rebuildAutocompleteLists();
+
             const unitCost = (Number(stockItem.cost) || 0) / availableQty;
             const saleTotal = unitPrice * sellQty;
             const saleCost = unitCost * sellQty;
@@ -1821,7 +2146,6 @@
                 profit: saleProfit
             };
 
-            // Crear pedido para el cliente comprador (sin volver a duplicar costo en la campaña)
             const newOrderRef = await db.collection('orders').add({
                 campaign: stockOrder.campaign,
                 clientName,
@@ -1838,7 +2162,6 @@
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // Descontar unidades vendidas del stock propio
             const updatedItems = [...stockOrder.items];
             if (sellQty >= availableQty) {
                 updatedItems.splice(itemIndex, 1);
@@ -1913,7 +2236,27 @@
         }
 
         // --- ASISTENTE IA WHATSAPP ---
+        function toggleCouponFields() {
+            const type = document.getElementById('aiMessageType').value;
+            const box = document.getElementById('aiCouponExtraFields');
+            if (!box) return;
+            if (type === 'Cupon Fidelizacion') {
+                box.classList.remove('d-none');
+            } else {
+                box.classList.add('d-none');
+            }
+        }
+
         function buildFallbackWhatsAppMessage(campaignName, camp, messageType, brand, extraNotes) {
+            if (messageType === 'Cupon Fidelizacion') {
+                const cName = document.getElementById('aiCouponClientName')?.value || '';
+                const dPct = document.getElementById('aiCouponDiscountPct')?.value || 10;
+                const cCode = document.getElementById('aiCouponCode')?.value || 'MIMO10';
+                let baseCoupon = buildLoyaltyCouponMessage(cName, dPct, cCode, 'tu próximo pedido', camp);
+                if (extraNotes) baseCoupon += `\n\n✨ *Nota especial:* ${extraNotes}`;
+                return baseCoupon;
+            }
+
             const closeFormatted = camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente';
             const arrivalFormatted = camp && camp.endDate ? formatDateAR(getEstimatedArrivalDate(camp.endDate)) : '';
             const dueFormatted = camp && camp.endDate ? formatDateAR(getPaymentDueDate(camp.endDate)) : '';
@@ -1981,7 +2324,7 @@
             const brand = document.getElementById('aiBrandSelect').value;
             const extraNotes = document.getElementById('aiExtraNotes').value.trim();
 
-            if (!campaignName && messageType !== 'Entrega Inmediata') {
+            if (!campaignName && messageType !== 'Entrega Inmediata' && messageType !== 'Cupon Fidelizacion') {
                 showToastMessage('Seleccioná una campaña.', 'warning');
                 return;
             }
@@ -1991,10 +2334,18 @@
                 ? `Links:\n- Natura: ${camp.linkNatura || 'N/A'}\n- Avon: ${camp.linkAvon || 'N/A'}\n- Casa & Estilo: ${camp.linkCasa || 'N/A'}`
                 : '';
 
-            const prompt = `Actúa como M. Eugenia Carol (WhatsApp 381-519-3109), consultora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp cálido, claro y atractivo con emojis para difundir.
-- Campaña: ${campaignName || 'Entrega Inmediata'} (Cierra el: ${camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente'})
+            let extraCouponPrompt = '';
+            if (messageType === 'Cupon Fidelizacion') {
+                const cName = document.getElementById('aiCouponClientName')?.value || 'el cliente';
+                const dPct = document.getElementById('aiCouponDiscountPct')?.value || 10;
+                const cCode = document.getElementById('aiCouponCode')?.value || 'MIMO10';
+                extraCouponPrompt = `\n- Cliente: ${cName}\n- Descuento ofrecido para su próximo pedido: ${dPct}%\n- Código del cupón: ${cCode}`;
+            }
+
+            const prompt = `Actúa como M. Eugenia Carol (WhatsApp 381-519-3109), consultora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp cálido, cercano y atractivo con emojis.
+- Campaña: ${campaignName || 'General'} (Cierra el: ${camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente'})
 - Tipo: ${messageType}
-- Marca: ${brand}
+- Marca: ${brand}${extraCouponPrompt}
 - Notas extra: ${extraNotes || 'Ninguna'}
 ${linkInfo}
 Devuelve únicamente el texto listo para copiar y enviar.`;
@@ -2045,4 +2396,4 @@ Devuelve únicamente el texto listo para copiar y enviar.`;
         }
     </script>
 </body>
-</html>
+                                                                                                         </html>
