@@ -29,7 +29,6 @@
             overflow-x: hidden;
         }
 
-        /* Ondas decorativas inspiradas en la tarjeta de consultora */
         .brand-waves-bg {
             position: fixed;
             top: 0;
@@ -207,156 +206,116 @@
             color: #1F1815;
         }
 
-        /* Estilos del Cupón de Descuento PNG estilo talonario + tarjeta */
+        /* Cupón de fidelización inspirado en la tarjeta de consultora */
         .coupon-voucher-canvas {
-            background-color: #F4E6E1;
-            color: #1F1815;
+            width: 100%;
+            max-width: 560px;
+            min-height: 330px;
+            margin: 0 auto;
+            padding: 28px 30px 22px;
             position: relative;
             overflow: hidden;
             border-radius: 14px;
-            box-shadow: 0 14px 32px rgba(43, 30, 25, 0.24);
-            display: flex;
-            align-items: stretch;
-            width: 100%;
-            max-width: 540px;
-            min-height: 235px;
-            margin: 0 auto;
-            border: 1px solid rgba(174, 56, 32, 0.2);
+            background: #F4E6E1;
+            color: #1F1815;
+            box-shadow: 0 8px 24px rgba(31,24,21,.16);
         }
-
         .coupon-wave-corner {
             position: absolute;
-            top: -12px;
-            right: -12px;
-            width: 195px;
-            height: 195px;
+            width: 245px;
+            height: 275px;
+            top: -5px;
+            right: -5px;
             pointer-events: none;
-        /* Estilos del Cupón de Descuento PNG estilo Tarjeta de Consultora */
-        .coupon-voucher-canvas {
-            background-color: #F4E6E1;
-            color: #1F1815;
-            position: relative;
-            overflow: hidden;
-            border-radius: 16px;
-            box-shadow: 0 14px 32px rgba(43, 30, 25, 0.24);
-            display: flex;
-            align-items: stretch;
-            width: 100%;
-            max-width: 540px;
-            min-height: 245px;
-            margin: 0 auto;
-            border: 1px solid rgba(174, 56, 32, 0.2);
         }
-
-        .coupon-wave-corner {
-            position: absolute;
-            top: -12px;
-            right: -12px;
-            width: 225px;
-            height: 255px;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.96;
-        }
-
-        .coupon-main-body {
-            flex: 1 1 100%;
-            padding: 20px 168px 18px 24px;
-            position: relative;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .coupon-main-heading {
-            font-family: Georgia, 'Times New Roman', serif;
-            font-size: 1.75rem;
-            font-weight: 700;
-            line-height: 1.04;
-            letter-spacing: 0.03em;
-            color: #1F1815;
-            margin: 0 0 8px 0;
-        }
-
-        .coupon-copy-text {
-            font-size: 0.95rem;
-            line-height: 1.34;
-            color: #2B1E19;
-        }
-
-        .coupon-copy-highlight {
-            font-weight: 800;
-            color: #AE3820;
-        }
-
-        .coupon-pct-badge {
-            display: inline-block;
-            background: rgba(255, 253, 251, 0.92);
-            border: 1.5px solid #AE3820;
-            color: #1F1815;
-            font-family: Georgia, 'Times New Roman', serif;
-            font-weight: 800;
-            font-size: 1.05rem;
-            letter-spacing: 0.04em;
-            padding: 3px 12px;
-            border-radius: 999px;
-            margin-top: 8px;
-        }
-
-        .coupon-footer-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            gap: 8px;
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 1px solid rgba(31, 24, 21, 0.14);
-        }
-
         .coupon-right-brands-overlay {
             position: absolute;
-            top: 18px;
-            right: 16px;
-            width: 118px;
             z-index: 2;
-            pointer-events: none;
+            top: 25px;
+            right: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
+            color: #111;
         }
-
-        .coupon-right-brands-overlay .brand-logo-pair {
-            flex-direction: column;
-            gap: 6px;
-            color: #111111;
-        }
-
-        .coupon-right-brands-overlay .brand-logo-natura-img {
-            height: 34px;
-            width: auto;
-            filter: brightness(0);
-        }
-
+        .coupon-right-brands-overlay .brand-logo-natura-img { height: 29px; }
         .coupon-right-brands-overlay .brand-logo-avon-word {
-            color: #111111;
-            font-size: 0.92rem;
-            letter-spacing: 0.16em;
+            font-size: 1.05rem;
+            letter-spacing: .13em;
+        }
+        .coupon-main-body {
+            position: relative;
+            z-index: 1;
+            min-height: 275px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding-top: 55px;
+        }
+        .coupon-main-heading {
+            margin: 8px 0 12px;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: clamp(1.55rem, 5vw, 2.25rem);
+            line-height: 1.02;
+            font-weight: 800;
+            letter-spacing: .045em;
+            color: #F4E6E1;
+            -webkit-text-stroke: 1px #1F1815;
+        }
+        .coupon-client-loyalty-label {
+            display: inline-block;
+            position: relative;
+            z-index: 3;
+            max-width: 100%;
+            padding: 4px 9px;
+            margin: 0 0 3px;
+            border-radius: 6px;
+            background: rgba(244, 230, 225, 0.96);
+            color: #7B2B1C;
+            letter-spacing: 0.03em;
+            line-height: 1.25;
+            box-shadow: 0 1px 4px rgba(31, 24, 21, 0.10);
+        }
+        .coupon-copy-text {
+            max-width: 390px;
+            font-size: 1.12rem;
+            line-height: 1.45;
+            font-weight: 600;
+        }
+        .coupon-copy-highlight {
+            color: #AE3820;
+            font-weight: 900;
+            font-size: 1.38rem;
+        }
+        .coupon-pct-badge {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 7px 18px;
+            border-radius: 30px;
+            background: #E45E27;
+            color: white;
+            font-size: 1.15rem;
+            font-weight: 900;
+            letter-spacing: .06em;
+            box-shadow: 0 3px 8px rgba(174,56,32,.2);
+        }
+        .coupon-footer-row {
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid rgba(31,24,21,.16);
+            padding-top: 10px;
+            margin-top: 18px;
+        }
+        @media (max-width: 575px) {
+            .coupon-voucher-canvas { padding: 22px 18px 18px; min-height: 320px; }
+            .coupon-right-brands-overlay { right: 14px; top: 18px; }
+            .coupon-main-body { padding-top: 58px; }
         }
 
-        @media (max-width: 520px) {
-            .coupon-voucher-canvas { min-height: 225px; }
-            .coupon-main-body { padding: 16px 128px 14px 18px; }
-            .coupon-main-heading { font-size: 1.38rem; }
-            .coupon-wave-corner { width: 175px; height: 225px; }
-            .coupon-right-brands-overlay { width: 92px; top: 14px; right: 10px; }
-            .coupon-right-brands-overlay .brand-logo-natura-img { height: 26px; }
-        }
     </style>
 </head>
 <body>
-    <!-- Ondas decorativas de fondo basadas en la tarjeta -->
     <svg class="brand-waves-bg" viewBox="0 0 400 380" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M92 -20C95 95 165 145 215 190C265 235 235 315 315 340C365 355 410 330 430 310V-20H92Z" fill="#E39D34"/>
         <path d="M192 -20C188 70 250 115 260 185C270 250 220 285 280 315C330 340 395 305 430 285V-20H192Z" fill="#E45E27"/>
@@ -398,10 +357,8 @@
             </div>
         </div>
 
-        <!-- Notificación flotante no bloqueante -->
         <div id="appToastBox" class="alert alert-info d-none shadow-sm py-2 px-3 mb-3" role="alert"></div>
 
-        <!-- Datalists globales para autocompletado de clientes y productos -->
         <datalist id="savedClientsDatalist"></datalist>
         <datalist id="savedProductCodesDatalist"></datalist>
         <datalist id="savedProductNamesDatalist"></datalist>
@@ -473,7 +430,6 @@
                             </div>
                             <input type="hidden" id="editingItemIndex" value="-1">
 
-                            <!-- Opción de Compra para Stock Propio -->
                             <div class="form-check form-switch mb-2 p-2 bg-info bg-opacity-10 border border-info rounded ps-5">
                                 <input class="form-check-input" type="checkbox" role="switch" id="itemIsOwnStock" onchange="handleItemModeSwitch('stock')">
                                 <label class="form-check-label fw-bold text-dark" for="itemIsOwnStock">
@@ -482,7 +438,6 @@
                                 <div class="form-text small mt-0">Se encarga en la campaña y suma costo, pero no genera deuda ($0 a cobrar) hasta que lo vendas desde "4. Mi Stock".</div>
                             </div>
 
-                            <!-- Opción de Regalo de la Compañía -->
                             <div class="form-check form-switch mb-3 p-2 bg-warning bg-opacity-10 border border-warning rounded ps-5">
                                 <input class="form-check-input" type="checkbox" role="switch" id="itemIsGift" onchange="handleItemModeSwitch('gift')">
                                 <label class="form-check-label fw-bold text-dark" for="itemIsGift">
@@ -528,7 +483,6 @@
                                 <input type="number" id="itemClientDiscount" class="form-control form-control-sm" value="0" min="0" max="100" step="0.5" oninput="calculateItemPreview()">
                             </div>
 
-                            <!-- Preview de Ganancia -->
                             <div class="p-2 bg-light rounded border mb-3 small">
                                 <div class="d-flex justify-content-between text-muted">
                                     <span>Tu Descuento Mayorista:</span>
@@ -610,7 +564,6 @@
                         <h5 class="card-title mb-0">Estado de Cuenta y Ganancias por Cliente</h5>
                         <div class="small text-muted">
                             <span class="me-2"><i class="bi bi-ticket-perforated"></i> Ticket</span>
-                            <span class="me-2"><i class="bi bi-gift text-danger"></i> Cupón PNG</span>
                             <span class="me-2"><i class="bi bi-bell text-warning"></i> Recordar</span>
                             <span class="me-2"><i class="bi bi-cash text-success"></i> Cobrar</span>
                             <span class="me-2"><i class="bi bi-pencil text-primary"></i> Editar</span>
@@ -637,7 +590,7 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 4: Mi Stock Propio (Entrega Inmediata) -->
+            <!-- MÓDULO 4: Mi Stock Propio -->
             <div class="tab-pane fade" id="stockTab">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                     <div>
@@ -684,34 +637,12 @@
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Tipo de Mensaje</label>
-                                <select id="aiMessageType" class="form-select" onchange="toggleCouponFields()">
+                                <select id="aiMessageType" class="form-select">
                                     <option value="Inicio de Ciclo">🌸 Apertura / Inicio de Ciclo</option>
                                     <option value="Cierre Inminente">⏳ ¡Últimos días! Cierre de Pedidos</option>
                                     <option value="Promos Destacadas">🔥 Ofertas Imperdibles</option>
                                     <option value="Entrega Inmediata">📦 Stock Disponible (Entrega Inmediata)</option>
-                                    <option value="Cupon Fidelizacion">🎁 Cupón Fidelización PNG (Próxima Compra)</option>
                                 </select>
-                            </div>
-
-                            <!-- Campos específicos para Cupón de Fidelización -->
-                            <div id="aiCouponExtraFields" class="p-3 bg-warning bg-opacity-10 border border-warning rounded mb-3 d-none">
-                                <div class="mb-2">
-                                    <label class="form-label small fw-bold">Cliente (Opcional, para personalizar)</label>
-                                    <input type="text" id="aiCouponClientName" list="savedClientsDatalist" class="form-control form-control-sm" placeholder="Ej: Sofía (o vacío para general)">
-                                </div>
-                                <div class="row g-2 mb-2">
-                                    <div class="col-5">
-                                        <label class="form-label small fw-bold">% Descuento</label>
-                                        <input type="number" id="aiCouponDiscountPct" class="form-control form-control-sm" value="10" min="1" max="50">
-                                    </div>
-                                    <div class="col-7">
-                                        <label class="form-label small fw-bold">Validez</label>
-                                        <input type="text" id="aiCouponValidity" class="form-control form-control-sm" value="tu próxima compra">
-                                    </div>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-danger w-100 fw-bold" onclick="openCouponModalFromAI()">
-                                    <i class="bi bi-image me-1"></i> Abrir Vista Previa y Descargar Cupón PNG
-                                </button>
                             </div>
 
                             <div class="mb-3">
@@ -752,7 +683,7 @@
         </div>
     </div>
 
-    <!-- Modal Cupón de Descuento PNG Estilo Talonario + Tarjeta -->
+    <!-- Modal Cupón de Descuento PNG Estilo Tarjeta de Consultora (Sin código ni línea troquelada) -->
     <div class="modal fade" id="loyaltyCouponModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 bg-dark text-white rounded-4 shadow-lg">
@@ -760,59 +691,24 @@
                     <h6 class="modal-title mb-0"><i class="bi bi-gift me-2 text-warning"></i>Cupón de Fidelización (Descargable en PNG)</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body p-3 p-md-4">
                     <input type="hidden" id="couponModalClientPhone">
-                    <!-- Controles rápidos para personalizar el cupón antes de descargar el PNG -->
-                    <div class="row g-2 mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label small text-light mb-1">Para (Cliente):</label>
-                            <input type="text" id="couponModalClientName" list="savedClientsDatalist" class="form-control form-control-sm" placeholder="Ej: Sofía" oninput="refreshLoyaltyCouponPreview()">
-                        </div>
-                        <div class="col-4 col-md-2">
-                            <label class="form-label small text-light mb-1">% Desc.:</label>
-                            <input type="number" id="couponModalDiscount" class="form-control form-control-sm" value="10" min="1" max="50" oninput="refreshLoyaltyCouponPreview()">
-                        </div>
-                        <div class="col-4 col-md-3">
-                            <label class="form-label small text-light mb-1">Código:</label>
-                            <input type="text" id="couponModalCode" class="form-control form-control-sm" value="MIMO10" oninput="refreshLoyaltyCouponPreview()">
-                        </div>
-                        <div class="col-4 col-md-3">
-                            <label class="form-label small text-light mb-1">Validez:</label>
-                            <input type="text" id="couponModalValidity" class="form-control form-control-sm" value="Tu próxima compra" oninput="refreshLoyaltyCouponPreview()">
-                        </div>
-                    </div>
-
-                    <!-- Área capturable como imagen PNG -->
-                    <div id="couponCaptureArea" class="coupon-voucher-canvas">
-    <!-- Modal Cupón de Descuento PNG Estilo Tarjeta de Consultora -->
-    <div class="modal fade" id="loyaltyCouponModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 bg-dark text-white rounded-4 shadow-lg">
-                <div class="modal-header border-secondary py-2 px-4">
-                    <h6 class="modal-title mb-0"><i class="bi bi-gift me-2 text-warning"></i>Cupón de Fidelización (Descargable en PNG)</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <input type="hidden" id="couponModalClientPhone">
-                    <!-- Controles rápidos para personalizar el cupón antes de descargar el PNG -->
-                    <div class="row g-2 mb-4">
+                    <div class="row g-2 mb-3">
                         <div class="col-md-5">
                             <label class="form-label small text-light mb-1">Para (Cliente):</label>
-                            <input type="text" id="couponModalClientName" list="savedClientsDatalist" class="form-control form-control-sm" placeholder="Ej: Sofía" oninput="refreshLoyaltyCouponPreview()">
+                            <input type="text" id="couponModalClientName" list="savedClientsDatalist" class="form-control form-control-sm" placeholder="Ej: Yani" oninput="refreshLoyaltyCouponPreview()">
                         </div>
                         <div class="col-4 col-md-3">
                             <label class="form-label small text-light mb-1">% Desc.:</label>
-                            <input type="number" id="couponModalDiscount" class="form-control form-control-sm" value="10" min="1" max="50" oninput="refreshLoyaltyCouponPreview()">
+                            <input type="number" id="couponModalDiscount" class="form-control form-control-sm" value="15" min="1" max="50" oninput="refreshLoyaltyCouponPreview()">
                         </div>
                         <div class="col-8 col-md-4">
                             <label class="form-label small text-light mb-1">Validez:</label>
-                            <input type="text" id="couponModalValidity" class="form-control form-control-sm" value="tu próxima compra" oninput="refreshLoyaltyCouponPreview()">
+                            <input type="text" id="couponModalValidity" class="form-control form-control-sm" value="C17" oninput="refreshLoyaltyCouponPreview()">
                         </div>
                     </div>
 
-                    <!-- Área capturable como imagen PNG -->
                     <div id="couponCaptureArea" class="coupon-voucher-canvas">
-                        <!-- Ondas decorativas de tu tarjeta en el margen derecho -->
                         <svg class="coupon-wave-corner" viewBox="0 0 240 270" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M45 -10C48 75 95 115 130 155C165 195 135 245 195 262C225 270 250 255 260 245V-10H45Z" fill="#E39D34"/>
                             <path d="M105 -10C102 58 142 92 152 142C162 188 125 215 168 238C200 255 240 232 258 220V-10H105Z" fill="#E45E27"/>
@@ -820,7 +716,6 @@
                             <path d="M205 -10C202 22 222 44 225 78C228 108 215 128 238 140C250 146 258 140 264 134V-10H205Z" fill="#7B3A1D"/>
                         </svg>
 
-                        <!-- Logos en negro integrados en la franja derecha de la tarjeta -->
                         <div class="coupon-right-brands-overlay" aria-label="Natura y AVON">
                             <span class="brand-logo-natura">
                                 <img src="logoNatura.png" alt="natura" class="brand-logo-natura-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
@@ -829,20 +724,19 @@
                             <span class="brand-logo-avon-word">AVON</span>
                         </div>
 
-                        <!-- Cuerpo de la tarjeta sin línea troquelada ni código -->
                         <div class="coupon-main-body">
                             <div>
-                                <div id="couponCardClientBadge" class="small fw-bold mb-1" style="color: #AE3820; letter-spacing: 0.03em;">
-                                    por ser fiel a Natura
+                                <div id="couponCardClientBadge" class="coupon-client-loyalty-label small fw-bold">
+                                    POR SER FIEL A NATURA
                                 </div>
                                 <h3 class="coupon-main-heading">CUPÓN DE<br>DESCUENTO</h3>
                                 <div class="coupon-copy-text">
-                                    Te ganaste un<br>
-                                    <span class="coupon-copy-highlight" id="couponCardMainPctText">10% DE DESCUENTO</span><br>
-                                    en <span id="couponCardValidityText">tu próxima compra</span>.
+                                    ¡GANASTE UN DESCUENTO!<br>
+                                    <span class="coupon-copy-highlight" id="couponCardMainPctText">15% DE DESCUENTO</span><br>
+                                    válido para <span id="couponCardValidityText">C17</span>.<br>¡Usalo en tu próximo pedido!
                                 </div>
                                 <div>
-                                    <span class="coupon-pct-badge" id="couponCardPctPill">10% OFF</span>
+                                    <span class="coupon-pct-badge" id="couponCardPctPill">15% OFF</span>
                                 </div>
                             </div>
 
@@ -856,11 +750,11 @@
                     </div>
 
                     <div id="couponPngPreviewBox" class="mt-3 text-center d-none">
-                        <div class="small text-light mb-1">PNG generado (también podés mantener presionado / clic derecho para guardar):</div>
+                        <div class="small text-light mb-1">PNG generado (también podés mantener presionado para guardar):</div>
                         <img id="couponPngPreviewImg" src="" alt="Cupón PNG generado" class="img-fluid rounded-3 shadow border border-secondary" style="max-width: 540px;">
                     </div>
 
-                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
                         <button type="button" class="btn btn-warning fw-bold px-3 rounded-pill text-dark" onclick="downloadLoyaltyCouponPNG()">
                             <i class="bi bi-download me-1"></i> Descargar Cupón (PNG)
                         </button>
@@ -1036,7 +930,7 @@
         </div>
     </div>
 
-    <!-- Modal Ticket Digital Cliente (Estilo Tarjeta de Consultora) -->
+    <!-- Modal Ticket Digital Cliente -->
     <div class="modal fade" id="clientTicketModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 bg-transparent shadow-none">
@@ -1118,7 +1012,6 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -1516,7 +1409,6 @@
             });
         }
 
-        // --- GESTIÓN DE CAMPAÑAS Y FACTURAS ---
         function renderCampaigns() {
             const container = document.getElementById('campaignsContainer');
             if (!container) return;
@@ -1574,7 +1466,6 @@
                 const pendingFromClients = Math.max(0, totalSold - totalPaidByClients);
                 const companyReference = invoicePaid > 0 ? invoicePaid : estimatedWholesaleCost;
                 const netCampaignBalance = totalPaidByClients - companyReference;
-
                 const consolidatedList = Object.values(consolidatedMap);
 
                 let linksHtml = '';
@@ -1605,7 +1496,6 @@
                                 </div>
                             </div>
 
-                            <!-- Balance financiero de la campaña (descontando pagos recibidos) -->
                             <div class="p-2 bg-white rounded border mb-2 small">
                                 <div class="d-flex justify-content-between">
                                     <span class="text-muted">Total Vendido en Campaña:</span>
@@ -1639,7 +1529,6 @@
                                 ${linksHtml || '<span class="text-muted small">Sin links cargados</span>'}
                             </div>
 
-                            <!-- CONSOLIDADO DE PEDIDO PARA LA EMPRESA -->
                             <div class="border-top pt-2">
                                 <h6 class="fw-bold small text-secondary d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#collapseConsolidated_${c.id}" style="cursor: pointer;">
                                     <span><i class="bi bi-list-check me-1"></i> Lista para Cargar en la Web (${consolidatedList.length} ítems)</span>
@@ -1758,7 +1647,6 @@
             document.getElementById('modalCampaignTitle').textContent = 'Configurar Campaña';
         }
 
-        // --- GESTIÓN DE PEDIDOS Y EDICIÓN ---
         function goToQuickStockLoad() {
             const tabEl = document.querySelector('button[data-bs-target="#ordersTab"]');
             if (tabEl) new bootstrap.Tab(tabEl).show();
@@ -2125,134 +2013,112 @@
             window.open(url, '_blank');
         }
 
-        // --- CUPÓN DE FIDELIZACIÓN EN PNG ---
-        function buildLoyaltyCouponMessage(clientName, discountPct, _unusedCode, validityText, campObj) {
-            const cleanName = String(clientName || '').trim();
-            const greeting = cleanName ? `¡Hola *${cleanName}*! 🌸` : `¡Hola! 🌸`;
-            const pct = Math.max(1, parseInt(discountPct, 10) || 10);
-            const validity = String(validityText || 'tu próxima compra').trim();
 
-            let catalogLine = '';
-            const activeCamp = campObj || campaigns.find(c => c.status === 'Activa') || campaigns[0];
-            if (activeCamp) {
-                const links = [];
-                if (activeCamp.linkNatura) links.push(`🌸 Natura: ${activeCamp.linkNatura}`);
-                if (activeCamp.linkAvon) links.push(`💄 Avon: ${activeCamp.linkAvon}`);
-                if (activeCamp.linkCasa) links.push(`🏠 Casa & Estilo: ${activeCamp.linkCasa}`);
-                if (links.length > 0) {
-                    catalogLine = `\n\n📖 *Mirá las revistas vigentes (${activeCamp.name}):*\n${links.join('\n')}`;
-                }
-            }
-
-            return `${greeting} ¡Muchas gracias por ser fiel a Natura y confiar en mí! 💖\n\nTe ganaste un *CUPÓN DE DESCUENTO* del *${pct}%* en ${validity}. ¡Solo tenés que enviarme el cupón cuando hagas tu próximo pedido! ✨${catalogLine}\n\n*M. Eugenia Carol* • 📱 381-519-3109`;
+        function getNextCampaignName(currentName) {
+            const name = String(currentName || '').trim();
+            const match = name.match(/^(.*?)(\d+)(\s*)$/);
+            if (match) return `${match[1]}${Number(match[2]) + 1}${match[3]}`;
+            const current = campaigns.find(c => c.name === name);
+            const future = campaigns
+                .filter(c => c.name !== name && c.startDate && (!current?.startDate || c.startDate > current.startDate))
+                .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+            return future[0]?.name || 'tu próxima campaña';
         }
 
-        function openLoyaltyCouponModal(orderId) {
+        function openLoyaltyCoupon(orderId) {
             const found = orders.find(o => o.id === orderId);
-            const o = found ? normalizeOrderData(found) : { clientName: '', clientPhone: '' };
-
+            if (!found) return;
+            const o = normalizeOrderData(found);
             document.getElementById('couponModalClientName').value = o.clientName || '';
             document.getElementById('couponModalClientPhone').value = o.clientPhone || '';
-            document.getElementById('couponModalDiscount').value = '10';
-            document.getElementById('couponModalValidity').value = 'tu próxima compra';
-            document.getElementById('couponPngPreviewBox').classList.add('d-none');
-
+            document.getElementById('couponModalDiscount').value = '15';
+            document.getElementById('couponModalValidity').value = getNextCampaignName(o.campaign);
             refreshLoyaltyCouponPreview();
-            new bootstrap.Modal(document.getElementById('loyaltyCouponModal')).show();
-        }
-
-        function openCouponModalFromAI() {
-            const cName = document.getElementById('aiCouponClientName')?.value.trim() || '';
-            const dPct = document.getElementById('aiCouponDiscountPct')?.value || '10';
-            const cVal = document.getElementById('aiCouponValidity')?.value.trim() || 'tu próxima compra';
-            const matchClient = savedClients.find(c => c.name.toLowerCase() === cName.toLowerCase());
-
-            document.getElementById('couponModalClientName').value = cName;
-            document.getElementById('couponModalClientPhone').value = matchClient?.phone || '';
-            document.getElementById('couponModalDiscount').value = dPct;
-            document.getElementById('couponModalValidity').value = cVal;
             document.getElementById('couponPngPreviewBox').classList.add('d-none');
-
-            refreshLoyaltyCouponPreview();
             new bootstrap.Modal(document.getElementById('loyaltyCouponModal')).show();
         }
 
         function refreshLoyaltyCouponPreview() {
-            const clientName = document.getElementById('couponModalClientName').value.trim();
-            const pct = Math.max(1, parseInt(document.getElementById('couponModalDiscount').value, 10) || 10);
-            const validity = document.getElementById('couponModalValidity').value.trim() || 'tu próxima compra';
+            const name = document.getElementById('couponModalClientName')?.value.trim() || 'CLIENTA';
+            const discount = Math.min(50, Math.max(1, Number(document.getElementById('couponModalDiscount')?.value) || 15));
+            const validity = document.getElementById('couponModalValidity')?.value.trim() || 'tu próxima campaña';
+            const badge = document.getElementById('couponCardClientBadge');
+            if (badge) badge.textContent = `PARA ${name.toLocaleUpperCase('es-AR')} • POR SER FIEL A NATURA`;
+            document.getElementById('couponCardMainPctText').textContent = `${discount}% DE DESCUENTO`;
+            document.getElementById('couponCardPctPill').textContent = `${discount}% OFF`;
+            document.getElementById('couponCardValidityText').textContent = validity;
+        }
 
-            const badgeEl = document.getElementById('couponCardClientBadge');
-            if (badgeEl) {
-                badgeEl.textContent = clientName
-                    ? `PARA ${clientName.toUpperCase()} • por ser fiel a Natura`
-                    : 'por ser fiel a Natura';
-            }
-            const mainPctEl = document.getElementById('couponCardMainPctText');
-            if (mainPctEl) mainPctEl.textContent = `${pct}% DE DESCUENTO`;
-
-            const validityEl = document.getElementById('couponCardValidityText');
-            if (validityEl) validityEl.textContent = validity;
-
-            const pctPillEl = document.getElementById('couponCardPctPill');
-            if (pctPillEl) pctPillEl.textContent = `${pct}% OFF`;
-
-            if (clientName) {
-                const match = savedClients.find(c => c.name.toLowerCase() === clientName.toLowerCase());
-                if (match && match.phone) {
-                    document.getElementById('couponModalClientPhone').value = match.phone;
-                }
-            }
+        async function createLoyaltyCouponBlob() {
+            const area = document.getElementById('couponCaptureArea');
+            if (!area || typeof html2canvas !== 'function') throw new Error('No está disponible el generador de imágenes.');
+            refreshLoyaltyCouponPreview();
+            const canvas = await html2canvas(area, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#F4E6E1'
+            });
+            return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         }
 
         async function downloadLoyaltyCouponPNG() {
-            const area = document.getElementById('couponCaptureArea');
-            if (!area || typeof html2canvas !== 'function') return;
             try {
-                const canvas = await html2canvas(area, {
-                    scale: 2.5,
-                    useCORS: true,
-                    backgroundColor: '#F4E6E1'
-                });
-                const dataUrl = canvas.toDataURL('image/png');
-
-                const previewBox = document.getElementById('couponPngPreviewBox');
-                const previewImg = document.getElementById('couponPngPreviewImg');
-                if (previewBox && previewImg) {
-                    previewImg.src = dataUrl;
-                    previewBox.classList.remove('d-none');
-                }
-
+                const blob = await createLoyaltyCouponBlob();
+                if (!blob) throw new Error('No se pudo crear la imagen.');
+                const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                const clientRaw = document.getElementById('couponModalClientName').value.trim() || 'cliente';
-                const pct = document.getElementById('couponModalDiscount').value || '10';
-                const safeName = clientRaw.toLowerCase().replace(/[^a-z0-9]+/gi, '_');
-                link.download = `cupon_${pct}off_${safeName}.png`;
-                link.href = dataUrl;
-                document.body.appendChild(link);
+                const safeName = (document.getElementById('couponModalClientName').value || 'clienta')
+                    .toLowerCase().replace(/[^a-z0-9]+/gi, '_');
+                link.download = `cupon_fidelizacion_${safeName}.png`;
+                link.href = url;
                 link.click();
-                document.body.removeChild(link);
-                showToastMessage('¡Cupón descargado en PNG listo para enviar!');
+                setTimeout(() => URL.revokeObjectURL(url), 1500);
+                showToastMessage('¡Cupón descargado en PNG!');
             } catch (err) {
-                console.error('Error al exportar cupón PNG:', err);
-                showToastMessage('No se pudo descargar el cupón PNG.', 'warning');
+                console.error('Error al generar cupón:', err);
+                showToastMessage('No se pudo generar el cupón. Probá nuevamente.', 'warning');
             }
         }
 
-        function sendLoyaltyCouponWhatsApp() {
-            const clientName = document.getElementById('couponModalClientName').value.trim();
-            const pct = document.getElementById('couponModalDiscount').value || 10;
-            const validity = document.getElementById('couponModalValidity').value.trim() || 'tu próxima compra';
-
-            const text = buildLoyaltyCouponMessage(clientName, pct, '', validity, null);
-            const phoneClean = String(document.getElementById('couponModalClientPhone').value || '').replace(/\D/g, '');
-            const url = phoneClean
-                ? `https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`
-                : `https://wa.me/?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
+        async function sendLoyaltyCouponWhatsApp() {
+            const name = document.getElementById('couponModalClientName').value.trim();
+            const phone = String(document.getElementById('couponModalClientPhone').value || '').replace(/\D/g, '');
+            const discount = Math.min(50, Math.max(1, Number(document.getElementById('couponModalDiscount').value) || 15));
+            const validity = document.getElementById('couponModalValidity').value.trim() || 'tu próxima campaña';
+            if (!name) {
+                showToastMessage('Ingresá el nombre de la clienta para personalizar el cupón.', 'warning');
+                return;
+            }
+            const message = `¡Hola ${name}! 🌸 Como agradecimiento por tu fidelidad, ganaste un ${discount}% de descuento para usar en ${validity}. ¡Aprovechalo en tu próximo pedido! 💛`;
+            try {
+                const blob = await createLoyaltyCouponBlob();
+                if (!blob) throw new Error('No se pudo crear la imagen.');
+                const file = new File([blob], `cupon_fidelizacion.png`, { type: 'image/png' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'Tu cupón de descuento', text: message });
+                    showToastMessage('Elegí WhatsApp en el menú para compartir el cupón.');
+                    return;
+                }
+                // WhatsApp Web no permite adjuntar archivos automáticamente desde un enlace.
+                const url = phone
+                    ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+                    : `https://wa.me/?text=${encodeURIComponent(message)}`;
+                const preview = document.getElementById('couponPngPreviewImg');
+                preview.src = URL.createObjectURL(blob);
+                document.getElementById('couponPngPreviewBox').classList.remove('d-none');
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'cupon_fidelizacion.png';
+                link.click();
+                window.open(url, '_blank');
+                showToastMessage('Cupón descargado. Adjuntalo en WhatsApp antes de enviar el mensaje.');
+            } catch (err) {
+                if (err?.name === 'AbortError') return;
+                console.error('Error al compartir cupón:', err);
+                showToastMessage('No se pudo preparar el cupón para WhatsApp.', 'warning');
+            }
         }
 
-        // --- MÓDULO 3: COBRANZAS Y CUENTAS ---
         function renderCollections() {
             const tbody = document.getElementById('collectionsTable');
             if (!tbody) return;
@@ -2304,7 +2170,7 @@
                         <td class="text-nowrap">
                             <div class="d-inline-flex align-items-center gap-1">
                                 <button class="btn btn-sm btn-outline-dark btn-icon-action" onclick="openClientTicket('${o.id}')" title="Ver / Descargar Ticket" aria-label="Ticket"><i class="bi bi-ticket-perforated"></i></button>
-                                <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="openLoyaltyCouponModal('${o.id}')" title="Crear / Descargar Cupón PNG" aria-label="Cupón"><i class="bi bi-gift"></i></button>
+                                <button class="btn btn-sm btn-outline-warning text-dark btn-icon-action" onclick="openLoyaltyCoupon('${o.id}')" title="Crear cupón de fidelización" aria-label="Crear cupón"><i class="bi bi-gift"></i></button>
                                 ${pendingActionsHtml}
                                 <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${o.id}')" title="Editar Pedido" aria-label="Editar"><i class="bi bi-pencil"></i></button>
                                 <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteOrder('${o.id}')" title="Eliminar Pedido" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
@@ -2314,7 +2180,6 @@
             });
         }
 
-        // --- MÓDULO 4: MI STOCK PROPIO (ENTREGA INMEDIATA) ---
         function renderOwnStock() {
             const tbody = document.getElementById('ownStockTable');
             const badge = document.getElementById('stockCountBadge');
@@ -2532,28 +2397,7 @@
             showToastMessage('Pedido eliminado.', 'secondary');
         }
 
-        // --- ASISTENTE IA WHATSAPP ---
-        function toggleCouponFields() {
-            const type = document.getElementById('aiMessageType').value;
-            const box = document.getElementById('aiCouponExtraFields');
-            if (!box) return;
-            if (type === 'Cupon Fidelizacion') {
-                box.classList.remove('d-none');
-            } else {
-                box.classList.add('d-none');
-            }
-        }
-
         function buildFallbackWhatsAppMessage(campaignName, camp, messageType, brand, extraNotes) {
-            if (messageType === 'Cupon Fidelizacion') {
-                const cName = document.getElementById('aiCouponClientName')?.value || '';
-                const dPct = document.getElementById('aiCouponDiscountPct')?.value || 10;
-                const cVal = document.getElementById('aiCouponValidity')?.value || 'tu próxima compra';
-                let baseCoupon = buildLoyaltyCouponMessage(cName, dPct, '', cVal, camp);
-                if (extraNotes) baseCoupon += `\n\n✨ *Nota especial:* ${extraNotes}`;
-                return baseCoupon;
-            }
-
             const closeFormatted = camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente';
             const arrivalFormatted = camp && camp.endDate ? formatDateAR(getEstimatedArrivalDate(camp.endDate)) : '';
             const dueFormatted = camp && camp.endDate ? formatDateAR(getPaymentDueDate(camp.endDate)) : '';
@@ -2621,7 +2465,7 @@
             const brand = document.getElementById('aiBrandSelect').value;
             const extraNotes = document.getElementById('aiExtraNotes').value.trim();
 
-            if (!campaignName && messageType !== 'Entrega Inmediata' && messageType !== 'Cupon Fidelizacion') {
+            if (!campaignName && messageType !== 'Entrega Inmediata') {
                 showToastMessage('Seleccioná una campaña.', 'warning');
                 return;
             }
@@ -2631,18 +2475,10 @@
                 ? `Links:\n- Natura: ${camp.linkNatura || 'N/A'}\n- Avon: ${camp.linkAvon || 'N/A'}\n- Casa & Estilo: ${camp.linkCasa || 'N/A'}`
                 : '';
 
-            let extraCouponPrompt = '';
-            if (messageType === 'Cupon Fidelizacion') {
-                const cName = document.getElementById('aiCouponClientName')?.value || 'el cliente';
-                const dPct = document.getElementById('aiCouponDiscountPct')?.value || 10;
-                const cVal = document.getElementById('aiCouponValidity')?.value || 'tu próxima compra';
-                extraCouponPrompt = `\n- Cliente: ${cName}\n- Descuento ofrecido en ${cVal}: ${dPct}%\n- Motivo: por ser fiel a Natura\n- Frase clave: "Te ganaste un ..."`;
-            }
-
             const prompt = `Actúa como M. Eugenia Carol (WhatsApp 381-519-3109), consultora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp cálido, cercano y atractivo con emojis.
 - Campaña: ${campaignName || 'General'} (Cierra el: ${camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente'})
 - Tipo: ${messageType}
-- Marca: ${brand}${extraCouponPrompt}
+- Marca: ${brand}
 - Notas extra: ${extraNotes || 'Ninguna'}
 ${linkInfo}
 Devuelve únicamente el texto listo para copiar y enviar.`;
@@ -2693,4 +2529,4 @@ Devuelve únicamente el texto listo para copiar y enviar.`;
         }
     </script>
 </body>
-                                    </html>
+</html>
