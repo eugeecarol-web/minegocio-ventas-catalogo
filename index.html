@@ -1,4 +1,3 @@
-<html>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -10,6 +9,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <!-- html2canvas para exportar el ticket y el cupón en PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- SheetJS (xlsx) para exportar planilla de carga automática en web -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -506,13 +507,17 @@
                                 </select>
                             </div>
                             <div class="row g-2 mb-2">
-                                <div class="col-6">
-                                    <label class="form-label">Código Producto (SKU)</label>
+                                <div class="col-5">
+                                    <label class="form-label">Código (SKU)</label>
                                     <input type="text" id="itemCode" list="savedProductCodesDatalist" class="form-control" placeholder="Ej: 282850" oninput="handleProductCodeAutocomplete(this.value)" onchange="handleProductCodeAutocomplete(this.value)">
                                 </div>
-                                <div class="col-6">
-                                    <label class="form-label">Pág. Folleto</label>
-                                    <input type="text" id="itemPage" class="form-control" placeholder="Ej: 24">
+                                <div class="col-4">
+                                    <label class="form-label">Puntos (pts)</label>
+                                    <input type="number" id="itemPoints" class="form-control" value="0" min="0" step="1" placeholder="Ej: 12" oninput="calculateItemPreview()">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label">Pág.</label>
+                                    <input type="text" id="itemPage" class="form-control" placeholder="24">
                                 </div>
                             </div>
                             <div class="mb-2">
@@ -538,6 +543,10 @@
                                 <div class="d-flex justify-content-between text-muted">
                                     <span>Tu Descuento Mayorista:</span>
                                     <strong id="previewWholesaleDiscount">25%</strong>
+                                </div>
+                                <div class="d-flex justify-content-between" style="color: #7B3A1D;">
+                                    <span>Puntos del Ítem:</span>
+                                    <strong id="previewPoints">0 pts</strong>
                                 </div>
                                 <div class="d-flex justify-content-between text-success">
                                     <span>Tu Ganancia Estimada:</span>
@@ -569,6 +578,7 @@
                                         <tr>
                                             <th>Marca</th>
                                             <th>Artículo</th>
+                                            <th>Pts</th>
                                             <th>Cant.</th>
                                             <th>P. Base</th>
                                             <th>Desc.</th>
@@ -578,11 +588,15 @@
                                         </tr>
                                     </thead>
                                     <tbody id="orderItemsTable">
-                                        <tr><td colspan="8" class="text-center text-muted">Aún no agregaste productos al pedido.</td></tr>
+                                        <tr><td colspan="9" class="text-center text-muted">Aún no agregaste productos al pedido.</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                             <hr>
+                            <div class="d-flex justify-content-between small fw-bold mb-1" style="color: #7B3A1D;">
+                                <span>Puntos Totales del Pedido:</span>
+                                <span id="orderTotalPoints">0 pts</span>
+                            </div>
                             <div class="d-flex justify-content-between small text-success fw-bold mb-1">
                                 <span>Ganancia Total Estimada:</span>
                                 <span id="orderTotalProfit">$0.00</span>
@@ -649,9 +663,14 @@
                         <h4 class="mb-0 fw-bold">📦 Mi Stock Propio (Entrega Inmediata)</h4>
                         <small class="text-muted">Productos comprados sin cliente asignado. Al venderlos con 1 clic, pasan directo a Cobranzas y Cuentas.</small>
                     </div>
-                    <button class="btn btn-primary btn-sm fw-bold" onclick="goToQuickStockLoad()">
-                        <i class="bi bi-plus-circle me-1"></i> Cargar Producto a Stock
-                    </button>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="openKitUnpackModal()">
+                            <i class="bi bi-boxes me-1"></i> Desarmar Kit en Stock
+                        </button>
+                        <button class="btn btn-primary btn-sm fw-bold" onclick="goToQuickStockLoad()">
+                            <i class="bi bi-plus-circle me-1"></i> Cargar Producto a Stock
+                        </button>
+                    </div>
                 </div>
 
                 <div class="card p-3">
@@ -1065,6 +1084,97 @@
         </div>
     </div>
 
+    <!-- Modal para Desarmar Kit Promocional en Stock Individual -->
+    <div class="modal fade" id="kitUnpackModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title"><i class="bi bi-boxes me-2 text-warning"></i>Desarmar Kit en Stock Individual</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-warning py-2 px-3 small mb-3">
+                        <strong>¿Cómo funciona?</strong> El <strong>código del kit</strong> y sus <strong>puntos</strong> van a la lista de carga de la campaña para que lo pidas en Natura/Avon, y sus componentes quedan cargados <strong>uno por uno en Mi Stock</strong> con su costo proporcional repartido.
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Campaña a Cargar</label>
+                            <select id="kitCampaignSelect" class="form-select form-select-sm"></select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Marca</label>
+                            <select id="kitBrandSelect" class="form-select form-select-sm">
+                                <option value="Natura">Natura 🌸</option>
+                                <option value="Avon">Avon 💄</option>
+                                <option value="Casa & Estilo">Casa & Estilo 🏠</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold">Nombre del Kit</label>
+                            <input type="text" id="kitTitleInput" class="form-control form-control-sm" placeholder="Ej: Kit esenciales">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small fw-bold">Código del Kit (SKU)</label>
+                            <input type="text" id="kitCodeInput" class="form-control form-control-sm" placeholder="Ej: 283558">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small fw-bold">Puntos por Kit (pts)</label>
+                            <input type="number" id="kitPointsInput" class="form-control form-control-sm" value="36" min="0" step="1" placeholder="Ej: 36" oninput="updateKitUnpackSummary()">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small fw-bold">Cant. de Kits</label>
+                            <input type="number" id="kitQtyInput" class="form-control form-control-sm" value="1" min="1" oninput="updateKitUnpackSummary()">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small fw-bold">Pagás por Kit ($)</label>
+                            <input type="number" id="kitPaidCostInput" class="form-control form-control-sm" step="0.01" placeholder="Ej: 44250" oninput="updateKitUnpackSummary()">
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                        <h6 class="fw-bold mb-0 small text-uppercase text-secondary">Productos individuales que trae cada kit</h6>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-outline-warning text-dark btn-sm py-0 px-2" onclick="loadKitEsencialesC17Preset()">
+                                ✨ Cargar Kit Esenciales C17 (283558 • 36 pts)
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" onclick="addKitComponentRow()">
+                                <i class="bi bi-plus-lg"></i> Agregar ítem
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive border rounded mb-3" style="max-height: 240px; overflow-y: auto;">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th>Descripción del Producto Suelto</th>
+                                    <th style="width: 78px;">Cant.</th>
+                                    <th style="width: 135px;">Venta Sugerida ($)</th>
+                                    <th style="width: 38px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="kitComponentsTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="p-2 bg-light rounded border small d-flex flex-wrap justify-content-between gap-2">
+                        <span>Puntos totales: <strong style="color: #7B3A1D;" id="kitSummaryPoints">36 pts</strong></span>
+                        <span>Costo a empresa: <strong class="text-danger" id="kitSummaryCost">$0.00</strong></span>
+                        <span>Venta estimada: <strong class="text-primary" id="kitSummarySale">$0.00</strong></span>
+                        <span>Ganancia potencial: <strong class="text-success" id="kitSummaryProfit">$0.00</strong></span>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success fw-bold" onclick="confirmKitUnpackToStock()">
+                        <i class="bi bi-check2-circle me-1"></i> Sumar Código y Puntos a Campaña y Guardar en Stock
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -1085,6 +1195,8 @@
 
         const LOCAL_CATALOG_KEY = 'catalogo_saved_products_v1';
         const LOCAL_CLIENTS_KEY = 'catalogo_saved_clients_v1';
+        const CAMPAIGN_MIN_POINTS = 85;
+        const CAMPAIGN_IDEAL_POINTS = 110;
 
         const ARGENTINA_HOLIDAYS = new Set([
             '2026-11-23',
@@ -1222,6 +1334,7 @@
             const cleanBrand = String(item?.brand || 'Natura').trim();
             const cleanPage = String(item?.page || '').trim();
             const cleanPrice = Number(item?.price) || 0;
+            const cleanPoints = Number(item?.points ?? item?.unitPoints) || 0;
 
             const existingIdx = savedCatalogProducts.findIndex(p =>
                 (cleanCode && p.code && p.code.toLowerCase() === cleanCode.toLowerCase()) ||
@@ -1233,7 +1346,8 @@
                 name: cleanName,
                 brand: cleanBrand,
                 page: cleanPage,
-                price: cleanPrice
+                price: cleanPrice,
+                points: cleanPoints
             };
 
             if (existingIdx >= 0) {
@@ -1242,7 +1356,8 @@
                     ...record,
                     code: cleanCode || savedCatalogProducts[existingIdx].code,
                     page: cleanPage || savedCatalogProducts[existingIdx].page,
-                    price: cleanPrice > 0 ? cleanPrice : savedCatalogProducts[existingIdx].price
+                    price: cleanPrice > 0 ? cleanPrice : savedCatalogProducts[existingIdx].price,
+                    points: cleanPoints > 0 ? cleanPoints : (Number(savedCatalogProducts[existingIdx].points) || 0)
                 };
             } else {
                 savedCatalogProducts.push(record);
@@ -1270,7 +1385,7 @@
             if (codesDl) {
                 codesDl.innerHTML = savedCatalogProducts
                     .filter(p => p.code)
-                    .map(p => `<option value="${p.code.replace(/"/g, '&quot;')}">${p.brand} - ${p.name}${p.price > 0 ? ` ($${p.price})` : ''}</option>`)
+                    .map(p => `<option value="${p.code.replace(/"/g, '&quot;')}">${p.brand} - ${p.name}${p.points > 0 ? ` (${p.points} pts)` : ''}${p.price > 0 ? ` • $${p.price}` : ''}</option>`)
                     .join('');
             }
 
@@ -1278,7 +1393,7 @@
             if (namesDl) {
                 namesDl.innerHTML = savedCatalogProducts
                     .sort((a, b) => a.name.localeCompare(b.name))
-                    .map(p => `<option value="${p.name.replace(/"/g, '&quot;')}">${p.brand}${p.code ? ` • Cód: ${p.code}` : ''}${p.price > 0 ? ` • $${p.price}` : ''}</option>`)
+                    .map(p => `<option value="${p.name.replace(/"/g, '&quot;')}">${p.brand}${p.code ? ` • Cód: ${p.code}` : ''}${p.points > 0 ? ` • ${p.points} pts` : ''}${p.price > 0 ? ` • $${p.price}` : ''}</option>`)
                     .join('');
             }
 
@@ -1314,6 +1429,7 @@
             if (match.name) document.getElementById('itemName').value = match.name;
             if (match.page && !document.getElementById('itemPage').value) document.getElementById('itemPage').value = match.page;
             if (match.price > 0) document.getElementById('itemPrice').value = match.price;
+            if (Number(match.points) > 0) document.getElementById('itemPoints').value = match.points;
             calculateItemPreview();
         }
 
@@ -1327,6 +1443,7 @@
             if (match.code && !document.getElementById('itemCode').value) document.getElementById('itemCode').value = match.code;
             if (match.page && !document.getElementById('itemPage').value) document.getElementById('itemPage').value = match.page;
             if (match.price > 0) document.getElementById('itemPrice').value = match.price;
+            if (Number(match.points) > 0) document.getElementById('itemPoints').value = match.points;
             calculateItemPreview();
         }
 
@@ -1362,14 +1479,18 @@
             const brand = document.getElementById('itemBrand').value;
             const qty = Math.max(1, parseInt(document.getElementById('itemQty').value) || 1);
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+            const unitPoints = Math.max(0, Number(document.getElementById('itemPoints')?.value) || 0);
             const clientDiscountPct = parseFloat(document.getElementById('itemClientDiscount').value) || 0;
             const wholesaleDiscountPct = isGift ? 100 : getWholesaleDiscountForBrand(brand);
 
             const wholesaleCost = (isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100))) * qty;
             const finalClientPrice = isOwnStock ? 0 : (price * (1 - (clientDiscountPct / 100)) * qty);
             const profit = isOwnStock ? 0 : (finalClientPrice - wholesaleCost);
+            const totalItemPoints = isGift ? 0 : (unitPoints * qty);
 
             document.getElementById('previewWholesaleDiscount').textContent = isGift ? '100% (Regalo)' : `${wholesaleDiscountPct}%`;
+            const previewPtsEl = document.getElementById('previewPoints');
+            if (previewPtsEl) previewPtsEl.textContent = isGift ? '0 pts (Regalo)' : `${totalItemPoints} pts`;
             document.getElementById('previewProfit').textContent = isOwnStock ? '$0.00 (Al venderse)' : `$${profit.toFixed(2)}`;
             document.getElementById('previewCost').textContent = `$${wholesaleCost.toFixed(2)}`;
             document.getElementById('previewFinalClientPrice').textContent = isOwnStock ? '$0.00 (Stock Propio)' : `$${finalClientPrice.toFixed(2)}`;
@@ -1386,6 +1507,8 @@
                 const brand = item?.brand || 'Natura';
                 const isGift = Boolean(item?.isGift ?? item?.isCompanyGift);
                 const isOwnStock = Boolean(item?.isOwnStock);
+                const unitPts = isGift ? 0 : (Number(item?.points ?? item?.unitPoints) || 0);
+                const itemTotalPts = item?.totalPoints !== undefined ? Number(item.totalPoints) : (unitPts * qty);
                 const wholesaleDisc = isGift ? 100 : (Number(item?.wholesaleDiscountPct) || getWholesaleDiscountForBrand(brand));
 
                 const itemCost = item?.cost !== undefined && (Number(item.cost) > 0 || isGift)
@@ -1407,10 +1530,13 @@
                 acc.total += itemFinal;
                 acc.cost += itemCost;
                 acc.profit += itemProfit;
+                if (!item?.skipWebOrder) {
+                    acc.points += itemTotalPts;
+                }
                 if (isOwnStock) acc.hasOwnStock = true;
                 else acc.hasClientItems = true;
                 return acc;
-            }, { total: 0, cost: 0, profit: 0, hasOwnStock: false, hasClientItems: false });
+            }, { total: 0, cost: 0, profit: 0, points: 0, hasOwnStock: false, hasClientItems: false });
 
             const isPureOwnStock = Boolean(o.isPureOwnStock) || (calcItems.hasOwnStock && !calcItems.hasClientItems);
 
@@ -1424,6 +1550,7 @@
             const totalProfit = isPureOwnStock ? 0 : (savedProfit !== 0 ? savedProfit : (total - totalCost));
 
             const paidAmount = Number(o.paidAmount ?? o.paid ?? 0) || 0;
+            const totalPoints = Number(o.totalPoints) > 0 ? Number(o.totalPoints) : calcItems.points;
 
             return {
                 ...o,
@@ -1435,7 +1562,8 @@
                 total,
                 totalCost,
                 totalProfit,
-                paidAmount
+                paidAmount,
+                totalPoints
             };
         }
 
@@ -1465,6 +1593,97 @@
             });
         }
 
+        function getConsolidatedWebItemsForCampaign(campaignName) {
+            const campOrders = orders.map(normalizeOrderData).filter(o => o.campaign === campaignName);
+            const consolidatedMap = {};
+            let totalCampaignPoints = 0;
+
+            campOrders.forEach(o => {
+                if (o.items && Array.isArray(o.items)) {
+                    o.items.forEach(item => {
+                        if (item.isGift || item.isCompanyGift || item.skipWebOrder) return;
+                        const brandKey = item.brand || 'Natura';
+                        const rawCode = String(item.code || '').trim();
+                        const codeKey = rawCode || 'S/C';
+                        const key = `${brandKey}_${codeKey}_${String(item.name || '').toLowerCase().trim()}`;
+                        const qtyItem = parseInt(item.qty, 10) || 1;
+                        const unitPts = Number(item.points ?? item.unitPoints) || 0;
+                        const linePts = item.totalPoints !== undefined ? Number(item.totalPoints) : (unitPts * qtyItem);
+
+                        totalCampaignPoints += linePts;
+
+                        if (!consolidatedMap[key]) {
+                            consolidatedMap[key] = {
+                                brand: brandKey,
+                                code: codeKey,
+                                rawCode,
+                                name: item.name,
+                                qty: 0,
+                                points: 0
+                            };
+                        }
+                        consolidatedMap[key].qty += qtyItem;
+                        consolidatedMap[key].points += linePts;
+                    });
+                }
+            });
+
+            return {
+                list: Object.values(consolidatedMap),
+                totalCampaignPoints
+            };
+        }
+
+        function exportCampaignWebExcel(campaignId) {
+            const camp = campaigns.find(c => c.id === campaignId);
+            if (!camp) return;
+
+            const { list } = getConsolidatedWebItemsForCampaign(camp.name);
+            const validRows = [];
+            let missingCodeCount = 0;
+
+            list.forEach(item => {
+                const cleanCode = String(item.rawCode || '').trim();
+                if (!cleanCode) {
+                    missingCodeCount++;
+                    return;
+                }
+                const numericCode = /^\d+$/.test(cleanCode) ? Number(cleanCode) : cleanCode;
+                validRows.push({
+                    'CANTIDAD': Number(item.qty) || 1,
+                    'CÓDIGO': numericCode
+                });
+            });
+
+            if (validRows.length === 0) {
+                showToastMessage(`La campaña "${camp.name}" no tiene artículos con código (SKU) para exportar.`, 'warning');
+                return;
+            }
+
+            if (typeof XLSX === 'undefined') {
+                showToastMessage('No se pudo cargar el generador de Excel. Recargá la página e intentá de nuevo.', 'danger');
+                return;
+            }
+
+            const worksheet = XLSX.utils.json_to_sheet(validRows, { header: ['CANTIDAD', 'CÓDIGO'] });
+            worksheet['!cols'] = [{ wch: 12 }, { wch: 14 }];
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Carga_Web');
+
+            const safeCampName = String(camp.name || 'campana')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/gi, '_')
+                .replace(/^_+|_+$/g, '');
+            const fileName = `planilla_${safeCampName || 'web'}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+
+            if (missingCodeCount > 0) {
+                showToastMessage(`Planilla "${fileName}" descargada (${validRows.length} códigos). Nota: se omitieron ${missingCodeCount} ítem(s) sin SKU.`, 'info');
+            } else {
+                showToastMessage(`¡Planilla "${fileName}" descargada con ${validRows.length} artículo(s) lista para carga web!`);
+            }
+        }
+
         function renderCampaigns() {
             const container = document.getElementById('campaignsContainer');
             if (!container) return;
@@ -1488,8 +1707,6 @@
                 const dueIso = getPaymentDueDate(c.endDate);
 
                 const campOrders = orders.map(normalizeOrderData).filter(o => o.campaign === c.name);
-                const consolidatedMap = {};
-
                 let totalSold = 0;
                 let totalPaidByClients = 0;
                 let estimatedWholesaleCost = 0;
@@ -1498,31 +1715,25 @@
                     totalSold += Number(o.total) || 0;
                     totalPaidByClients += Number(o.paidAmount) || 0;
                     estimatedWholesaleCost += Number(o.totalCost) || 0;
-
-                    if (o.items && Array.isArray(o.items)) {
-                        o.items.forEach(item => {
-                            if (item.isGift || item.isCompanyGift) return;
-                            const brandKey = item.brand || 'Natura';
-                            const codeKey = item.code ? item.code.trim() : 'S/C';
-                            const key = `${brandKey}_${codeKey}_${String(item.name || '').toLowerCase().trim()}`;
-
-                            if (!consolidatedMap[key]) {
-                                consolidatedMap[key] = {
-                                    brand: brandKey,
-                                    code: codeKey,
-                                    name: item.name,
-                                    qty: 0
-                                };
-                            }
-                            consolidatedMap[key].qty += parseInt(item.qty, 10) || 1;
-                        });
-                    }
                 });
+
+                const { list: consolidatedList, totalCampaignPoints } = getConsolidatedWebItemsForCampaign(c.name);
 
                 const pendingFromClients = Math.max(0, totalSold - totalPaidByClients);
                 const companyReference = invoicePaid > 0 ? invoicePaid : estimatedWholesaleCost;
                 const netCampaignBalance = totalPaidByClients - companyReference;
-                const consolidatedList = Object.values(consolidatedMap);
+
+                // Cálculo de progreso de puntos (Mínimo 85 pts • Ideal 110 pts)
+                const pointsPct = Math.min(100, Math.round((totalCampaignPoints / CAMPAIGN_IDEAL_POINTS) * 100));
+                let pointsBarClass = 'bg-danger';
+                let pointsStatusText = `Faltan ${Math.max(0, CAMPAIGN_MIN_POINTS - totalCampaignPoints)} pts para el mínimo (85)`;
+                if (totalCampaignPoints >= CAMPAIGN_IDEAL_POINTS) {
+                    pointsBarClass = 'bg-success';
+                    pointsStatusText = '¡Meta ideal alcanzada! (110+ pts) 🌟';
+                } else if (totalCampaignPoints >= CAMPAIGN_MIN_POINTS) {
+                    pointsBarClass = 'bg-warning text-dark';
+                    pointsStatusText = `¡Mínimo logrado! Faltan ${CAMPAIGN_IDEAL_POINTS - totalCampaignPoints} pts para el ideal (110)`;
+                }
 
                 let linksHtml = '';
                 if (c.linkNatura) linksHtml += `<a href="${c.linkNatura}" target="_blank" class="btn btn-sm btn-outline-danger">Natura 🌸</a>`;
@@ -1540,6 +1751,23 @@
                                 </div>
                             </div>
                             <small class="text-muted mb-2 d-block">📅 Del ${formatDateAR(c.startDate)} al ${formatDateAR(c.endDate)}</small>
+
+                            <!-- Indicador de Puntos de la Campaña (85 mínimo / 110 ideal) -->
+                            <div class="p-2 bg-white rounded border mb-2 small">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold" style="color: #7B3A1D;"><i class="bi bi-stars me-1"></i>Puntos del Pedido:</span>
+                                    <span class="badge ${totalCampaignPoints >= CAMPAIGN_IDEAL_POINTS ? 'bg-success' : (totalCampaignPoints >= CAMPAIGN_MIN_POINTS ? 'bg-warning text-dark' : 'bg-danger')}">
+                                        ${totalCampaignPoints} / ${CAMPAIGN_IDEAL_POINTS} pts
+                                    </span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar ${pointsBarClass}" role="progressbar" style="width: ${pointsPct}%;" aria-valuenow="${totalCampaignPoints}" aria-valuemin="0" aria-valuemax="${CAMPAIGN_IDEAL_POINTS}"></div>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted mt-1" style="font-size: 11px;">
+                                    <span>${pointsStatusText}</span>
+                                    <span>Mín: <strong>85</strong> • Ideal: <strong>110</strong></span>
+                                </div>
+                            </div>
 
                             <div class="p-2 rounded border mb-2 small" style="background-color: rgba(227, 157, 52, 0.12); border-color: rgba(174, 56, 32, 0.2) !important;">
                                 <div class="d-flex justify-content-between">
@@ -1586,10 +1814,15 @@
                             </div>
 
                             <div class="border-top pt-2">
-                                <h6 class="fw-bold small text-secondary d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#collapseConsolidated_${c.id}" style="cursor: pointer;">
-                                    <span><i class="bi bi-list-check me-1"></i> Lista para Cargar en la Web (${consolidatedList.length} ítems)</span>
-                                    <i class="bi bi-chevron-down"></i>
-                                </h6>
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <h6 class="fw-bold small text-secondary mb-0 d-flex align-items-center gap-1" data-bs-toggle="collapse" data-bs-target="#collapseConsolidated_${c.id}" style="cursor: pointer;">
+                                        <span><i class="bi bi-list-check me-1"></i> Lista para Cargar en la Web (${consolidatedList.length} ítems • ${totalCampaignPoints} pts)</span>
+                                        <i class="bi bi-chevron-down"></i>
+                                    </h6>
+                                    <button type="button" class="btn btn-sm btn-success py-0 px-2 fw-bold" onclick="exportCampaignWebExcel('${c.id}')" title="Descargar planilla Excel (CANTIDAD y CÓDIGO) para carga automática en web">
+                                        <i class="bi bi-file-earmark-excel me-1"></i> Planilla Web (.xlsx)
+                                    </button>
+                                </div>
                                 <div class="collapse mt-2" id="collapseConsolidated_${c.id}">
                                     <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
                                         <table class="table table-sm table-bordered align-middle mb-0" style="font-size: 11px;">
@@ -1598,16 +1831,18 @@
                                                     <th>Marca</th>
                                                     <th>Cód.</th>
                                                     <th>Producto</th>
-                                                    <th class="text-center">Cant. Total</th>
+                                                    <th class="text-center">Pts</th>
+                                                    <th class="text-center">Cant.</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                ${consolidatedList.length === 0 ? '<tr><td colspan="4" class="text-center text-muted">No hay pedidos para encargar en esta campaña.</td></tr>' :
+                                                ${consolidatedList.length === 0 ? '<tr><td colspan="5" class="text-center text-muted">No hay pedidos para encargar en esta campaña.</td></tr>' :
                                                   consolidatedList.map(item => `
                                                     <tr>
                                                         <td><span class="badge ${item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa')}">${item.brand}</span></td>
                                                         <td><strong>${item.code}</strong></td>
                                                         <td>${item.name}</td>
+                                                        <td class="text-center fw-semibold" style="color: #7B3A1D;">${item.points || 0}</td>
                                                         <td class="text-center fw-bold text-danger">${item.qty}</td>
                                                     </tr>
                                                   `).join('')}
@@ -1640,7 +1875,8 @@
             const selects = [
                 document.getElementById('orderCampaignSelect'),
                 document.getElementById('filterCampaignSelect'),
-                document.getElementById('aiCampaignSelect')
+                document.getElementById('aiCampaignSelect'),
+                document.getElementById('kitCampaignSelect')
             ];
             selects.forEach(select => {
                 if (!select) return;
@@ -1728,6 +1964,7 @@
             document.getElementById('itemIsGift').checked = false;
             document.getElementById('itemBrand').value = 'Natura';
             document.getElementById('itemCode').value = '';
+            document.getElementById('itemPoints').value = '0';
             document.getElementById('itemPage').value = '';
             document.getElementById('itemName').value = '';
             document.getElementById('itemQty').value = '1';
@@ -1750,6 +1987,7 @@
             document.getElementById('itemIsGift').checked = Boolean(item.isGift);
             document.getElementById('itemBrand').value = item.brand || 'Natura';
             document.getElementById('itemCode').value = item.code || '';
+            document.getElementById('itemPoints').value = item.points ?? item.unitPoints ?? 0;
             document.getElementById('itemPage').value = item.page || '';
             document.getElementById('itemName').value = item.name || '';
             document.getElementById('itemQty').value = item.qty || 1;
@@ -1781,6 +2019,7 @@
             const isGift = !isOwnStock && document.getElementById('itemIsGift').checked;
             const brand = document.getElementById('itemBrand').value;
             const code = document.getElementById('itemCode').value.trim();
+            const unitPoints = isGift ? 0 : Math.max(0, Number(document.getElementById('itemPoints').value) || 0);
             const page = document.getElementById('itemPage').value.trim();
             const name = document.getElementById('itemName').value.trim();
             const qty = parseInt(document.getElementById('itemQty').value, 10) || 1;
@@ -1799,6 +2038,8 @@
 
             const newItem = {
                 isOwnStock, isGift, brand, code, page, name, qty,
+                points: unitPoints,
+                totalPoints: unitPoints * qty,
                 price, clientDiscountPct, wholesaleDiscountPct,
                 finalClientPrice: finalClientPriceUnit * qty,
                 profit: unitProfit * qty,
@@ -1825,12 +2066,14 @@
             let totalCatalog = 0;
             let totalProfit = 0;
             let totalCost = 0;
+            let totalPoints = 0;
 
             if (currentOrderItems.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Aún no agregaste productos al pedido.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">Aún no agregaste productos al pedido.</td></tr>`;
                 document.getElementById('orderTotal').textContent = '$0.00';
                 document.getElementById('orderTotalProfit').textContent = '$0.00';
                 document.getElementById('orderTotalCost').textContent = '$0.00';
+                document.getElementById('orderTotalPoints').textContent = '0 pts';
                 return;
             }
 
@@ -1838,9 +2081,13 @@
                 const subtotal = item.isOwnStock ? 0 : (Number(item.finalClientPrice) || 0);
                 const itemProfit = item.isOwnStock ? 0 : (Number(item.profit) || 0);
                 const itemCost = Number(item.cost) || 0;
+                const qtyItem = Number(item.qty) || 1;
+                const itemPts = item.isGift ? 0 : (item.totalPoints !== undefined ? Number(item.totalPoints) : ((Number(item.points) || 0) * qtyItem));
+
                 totalCatalog += subtotal;
                 totalProfit += itemProfit;
                 totalCost += itemCost;
+                totalPoints += itemPts;
 
                 const badgeClass = item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
                 const specialBadge = item.isOwnStock
@@ -1851,8 +2098,9 @@
                     <tr>
                         <td><span class="badge ${badgeClass}">${item.brand}</span></td>
                         <td>${item.name} ${specialBadge}</td>
-                        <td>${item.qty}</td>
-                        <td>$${((Number(item.price) || 0) * (Number(item.qty) || 1)).toFixed(2)}</td>
+                        <td class="fw-semibold" style="color: #7B3A1D;">${itemPts}</td>
+                        <td>${qtyItem}</td>
+                        <td>$${((Number(item.price) || 0) * qtyItem).toFixed(2)}</td>
                         <td>${(Number(item.clientDiscountPct) || 0) > 0 ? `<span class="text-danger fw-bold">${item.clientDiscountPct}%</span>` : 'Sin desc.'}</td>
                         <td class="fw-bold">$${subtotal.toFixed(2)}</td>
                         <td class="text-success fw-bold">+$${itemProfit.toFixed(2)}</td>
@@ -1866,6 +2114,7 @@
             document.getElementById('orderTotal').textContent = `$${totalCatalog.toFixed(2)}`;
             document.getElementById('orderTotalProfit').textContent = `+$${totalProfit.toFixed(2)}`;
             document.getElementById('orderTotalCost').textContent = `-$${totalCost.toFixed(2)}`;
+            document.getElementById('orderTotalPoints').textContent = `${totalPoints} pts`;
         }
 
         function buildOrderWhatsAppText(order) {
@@ -1974,6 +2223,12 @@
             const total = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.finalClientPrice) || 0)), 0);
             const totalProfit = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.profit) || 0)), 0);
             const totalCost = currentOrderItems.reduce((acc, item) => acc + (Number(item.cost) || 0), 0);
+            const totalPoints = currentOrderItems.reduce((acc, item) => {
+                if (item.isGift || item.skipWebOrder) return acc;
+                const qtyItem = Number(item.qty) || 1;
+                const itemPts = item.totalPoints !== undefined ? Number(item.totalPoints) : ((Number(item.points) || 0) * qtyItem);
+                return acc + itemPts;
+            }, 0);
 
             const orderData = {
                 campaign,
@@ -1984,6 +2239,7 @@
                 total,
                 totalProfit,
                 totalCost,
+                totalPoints,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -2157,7 +2413,6 @@
                     showToastMessage('Elegí WhatsApp en el menú para compartir el cupón.');
                     return;
                 }
-                // WhatsApp Web no permite adjuntar archivos automáticamente desde un enlace.
                 const url = phone
                     ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
                     : `https://wa.me/?text=${encodeURIComponent(message)}`;
@@ -2246,7 +2501,7 @@
             const stockEntries = [];
             orders.map(normalizeOrderData).forEach(o => {
                 (o.items || []).forEach((item, idx) => {
-                    if (item.isOwnStock && (parseInt(item.qty, 10) || 0) > 0) {
+                    if (item.isOwnStock && !item.isKitHeaderOnly && (parseInt(item.qty, 10) || 0) > 0) {
                         stockEntries.push({
                             orderId: o.id,
                             campaign: o.campaign,
@@ -2358,6 +2613,8 @@
                 page: stockItem.page || '',
                 name: stockItem.name,
                 qty: sellQty,
+                points: 0,
+                totalPoints: 0,
                 price: unitPrice,
                 clientDiscountPct: 0,
                 wholesaleDiscountPct: stockItem.wholesaleDiscountPct || getWholesaleDiscountForBrand(stockItem.brand),
@@ -2376,6 +2633,7 @@
                 total: saleTotal,
                 totalProfit: saleProfit,
                 totalCost: 0,
+                totalPoints: 0,
                 paidAmount: markPaid ? saleTotal : 0,
                 paymentStatus: markPaid ? 'Pagado' : 'Pendiente',
                 lastPaymentMethod: markPaid ? 'Efectivo' : '-',
@@ -2394,7 +2652,7 @@
                 };
             }
 
-            if (updatedItems.length === 0) {
+            if (updatedItems.length === 0 || updatedItems.every(i => i.isKitHeaderOnly)) {
                 await db.collection('orders').doc(orderId).delete();
             } else {
                 const updatedTotal = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.finalClientPrice) || 0)), 0);
@@ -2422,6 +2680,185 @@
             });
             orders.unshift(createdSale);
             openClientTicket(createdSale.id);
+        }
+
+        function openKitUnpackModal() {
+            updateCampaignSelects();
+            const campSelect = document.getElementById('kitCampaignSelect');
+            const c17 = campaigns.find(c => /17/i.test(c.name)) || campaigns.find(c => c.status === 'Activa') || campaigns[0];
+            if (campSelect && c17) campSelect.value = c17.name;
+
+            loadKitEsencialesC17Preset();
+            new bootstrap.Modal(document.getElementById('kitUnpackModal')).show();
+        }
+
+        function loadKitEsencialesC17Preset() {
+            document.getElementById('kitBrandSelect').value = 'Natura';
+            document.getElementById('kitTitleInput').value = 'Kit esenciales';
+            document.getElementById('kitCodeInput').value = '283558';
+            document.getElementById('kitPointsInput').value = '36';
+            document.getElementById('kitQtyInput').value = '1';
+            const tierCost = currentRevellerDiscount >= 30 ? 41300 : 44250;
+            document.getElementById('kitPaidCostInput').value = String(tierCost);
+
+            const presetItems = [
+                { name: 'Tododia body splash frambuesa y pimienta rosa 200 ml', qty: 1, price: 25900 },
+                { name: 'Tododia crema nutritiva avellana y casis 400 ml', qty: 1, price: 23900 },
+                { name: 'Tododia shampoo nutrición durazno y almendra 300 ml', qty: 1, price: 13000 },
+                { name: 'Tododia acondicionador nutrición durazno y almendra 280 ml', qty: 1, price: 13000 },
+                { name: 'Tododia desodorante roll on piel uniforme 70 ml', qty: 1, price: 7500 },
+                { name: 'Erva Doce desodorante en crema 50 g', qty: 1, price: 7500 }
+            ];
+
+            const tbody = document.getElementById('kitComponentsTableBody');
+            tbody.innerHTML = '';
+            presetItems.forEach(p => addKitComponentRow(p.name, p.qty, p.price));
+            updateKitUnpackSummary();
+        }
+
+        function addKitComponentRow(name = '', qty = 1, price = '') {
+            const tbody = document.getElementById('kitComponentsTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" class="form-control form-control-sm kit-comp-name" value="${String(name).replace(/"/g, '&quot;')}" placeholder="Nombre del producto individual"></td>
+                <td><input type="number" class="form-control form-control-sm kit-comp-qty" value="${qty}" min="1" oninput="updateKitUnpackSummary()"></td>
+                <td><input type="number" class="form-control form-control-sm kit-comp-price" value="${price}" step="0.01" placeholder="0.00" oninput="updateKitUnpackSummary()"></td>
+                <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('tr').remove(); updateKitUnpackSummary();"><i class="bi bi-x-circle"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+            updateKitUnpackSummary();
+        }
+
+        function readKitComponentRows() {
+            const rows = Array.from(document.querySelectorAll('#kitComponentsTableBody tr'));
+            return rows.map(tr => ({
+                name: tr.querySelector('.kit-comp-name')?.value.trim() || '',
+                qty: Math.max(1, parseInt(tr.querySelector('.kit-comp-qty')?.value, 10) || 1),
+                price: parseFloat(tr.querySelector('.kit-comp-price')?.value) || 0
+            })).filter(r => r.name);
+        }
+
+        function updateKitUnpackSummary() {
+            const kitQty = Math.max(1, parseInt(document.getElementById('kitQtyInput')?.value, 10) || 1);
+            const pointsPerKit = Math.max(0, Number(document.getElementById('kitPointsInput')?.value) || 0);
+            const paidPerKit = parseFloat(document.getElementById('kitPaidCostInput')?.value) || 0;
+            const comps = readKitComponentRows();
+
+            const totalPoints = pointsPerKit * kitQty;
+            const totalCost = paidPerKit * kitQty;
+            const totalSalePerKit = comps.reduce((acc, c) => acc + (c.price * c.qty), 0);
+            const totalSale = totalSalePerKit * kitQty;
+            const profit = totalSale - totalCost;
+
+            const ptsEl = document.getElementById('kitSummaryPoints');
+            if (ptsEl) ptsEl.textContent = `${totalPoints} pts`;
+            document.getElementById('kitSummaryCost').textContent = `$${totalCost.toFixed(2)}`;
+            document.getElementById('kitSummarySale').textContent = `$${totalSale.toFixed(2)}`;
+            document.getElementById('kitSummaryProfit').textContent = `${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}`;
+        }
+
+        async function confirmKitUnpackToStock() {
+            const campaign = document.getElementById('kitCampaignSelect').value;
+            const brand = document.getElementById('kitBrandSelect').value || 'Natura';
+            const kitTitle = document.getElementById('kitTitleInput').value.trim() || 'Kit Promocional';
+            const kitCode = document.getElementById('kitCodeInput').value.trim();
+            const pointsPerKit = Math.max(0, Number(document.getElementById('kitPointsInput').value) || 0);
+            const kitQty = Math.max(1, parseInt(document.getElementById('kitQtyInput').value, 10) || 1);
+            const paidPerKit = parseFloat(document.getElementById('kitPaidCostInput').value) || 0;
+            const comps = readKitComponentRows();
+
+            if (!campaign || paidPerKit <= 0 || comps.length === 0) {
+                showToastMessage('Seleccioná la campaña, el monto que pagás por el kit y al menos un producto individual.', 'warning');
+                return;
+            }
+
+            const totalPaidCost = paidPerKit * kitQty;
+            const totalKitPoints = pointsPerKit * kitQty;
+            const totalSuggestedPerKit = comps.reduce((acc, c) => acc + (c.price * c.qty), 0);
+            const totalUnitsPerKit = comps.reduce((acc, c) => acc + c.qty, 0);
+
+            const orderItems = [];
+
+            // 1) Ítem exclusivo para la Lista de Carga Web de la campaña (con el SKU del kit y sus puntos)
+            const kitHeaderItem = {
+                isOwnStock: true,
+                isKitHeaderOnly: true,
+                skipWebOrder: false,
+                isGift: false,
+                brand,
+                code: kitCode,
+                page: '',
+                name: `${kitTitle} (Kit para desarmar)`,
+                qty: kitQty,
+                points: pointsPerKit,
+                totalPoints: totalKitPoints,
+                price: totalSuggestedPerKit,
+                clientDiscountPct: 0,
+                wholesaleDiscountPct: 0,
+                finalClientPrice: 0,
+                profit: 0,
+                cost: 0
+            };
+            rememberProductEntry({
+                code: kitCode,
+                name: kitTitle,
+                brand,
+                price: totalSuggestedPerKit,
+                points: pointsPerKit
+            });
+            orderItems.push(kitHeaderItem);
+
+            // 2) Cada producto suelto entra a Mi Stock Propio con su costo proporcional y marcado skipWebOrder para no pedirlo doble
+            comps.forEach(c => {
+                const totalLineUnits = c.qty * kitQty;
+                const weight = totalSuggestedPerKit > 0
+                    ? ((c.price * c.qty) / totalSuggestedPerKit)
+                    : (c.qty / Math.max(1, totalUnitsPerKit));
+                const allocatedLineCost = totalPaidCost * weight;
+
+                const stockItem = {
+                    isOwnStock: true,
+                    skipWebOrder: true,
+                    fromKitCode: kitCode,
+                    isGift: false,
+                    brand,
+                    code: kitCode ? `KIT-${kitCode}` : '',
+                    page: '',
+                    name: c.name,
+                    qty: totalLineUnits,
+                    points: 0,
+                    totalPoints: 0,
+                    price: c.price,
+                    clientDiscountPct: 0,
+                    wholesaleDiscountPct: getWholesaleDiscountForBrand(brand),
+                    finalClientPrice: 0,
+                    profit: 0,
+                    cost: allocatedLineCost
+                };
+                rememberProductEntry(stockItem);
+                orderItems.push(stockItem);
+            });
+
+            rebuildAutocompleteLists();
+
+            await db.collection('orders').add({
+                campaign,
+                clientName: 'Stock Propio',
+                clientPhone: '',
+                items: orderItems,
+                isPureOwnStock: true,
+                total: 0,
+                totalProfit: 0,
+                totalCost: totalPaidCost,
+                totalPoints: totalKitPoints,
+                paidAmount: 0,
+                paymentStatus: 'Stock Propio',
+                lastPaymentMethod: '-',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            bootstrap.Modal.getInstance(document.getElementById('kitUnpackModal')).hide();
+            showToastMessage(`¡Kit ${kitCode || kitTitle} (${totalKitPoints} pts) agregado a ${campaign} y desarmado en ${comps.length} productos en Mi Stock!`);
         }
 
         function openPaymentModal(orderId, clientName, currentSaldo) {
@@ -2480,7 +2917,7 @@
                 const stockLines = [];
                 orders.map(normalizeOrderData).forEach(o => {
                     (o.items || []).forEach(it => {
-                        if (it.isOwnStock && (parseInt(it.qty, 10) || 0) > 0) {
+                        if (it.isOwnStock && !it.isKitHeaderOnly && (parseInt(it.qty, 10) || 0) > 0) {
                             stockLines.push(`• *[${it.brand || 'Natura'}]* ${it.name} - $${(Number(it.price) || 0).toFixed(2)}`);
                         }
                     });
@@ -2587,4 +3024,4 @@ Devuelve únicamente el texto listo para copiar y enviar.`;
         }
     </script>
 </body>
-        </html>
+</html>
