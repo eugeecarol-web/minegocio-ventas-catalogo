@@ -4,18 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Negocio por Catálogo - Natura, Avon & Casa & Estilo</title>
-    <!-- Firebase SDK compat para sincronización en tiempo real -->
+    <!-- Firebase SDK compat -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <!-- html2canvas para exportar el ticket y el cupón en PNG -->
+    <!-- html2canvas para descargar el ticket y el cupón en PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- SheetJS (xlsx) para exportar planilla de carga automática en web -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- SheetJS para exportar la planilla Excel (.xlsx) de carga automática -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        /* Paleta cálida inspirada en tarjetas de consultora Natura y Avon */
         :root {
             --natura-color: #E45E27;
             --avon-color: #AE3820;
@@ -32,7 +31,6 @@
             overflow-x: hidden;
         }
 
-        /* Ondas decorativas de fondo en la esquina superior derecha */
         .brand-waves-bg {
             position: fixed;
             top: 0;
@@ -100,6 +98,19 @@
             align-items: center;
             justify-content: center;
             border-radius: 8px;
+        }
+
+        .campaign-draggable-col {
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+
+        .campaign-draggable-col.dragging {
+            opacity: 0.55;
+            transform: scale(0.98);
+        }
+
+        .campaign-draggable-col.drag-over .card {
+            border: 2px dashed var(--natura-color);
         }
 
         /* Estilos del Ticket Digital estilo Tarjeta de Consultora */
@@ -210,7 +221,7 @@
             color: #1F1815;
         }
 
-        /* Cupón de fidelización con jerarquía tipográfica ordenada */
+        /* Cupón de fidelización inspirado en la tarjeta de consultora */
         .coupon-voucher-canvas {
             width: 100%;
             max-width: 560px;
@@ -222,9 +233,8 @@
             border-radius: 14px;
             background: #F4E6E1;
             color: #1F1815;
-            box-shadow: 0 8px 24px rgba(31, 24, 21, .16);
+            box-shadow: 0 8px 24px rgba(31,24,21,.16);
         }
-
         .coupon-wave-corner {
             position: absolute;
             width: 245px;
@@ -233,7 +243,6 @@
             right: -5px;
             pointer-events: none;
         }
-
         .coupon-right-brands-overlay {
             position: absolute;
             z-index: 2;
@@ -245,123 +254,78 @@
             gap: 5px;
             color: #111;
         }
-
-        .coupon-right-brands-overlay .brand-logo-natura-img {
-            height: 29px;
-        }
-
+        .coupon-right-brands-overlay .brand-logo-natura-img { height: 29px; }
         .coupon-right-brands-overlay .brand-logo-avon-word {
             font-size: 1.05rem;
             letter-spacing: .13em;
         }
-
         .coupon-main-body {
             position: relative;
             z-index: 1;
-            min-height: 280px;
+            min-height: 275px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding-top: 46px;
+            padding-top: 55px;
             text-align: center;
         }
-
-        .coupon-header-stack {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 14px;
+        .coupon-main-heading {
+            margin: 10px auto 15px;
+            max-width: 92%;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: clamp(1.25rem, 4.5vw, 1.9rem);
+            line-height: 1.08;
+            font-weight: 800;
+            letter-spacing: .045em;
+            color: #F4E6E1;
+            -webkit-text-stroke: 1px #1F1815;
+            text-align: center;
         }
-
         .coupon-client-loyalty-label {
             display: inline-block;
             position: relative;
             z-index: 3;
             max-width: 100%;
-            padding: 4px 14px;
-            margin: 0 auto;
-            border-radius: 999px;
-            background: rgba(255, 253, 251, 0.92);
-            border: 1px solid rgba(174, 56, 32, 0.22);
+            padding: 4px 12px;
+            margin: 0 auto 3px;
+            border-radius: 6px;
+            background: rgba(244, 230, 225, 0.96);
             color: #7B2B1C;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.03em;
             line-height: 1.25;
-            box-shadow: 0 2px 6px rgba(31, 24, 21, 0.08);
+            box-shadow: 0 1px 4px rgba(31, 24, 21, 0.10);
         }
-
-        .coupon-main-heading {
-            margin: 0 auto;
-            max-width: 92%;
-            font-family: Georgia, 'Times New Roman', serif;
-            font-size: clamp(1.22rem, 4.3vw, 1.82rem);
-            line-height: 1.12;
-            font-weight: 800;
-            letter-spacing: .04em;
-            color: #F4E6E1;
-            -webkit-text-stroke: 1px #1F1815;
-            text-align: center;
-        }
-
         .coupon-copy-text {
-            max-width: 380px;
+            max-width: 390px;
             margin: 0 auto;
-            font-size: 1.06rem;
-            line-height: 1.55;
+            font-size: 1.12rem;
+            line-height: 1.5;
             font-weight: 600;
-            color: #2B1E19;
             text-align: center;
         }
-
-        .coupon-copy-lead {
-            display: block;
-            font-size: 0.96rem;
-            font-weight: 600;
-            color: #4A3E3D;
-            margin-bottom: 2px;
-        }
-
         .coupon-copy-highlight {
             display: inline-block;
-            margin: 8px 0;
-            padding: 7px 16px;
-            border-radius: 10px;
+            margin: 7px 0;
+            padding: 7px 15px;
+            border-radius: 9px;
             background: #FFFDFB;
             border: 1px solid rgba(174, 56, 32, .25);
             color: #AE3820;
             font-weight: 900;
-            font-size: 1.32rem;
-            box-shadow: 0 3px 8px rgba(174, 56, 32, .12);
+            font-size: 1.35rem;
+            box-shadow: 0 3px 8px rgba(174,56,32,.12);
         }
-
-        .coupon-copy-closing {
-            display: block;
-            margin-top: 4px;
-            font-size: 1.02rem;
-            font-weight: 700;
-            color: #1F1815;
-        }
-
         .coupon-footer-row {
             display: flex;
             justify-content: flex-end;
-            border-top: 1px solid rgba(31, 24, 21, .16);
+            border-top: 1px solid rgba(31,24,21,.16);
             padding-top: 10px;
             margin-top: 18px;
         }
-
         @media (max-width: 575px) {
-            .coupon-voucher-canvas {
-                padding: 22px 18px 18px;
-                min-height: 320px;
-            }
-            .coupon-right-brands-overlay {
-                right: 14px;
-                top: 18px;
-            }
-            .coupon-main-body {
-                padding-top: 58px;
-            }
+            .coupon-voucher-canvas { padding: 22px 18px 18px; min-height: 320px; }
+            .coupon-right-brands-overlay { right: 14px; top: 18px; }
+            .coupon-main-body { padding-top: 58px; }
         }
     </style>
 </head>
@@ -407,10 +371,8 @@
             </div>
         </div>
 
-        <!-- Caja de notificaciones no bloqueante -->
         <div id="appToastBox" class="alert alert-info d-none shadow-sm py-2 px-3 mb-3" role="alert"></div>
 
-        <!-- Datalists de autocompletado para clientes y productos -->
         <datalist id="savedClientsDatalist"></datalist>
         <datalist id="savedProductCodesDatalist"></datalist>
         <datalist id="savedProductNamesDatalist"></datalist>
@@ -437,8 +399,11 @@
         <div class="tab-content">
             <!-- MÓDULO 1: Campañas y Facturas a la Empresa -->
             <div class="tab-pane fade show active" id="campaignsTab">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0 fw-bold">Campañas, Catálogos y Pagos a Empresas</h4>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div>
+                        <h4 class="mb-0 fw-bold">Campañas, Catálogos y Pagos a Empresas</h4>
+                        <small class="text-muted">Arrastrá las tarjetas para ordenarlas o usá el botón de cada campaña para mostrar u ocultar su detalle.</small>
+                    </div>
                     <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#campaignModal" onclick="resetCampaignForm()">
                         <i class="bi bi-plus-circle me-1"></i> Nueva Campaña
                     </button>
@@ -507,17 +472,13 @@
                                 </select>
                             </div>
                             <div class="row g-2 mb-2">
-                                <div class="col-5">
-                                    <label class="form-label">Código (SKU)</label>
+                                <div class="col-6">
+                                    <label class="form-label">Código Producto (SKU)</label>
                                     <input type="text" id="itemCode" list="savedProductCodesDatalist" class="form-control" placeholder="Ej: 282850" oninput="handleProductCodeAutocomplete(this.value)" onchange="handleProductCodeAutocomplete(this.value)">
                                 </div>
-                                <div class="col-4">
-                                    <label class="form-label">Puntos (pts)</label>
-                                    <input type="number" id="itemPoints" class="form-control" value="0" min="0" step="1" placeholder="Ej: 12" oninput="calculateItemPreview()">
-                                </div>
-                                <div class="col-3">
-                                    <label class="form-label">Pág.</label>
-                                    <input type="text" id="itemPage" class="form-control" placeholder="24">
+                                <div class="col-6">
+                                    <label class="form-label">Pág. Folleto</label>
+                                    <input type="text" id="itemPage" class="form-control" placeholder="Ej: 24">
                                 </div>
                             </div>
                             <div class="mb-2">
@@ -525,12 +486,16 @@
                                 <input type="text" id="itemName" list="savedProductNamesDatalist" class="form-control" placeholder="Ej: Kaiak clásico femenino" oninput="handleProductNameAutocomplete(this.value)" onchange="handleProductNameAutocomplete(this.value)">
                             </div>
                             <div class="row g-2 mb-2">
-                                <div class="col-6">
+                                <div class="col-4">
                                     <label class="form-label">Cantidad</label>
                                     <input type="number" id="itemQty" class="form-control" value="1" min="1" oninput="calculateItemPreview()">
                                 </div>
-                                <div class="col-6">
-                                    <label class="form-label">Precio de Venta / Catálogo ($)</label>
+                                <div class="col-4">
+                                    <label class="form-label">Puntos</label>
+                                    <input type="number" id="itemPoints" class="form-control" value="0" min="0" step="1" oninput="calculateItemPreview()">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Precio Venta ($)</label>
                                     <input type="number" id="itemPrice" class="form-control" placeholder="0.00" step="0.01" oninput="calculateItemPreview()">
                                 </div>
                             </div>
@@ -546,7 +511,7 @@
                                 </div>
                                 <div class="d-flex justify-content-between" style="color: #7B3A1D;">
                                     <span>Puntos del Ítem:</span>
-                                    <strong id="previewPoints">0 pts</strong>
+                                    <strong id="previewItemPoints">0 pts</strong>
                                 </div>
                                 <div class="d-flex justify-content-between text-success">
                                     <span>Tu Ganancia Estimada:</span>
@@ -578,8 +543,8 @@
                                         <tr>
                                             <th>Marca</th>
                                             <th>Artículo</th>
-                                            <th>Pts</th>
                                             <th>Cant.</th>
+                                            <th>Pts</th>
                                             <th>P. Base</th>
                                             <th>Desc.</th>
                                             <th>A Cobrar</th>
@@ -594,7 +559,7 @@
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between small fw-bold mb-1" style="color: #7B3A1D;">
-                                <span>Puntos Totales del Pedido:</span>
+                                <span>Puntos del Pedido:</span>
                                 <span id="orderTotalPoints">0 pts</span>
                             </div>
                             <div class="d-flex justify-content-between small text-success fw-bold mb-1">
@@ -661,11 +626,11 @@
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                     <div>
                         <h4 class="mb-0 fw-bold">📦 Mi Stock Propio (Entrega Inmediata)</h4>
-                        <small class="text-muted">Productos comprados sin cliente asignado. Al venderlos con 1 clic, pasan directo a Cobranzas y Cuentas.</small>
+                        <small class="text-muted">Productos comprados sin cliente asignado o kits desarmados para vender uno por uno.</small>
                     </div>
                     <div class="d-flex flex-wrap gap-2">
-                        <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="openKitUnpackModal()">
-                            <i class="bi bi-boxes me-1"></i> Desarmar Kit en Stock
+                        <button class="btn btn-outline-dark btn-sm fw-bold" onclick="openUnpackKitModal()">
+                            <i class="bi bi-boxes me-1"></i> Desarmar Kit en Stock Individual
                         </button>
                         <button class="btn btn-primary btn-sm fw-bold" onclick="goToQuickStockLoad()">
                             <i class="bi bi-plus-circle me-1"></i> Cargar Producto a Stock
@@ -682,8 +647,8 @@
                                     <th>Producto</th>
                                     <th>Campaña Origen</th>
                                     <th class="text-center">Unidades</th>
-                                    <th>Costo Pagado</th>
-                                    <th>Precio Sugerido</th>
+                                    <th>Pagado</th>
+                                    <th>Sugerido</th>
                                     <th>Acción</th>
                                 </tr>
                             </thead>
@@ -699,7 +664,7 @@
                     <div class="col-md-5">
                         <div class="card p-4 mb-4">
                             <h5 class="card-title mb-3 text-primary"><i class="bi bi-robot me-2"></i>Generador de Mensajes IA</h5>
-                            <p class="text-muted small">Crea mensajes atractivos, recordatorios y cupones PNG de fidelización para enviar por WhatsApp.</p>
+                            <p class="text-muted small">Crea mensajes atractivos, recordatorios y difusiones para enviar por WhatsApp.</p>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Campaña Objetivo</label>
@@ -754,6 +719,80 @@
         </div>
     </div>
 
+    <!-- Modal para Desarmar un Kit en Productos Individuales en Stock -->
+    <div class="modal fade" id="unpackKitModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title"><i class="bi bi-boxes me-2 text-warning"></i>Desarmar Kit en Stock Individual</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        El código del kit se agrega a la <strong>Lista para Cargar en la Web</strong> de la campaña y sus productos pasan sueltos a <strong>Mi Stock</strong> para vender uno por uno.
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold small">Campaña</label>
+                            <select id="kitCampaignSelect" class="form-select form-select-sm"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Marca</label>
+                            <select id="kitBrandSelect" class="form-select form-select-sm">
+                                <option value="Natura">Natura 🌸</option>
+                                <option value="Avon">Avon 💄</option>
+                                <option value="Casa & Estilo">Casa & Estilo 🏠</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">Código del Kit (SKU)</label>
+                            <input type="text" id="kitSkuInput" class="form-control form-control-sm" value="283558">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Nombre del Kit</label>
+                            <input type="text" id="kitNameInput" class="form-control form-control-sm" value="Kit esenciales">
+                        </div>
+                        <div class="col-3 col-md-2">
+                            <label class="form-label fw-bold small">Cant. Kits</label>
+                            <input type="number" id="kitQtyInput" class="form-control form-control-sm" value="1" min="1" oninput="recalcKitPreview()">
+                        </div>
+                        <div class="col-4 col-md-2">
+                            <label class="form-label fw-bold small">Puntos Kit</label>
+                            <input type="number" id="kitPointsInput" class="form-control form-control-sm" value="36" min="0" oninput="recalcKitPreview()">
+                        </div>
+                        <div class="col-5 col-md-2">
+                            <label class="form-label fw-bold small">Vos Pagás ($)</label>
+                            <input type="number" id="kitPaidInput" class="form-control form-control-sm" value="44250" step="0.01" oninput="recalcKitPreview()">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold small text-secondary">Productos incluidos en el kit (para vender por separado):</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" onclick="addKitComponentRow()">
+                            <i class="bi bi-plus"></i> Agregar Ítem
+                        </button>
+                    </div>
+                    <div id="kitComponentsList" class="vstack gap-2 mb-3"></div>
+
+                    <div class="p-2 bg-light rounded border small d-flex flex-wrap justify-content-between gap-2">
+                        <span>Inversión total (kits): <strong class="text-danger" id="kitPreviewCost">$0.00</strong></span>
+                        <span>Venta sugerida total (por kit): <strong class="text-success" id="kitPreviewSuggested">$0.00</strong></span>
+                        <span>Puntos a sumar: <strong style="color:#7B3A1D;" id="kitPreviewPoints">0 pts</strong></span>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success fw-bold" onclick="confirmUnpackKitToStock()">
+                        <i class="bi bi-check2-circle me-1"></i> Cargar Kit y Pasar Productos a Mi Stock
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Cupón de Descuento PNG Estilo Tarjeta de Consultora -->
     <div class="modal fade" id="loyaltyCouponModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -798,17 +837,14 @@
 
                         <div class="coupon-main-body">
                             <div>
-                                <div class="coupon-header-stack">
-                                    <div id="couponCardClientBadge" class="coupon-client-loyalty-label small fw-bold">
-                                        PARA CLIENTA
-                                    </div>
-                                    <h3 class="coupon-main-heading" id="couponCardLoyaltyHeading">POR SER FIEL A NATURA</h3>
+                                <div id="couponCardClientBadge" class="coupon-client-loyalty-label small fw-bold">
+                                    PARA CLIENTA
                                 </div>
+                                <h3 class="coupon-main-heading" id="couponCardLoyaltyHeading">POR SER FIEL A NATURA</h3>
                                 <div class="coupon-copy-text">
-                                    <span class="coupon-copy-lead">Te ganaste un</span>
+                                    Te ganaste un<br>
                                     <span class="coupon-copy-highlight" id="couponCardMainPctText">15% de descuento</span><br>
-                                    válido para <strong id="couponCardValidityText">C17</strong>.
-                                    <span class="coupon-copy-closing">¡Usalo en tu próximo pedido!</span>
+                                    válido para <span id="couponCardValidityText">C17</span>.<br>¡Usalo en tu próximo pedido!
                                 </div>
                             </div>
 
@@ -1084,101 +1120,9 @@
         </div>
     </div>
 
-    <!-- Modal para Desarmar Kit Promocional en Stock Individual -->
-    <div class="modal fade" id="kitUnpackModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title"><i class="bi bi-boxes me-2 text-warning"></i>Desarmar Kit en Stock Individual</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="alert alert-warning py-2 px-3 small mb-3">
-                        <strong>¿Cómo funciona?</strong> El <strong>código del kit</strong> y sus <strong>puntos</strong> van a la lista de carga de la campaña para que lo pidas en Natura/Avon, y sus componentes quedan cargados <strong>uno por uno en Mi Stock</strong> con su costo proporcional repartido.
-                    </div>
-
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold">Campaña a Cargar</label>
-                            <select id="kitCampaignSelect" class="form-select form-select-sm"></select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-bold">Marca</label>
-                            <select id="kitBrandSelect" class="form-select form-select-sm">
-                                <option value="Natura">Natura 🌸</option>
-                                <option value="Avon">Avon 💄</option>
-                                <option value="Casa & Estilo">Casa & Estilo 🏠</option>
-                            </select>
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label small fw-bold">Nombre del Kit</label>
-                            <input type="text" id="kitTitleInput" class="form-control form-control-sm" placeholder="Ej: Kit esenciales">
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label class="form-label small fw-bold">Código del Kit (SKU)</label>
-                            <input type="text" id="kitCodeInput" class="form-control form-control-sm" placeholder="Ej: 283558">
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label class="form-label small fw-bold">Puntos por Kit (pts)</label>
-                            <input type="number" id="kitPointsInput" class="form-control form-control-sm" value="36" min="0" step="1" placeholder="Ej: 36" oninput="updateKitUnpackSummary()">
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label class="form-label small fw-bold">Cant. de Kits</label>
-                            <input type="number" id="kitQtyInput" class="form-control form-control-sm" value="1" min="1" oninput="updateKitUnpackSummary()">
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label class="form-label small fw-bold">Pagás por Kit ($)</label>
-                            <input type="number" id="kitPaidCostInput" class="form-control form-control-sm" step="0.01" placeholder="Ej: 44250" oninput="updateKitUnpackSummary()">
-                        </div>
-                    </div>
-
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                        <h6 class="fw-bold mb-0 small text-uppercase text-secondary">Productos individuales que trae cada kit</h6>
-                        <div class="d-flex gap-1">
-                            <button type="button" class="btn btn-outline-warning text-dark btn-sm py-0 px-2" onclick="loadKitEsencialesC17Preset()">
-                                ✨ Cargar Kit Esenciales C17 (283558 • 36 pts)
-                            </button>
-                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" onclick="addKitComponentRow()">
-                                <i class="bi bi-plus-lg"></i> Agregar ítem
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="table-responsive border rounded mb-3" style="max-height: 240px; overflow-y: auto;">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead class="table-light small">
-                                <tr>
-                                    <th>Descripción del Producto Suelto</th>
-                                    <th style="width: 78px;">Cant.</th>
-                                    <th style="width: 135px;">Venta Sugerida ($)</th>
-                                    <th style="width: 38px;"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="kitComponentsTableBody"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="p-2 bg-light rounded border small d-flex flex-wrap justify-content-between gap-2">
-                        <span>Puntos totales: <strong style="color: #7B3A1D;" id="kitSummaryPoints">36 pts</strong></span>
-                        <span>Costo a empresa: <strong class="text-danger" id="kitSummaryCost">$0.00</strong></span>
-                        <span>Venta estimada: <strong class="text-primary" id="kitSummarySale">$0.00</strong></span>
-                        <span>Ganancia potencial: <strong class="text-success" id="kitSummaryProfit">$0.00</strong></span>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-success fw-bold" onclick="confirmKitUnpackToStock()">
-                        <i class="bi bi-check2-circle me-1"></i> Sumar Código y Puntos a Campaña y Guardar en Stock
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Configuración de Firebase Firestore
         const firebaseConfig = {
             apiKey: "AIzaSyD6nfEiJ8Rkka4sWKzHweZ6tvFZu6BsI-0",
             authDomain: "minegocio-ventas-catalogo.firebaseapp.com",
@@ -1195,8 +1139,27 @@
 
         const LOCAL_CATALOG_KEY = 'catalogo_saved_products_v1';
         const LOCAL_CLIENTS_KEY = 'catalogo_saved_clients_v1';
+        const LOCAL_CAMPAIGN_ORDER_KEY = 'catalogo_campaign_order_v1';
+        const LOCAL_CAMPAIGN_COLLAPSED_KEY = 'catalogo_campaign_collapsed_v1';
         const CAMPAIGN_MIN_POINTS = 85;
         const CAMPAIGN_IDEAL_POINTS = 110;
+
+        const DEFAULT_KIT_C17 = {
+            brand: 'Natura',
+            code: '283558',
+            name: 'Kit esenciales',
+            qty: 1,
+            points: 36,
+            paidTotal: 44250,
+            components: [
+                { name: 'Tododia body splash frambuesa y pimienta rosa 200 ml', qty: 1, suggestedPrice: 25900 },
+                { name: 'Tododia desodorante antitranspirante prebiótico roll on piel uniforme 70 ml', qty: 1, suggestedPrice: 7500 },
+                { name: 'Tododia acondicionador nutrición durazno y almendra 280 ml', qty: 1, suggestedPrice: 13000 },
+                { name: 'Tododia shampoo nutrición durazno y almendra 300 ml', qty: 1, suggestedPrice: 13000 },
+                { name: 'Erva Doce desodorante en crema 50 g', qty: 1, suggestedPrice: 7500 },
+                { name: 'Tododia crema nutritiva avellana y casis 400 ml', qty: 1, suggestedPrice: 23900 }
+            ]
+        };
 
         const ARGENTINA_HOLIDAYS = new Set([
             '2026-11-23',
@@ -1205,7 +1168,8 @@
             '2026-12-25'
         ]);
 
-        // Muestra avisos breves en pantalla sin interrumpir el flujo con alertas nativas
+        let draggedCampaignId = null;
+
         function showToastMessage(msg, type = 'success') {
             const box = document.getElementById('appToastBox');
             if (!box) return;
@@ -1276,7 +1240,6 @@
             return addCalendarDaysAR(arrivalDate, 20);
         }
 
-        // Estado global de la aplicación
         let campaigns = [];
         let orders = [];
         let savedCatalogProducts = [];
@@ -1329,12 +1292,11 @@
 
         function rememberProductEntry(item) {
             const cleanName = String(item?.name || '').trim();
-            if (!cleanName) return;
+            if (!cleanName || item?.fromKitCode || item?.isKitHeaderOnly) return;
             const cleanCode = String(item?.code || '').trim();
             const cleanBrand = String(item?.brand || 'Natura').trim();
             const cleanPage = String(item?.page || '').trim();
             const cleanPrice = Number(item?.price) || 0;
-            const cleanPoints = Number(item?.points ?? item?.unitPoints) || 0;
 
             const existingIdx = savedCatalogProducts.findIndex(p =>
                 (cleanCode && p.code && p.code.toLowerCase() === cleanCode.toLowerCase()) ||
@@ -1346,8 +1308,7 @@
                 name: cleanName,
                 brand: cleanBrand,
                 page: cleanPage,
-                price: cleanPrice,
-                points: cleanPoints
+                price: cleanPrice
             };
 
             if (existingIdx >= 0) {
@@ -1356,8 +1317,7 @@
                     ...record,
                     code: cleanCode || savedCatalogProducts[existingIdx].code,
                     page: cleanPage || savedCatalogProducts[existingIdx].page,
-                    price: cleanPrice > 0 ? cleanPrice : savedCatalogProducts[existingIdx].price,
-                    points: cleanPoints > 0 ? cleanPoints : (Number(savedCatalogProducts[existingIdx].points) || 0)
+                    price: cleanPrice > 0 ? cleanPrice : savedCatalogProducts[existingIdx].price
                 };
             } else {
                 savedCatalogProducts.push(record);
@@ -1385,7 +1345,7 @@
             if (codesDl) {
                 codesDl.innerHTML = savedCatalogProducts
                     .filter(p => p.code)
-                    .map(p => `<option value="${p.code.replace(/"/g, '&quot;')}">${p.brand} - ${p.name}${p.points > 0 ? ` (${p.points} pts)` : ''}${p.price > 0 ? ` • $${p.price}` : ''}</option>`)
+                    .map(p => `<option value="${p.code.replace(/"/g, '&quot;')}">${p.brand} - ${p.name}${p.price > 0 ? ` ($${p.price})` : ''}</option>`)
                     .join('');
             }
 
@@ -1393,7 +1353,7 @@
             if (namesDl) {
                 namesDl.innerHTML = savedCatalogProducts
                     .sort((a, b) => a.name.localeCompare(b.name))
-                    .map(p => `<option value="${p.name.replace(/"/g, '&quot;')}">${p.brand}${p.code ? ` • Cód: ${p.code}` : ''}${p.points > 0 ? ` • ${p.points} pts` : ''}${p.price > 0 ? ` • $${p.price}` : ''}</option>`)
+                    .map(p => `<option value="${p.name.replace(/"/g, '&quot;')}">${p.brand}${p.code ? ` • Cód: ${p.code}` : ''}${p.price > 0 ? ` • $${p.price}` : ''}</option>`)
                     .join('');
             }
 
@@ -1429,7 +1389,6 @@
             if (match.name) document.getElementById('itemName').value = match.name;
             if (match.page && !document.getElementById('itemPage').value) document.getElementById('itemPage').value = match.page;
             if (match.price > 0) document.getElementById('itemPrice').value = match.price;
-            if (Number(match.points) > 0) document.getElementById('itemPoints').value = match.points;
             calculateItemPreview();
         }
 
@@ -1443,7 +1402,6 @@
             if (match.code && !document.getElementById('itemCode').value) document.getElementById('itemCode').value = match.code;
             if (match.page && !document.getElementById('itemPage').value) document.getElementById('itemPage').value = match.page;
             if (match.price > 0) document.getElementById('itemPrice').value = match.price;
-            if (Number(match.points) > 0) document.getElementById('itemPoints').value = match.points;
             calculateItemPreview();
         }
 
@@ -1478,19 +1436,18 @@
             const isGift = document.getElementById('itemIsGift').checked;
             const brand = document.getElementById('itemBrand').value;
             const qty = Math.max(1, parseInt(document.getElementById('itemQty').value) || 1);
+            const unitPts = Math.max(0, parseInt(document.getElementById('itemPoints').value) || 0);
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
-            const unitPoints = Math.max(0, Number(document.getElementById('itemPoints')?.value) || 0);
             const clientDiscountPct = parseFloat(document.getElementById('itemClientDiscount').value) || 0;
             const wholesaleDiscountPct = isGift ? 100 : getWholesaleDiscountForBrand(brand);
 
             const wholesaleCost = (isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100))) * qty;
             const finalClientPrice = isOwnStock ? 0 : (price * (1 - (clientDiscountPct / 100)) * qty);
             const profit = isOwnStock ? 0 : (finalClientPrice - wholesaleCost);
-            const totalItemPoints = isGift ? 0 : (unitPoints * qty);
+            const totalPts = isOwnStock ? 0 : (unitPts * qty);
 
             document.getElementById('previewWholesaleDiscount').textContent = isGift ? '100% (Regalo)' : `${wholesaleDiscountPct}%`;
-            const previewPtsEl = document.getElementById('previewPoints');
-            if (previewPtsEl) previewPtsEl.textContent = isGift ? '0 pts (Regalo)' : `${totalItemPoints} pts`;
+            document.getElementById('previewItemPoints').textContent = `${totalPts} pts`;
             document.getElementById('previewProfit').textContent = isOwnStock ? '$0.00 (Al venderse)' : `$${profit.toFixed(2)}`;
             document.getElementById('previewCost').textContent = `$${wholesaleCost.toFixed(2)}`;
             document.getElementById('previewFinalClientPrice').textContent = isOwnStock ? '$0.00 (Stock Propio)' : `$${finalClientPrice.toFixed(2)}`;
@@ -1507,33 +1464,34 @@
                 const brand = item?.brand || 'Natura';
                 const isGift = Boolean(item?.isGift ?? item?.isCompanyGift);
                 const isOwnStock = Boolean(item?.isOwnStock);
-                const unitPts = isGift ? 0 : (Number(item?.points ?? item?.unitPoints) || 0);
-                const itemTotalPts = item?.totalPoints !== undefined ? Number(item.totalPoints) : (unitPts * qty);
+                const isKitHeaderOnly = Boolean(item?.isKitHeaderOnly);
                 const wholesaleDisc = isGift ? 100 : (Number(item?.wholesaleDiscountPct) || getWholesaleDiscountForBrand(brand));
 
                 const itemCost = item?.cost !== undefined && (Number(item.cost) > 0 || isGift)
                     ? Number(item.cost)
                     : ((isGift ? 0 : basePrice * (1 - (wholesaleDisc / 100))) * qty);
 
-                const itemFinal = isOwnStock
+                const itemFinal = (isOwnStock || isKitHeaderOnly)
                     ? 0
                     : (item?.finalClientPrice !== undefined && Number(item.finalClientPrice) > 0
                         ? Number(item.finalClientPrice)
                         : (basePrice * (1 - (clientDisc / 100)) * qty));
 
-                const itemProfit = isOwnStock
+                const itemProfit = (isOwnStock || isKitHeaderOnly)
                     ? 0
                     : (item?.profit !== undefined && Number(item.profit) !== 0
                         ? Number(item.profit)
                         : (itemFinal - itemCost));
 
+                const itemPts = isKitHeaderOnly
+                    ? (Number(item?.totalPoints ?? ((Number(item?.points) || 0) * qty)) || 0)
+                    : (isOwnStock ? 0 : (Number(item?.totalPoints ?? ((Number(item?.points) || 0) * qty)) || 0));
+
                 acc.total += itemFinal;
                 acc.cost += itemCost;
                 acc.profit += itemProfit;
-                if (!item?.skipWebOrder) {
-                    acc.points += itemTotalPts;
-                }
-                if (isOwnStock) acc.hasOwnStock = true;
+                acc.points += itemPts;
+                if (isOwnStock || isKitHeaderOnly) acc.hasOwnStock = true;
                 else acc.hasClientItems = true;
                 return acc;
             }, { total: 0, cost: 0, profit: 0, points: 0, hasOwnStock: false, hasClientItems: false });
@@ -1549,8 +1507,8 @@
             const savedProfit = Number(o.totalProfit ?? o.netProfit ?? o.profit ?? 0) || 0;
             const totalProfit = isPureOwnStock ? 0 : (savedProfit !== 0 ? savedProfit : (total - totalCost));
 
+            const totalPoints = Number(o.totalPoints ?? calcItems.points) || 0;
             const paidAmount = Number(o.paidAmount ?? o.paid ?? 0) || 0;
-            const totalPoints = Number(o.totalPoints) > 0 ? Number(o.totalPoints) : calcItems.points;
 
             return {
                 ...o,
@@ -1562,8 +1520,8 @@
                 total,
                 totalCost,
                 totalProfit,
-                paidAmount,
-                totalPoints
+                totalPoints,
+                paidAmount
             };
         }
 
@@ -1593,39 +1551,147 @@
             });
         }
 
+        // Lee el orden personalizado guardado en el navegador para las tarjetas de campaña
+        function getSavedCampaignOrderIds() {
+            try {
+                const raw = localStorage.getItem(LOCAL_CAMPAIGN_ORDER_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (_) {
+                return [];
+            }
+        }
+
+        function saveCampaignOrder(orderedIds) {
+            try {
+                localStorage.setItem(LOCAL_CAMPAIGN_ORDER_KEY, JSON.stringify(orderedIds));
+            } catch (_) {}
+        }
+
+        // Lee qué tarjetas de campaña fueron colapsadas por el usuario
+        function getCollapsedCampaignIds() {
+            try {
+                const raw = localStorage.getItem(LOCAL_CAMPAIGN_COLLAPSED_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return new Set(Array.isArray(parsed) ? parsed : []);
+            } catch (_) {
+                return new Set();
+            }
+        }
+
+        // Alterna la visibilidad del detalle de una tarjeta de campaña
+        function toggleCampaignDetails(campId) {
+            if (!campId) return;
+            const collapsed = getCollapsedCampaignIds();
+            if (collapsed.has(campId)) {
+                collapsed.delete(campId);
+            } else {
+                collapsed.add(campId);
+            }
+            try {
+                localStorage.setItem(LOCAL_CAMPAIGN_COLLAPSED_KEY, JSON.stringify(Array.from(collapsed)));
+            } catch (_) {}
+            renderCampaigns();
+        }
+
+        function getOrderedCampaigns() {
+            const savedIds = getSavedCampaignOrderIds();
+            if (!savedIds.length) return [...campaigns];
+            const indexMap = new Map(savedIds.map((id, idx) => [id, idx]));
+            return [...campaigns].sort((a, b) => {
+                const ia = indexMap.has(a.id) ? indexMap.get(a.id) : Number.MAX_SAFE_INTEGER;
+                const ib = indexMap.has(b.id) ? indexMap.get(b.id) : Number.MAX_SAFE_INTEGER;
+                if (ia !== ib) return ia - ib;
+                return String(b.startDate || '').localeCompare(String(a.startDate || ''));
+            });
+        }
+
+        function handleCampaignDragStart(e, campId) {
+            draggedCampaignId = campId;
+            if (e?.currentTarget) {
+                e.currentTarget.classList.add('dragging');
+            }
+            if (e?.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', campId);
+            }
+        }
+
+        function handleCampaignDragEnd(e) {
+            if (e?.currentTarget) {
+                e.currentTarget.classList.remove('dragging');
+            }
+            document.querySelectorAll('.campaign-draggable-col.drag-over').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            draggedCampaignId = null;
+        }
+
+        function handleCampaignDragOver(e) {
+            e.preventDefault();
+            if (e?.dataTransfer) {
+                e.dataTransfer.dropEffect = 'move';
+            }
+            const col = e.currentTarget;
+            if (col && !col.classList.contains('drag-over')) {
+                col.classList.add('drag-over');
+            }
+        }
+
+        function handleCampaignDrop(e, targetCampId) {
+            e.preventDefault();
+            const col = e.currentTarget;
+            if (col) col.classList.remove('drag-over');
+
+            const sourceId = draggedCampaignId || (e?.dataTransfer ? e.dataTransfer.getData('text/plain') : '');
+            if (!sourceId || !targetCampId || sourceId === targetCampId) return;
+
+            const currentOrdered = getOrderedCampaigns().map(c => c.id);
+            const fromIdx = currentOrdered.indexOf(sourceId);
+            const toIdx = currentOrdered.indexOf(targetCampId);
+            if (fromIdx < 0 || toIdx < 0) return;
+
+            const [moved] = currentOrdered.splice(fromIdx, 1);
+            currentOrdered.splice(toIdx, 0, moved);
+            saveCampaignOrder(currentOrdered);
+            renderCampaigns();
+            showToastMessage('¡Orden de campañas actualizado!');
+        }
+
+        // Consolida los artículos a encargar en la web (excluyendo regalos e ítems desarmados de kits)
         function getConsolidatedWebItemsForCampaign(campaignName) {
             const campOrders = orders.map(normalizeOrderData).filter(o => o.campaign === campaignName);
             const consolidatedMap = {};
             let totalCampaignPoints = 0;
 
             campOrders.forEach(o => {
-                if (o.items && Array.isArray(o.items)) {
-                    o.items.forEach(item => {
-                        if (item.isGift || item.isCompanyGift || item.skipWebOrder) return;
-                        const brandKey = item.brand || 'Natura';
-                        const rawCode = String(item.code || '').trim();
-                        const codeKey = rawCode || 'S/C';
-                        const key = `${brandKey}_${codeKey}_${String(item.name || '').toLowerCase().trim()}`;
-                        const qtyItem = parseInt(item.qty, 10) || 1;
-                        const unitPts = Number(item.points ?? item.unitPoints) || 0;
-                        const linePts = item.totalPoints !== undefined ? Number(item.totalPoints) : (unitPts * qtyItem);
+                (o.items || []).forEach(item => {
+                    if (item.isGift || item.isCompanyGift) return;
+                    const rawCode = String(item.code || '').trim();
+                    const isUnpackedComponent = Boolean(item.fromKitCode) || /^KIT-/i.test(rawCode);
+                    if (isUnpackedComponent) return;
 
-                        totalCampaignPoints += linePts;
+                    const qty = parseInt(item.qty, 10) || 1;
+                    const unitPts = Math.max(0, Number(item.points) || 0);
+                    const linePts = Number(item.totalPoints ?? (unitPts * qty)) || 0;
+                    totalCampaignPoints += linePts;
 
-                        if (!consolidatedMap[key]) {
-                            consolidatedMap[key] = {
-                                brand: brandKey,
-                                code: codeKey,
-                                rawCode,
-                                name: item.name,
-                                qty: 0,
-                                points: 0
-                            };
-                        }
-                        consolidatedMap[key].qty += qtyItem;
-                        consolidatedMap[key].points += linePts;
-                    });
-                }
+                    const brandKey = item.brand || 'Natura';
+                    const codeKey = rawCode || 'S/C';
+                    const key = `${brandKey}_${codeKey}_${String(item.name || '').toLowerCase().trim()}`;
+
+                    if (!consolidatedMap[key]) {
+                        consolidatedMap[key] = {
+                            brand: brandKey,
+                            code: codeKey,
+                            name: item.name,
+                            qty: 0,
+                            points: 0
+                        };
+                    }
+                    consolidatedMap[key].qty += qty;
+                    consolidatedMap[key].points += linePts;
+                });
             });
 
             return {
@@ -1634,54 +1700,41 @@
             };
         }
 
+        // Genera y descarga el archivo Excel (.xlsx) con columnas CANTIDAD y CÓDIGO para carga automática en web
         function exportCampaignWebExcel(campaignId) {
             const camp = campaigns.find(c => c.id === campaignId);
-            if (!camp) return;
+            if (!camp || typeof XLSX === 'undefined') {
+                showToastMessage('No se pudo generar la planilla Excel.', 'warning');
+                return;
+            }
 
             const { list } = getConsolidatedWebItemsForCampaign(camp.name);
-            const validRows = [];
-            let missingCodeCount = 0;
+            if (!list.length) {
+                showToastMessage('Esta campaña no tiene códigos cargados para exportar.', 'warning');
+                return;
+            }
 
-            list.forEach(item => {
-                const cleanCode = String(item.rawCode || '').trim();
-                if (!cleanCode) {
-                    missingCodeCount++;
-                    return;
-                }
+            const rows = list.map(item => {
+                const cleanCode = String(item.code || '').trim();
                 const numericCode = /^\d+$/.test(cleanCode) ? Number(cleanCode) : cleanCode;
-                validRows.push({
+                return {
                     'CANTIDAD': Number(item.qty) || 1,
                     'CÓDIGO': numericCode
-                });
+                };
             });
 
-            if (validRows.length === 0) {
-                showToastMessage(`La campaña "${camp.name}" no tiene artículos con código (SKU) para exportar.`, 'warning');
-                return;
-            }
+            const worksheet = XLSX.utils.json_to_sheet(rows, { header: ['CANTIDAD', 'CÓDIGO'] });
+            worksheet['!cols'] = [{ wch: 12 }, { wch: 16 }];
 
-            if (typeof XLSX === 'undefined') {
-                showToastMessage('No se pudo cargar el generador de Excel. Recargá la página e intentá de nuevo.', 'danger');
-                return;
-            }
-
-            const worksheet = XLSX.utils.json_to_sheet(validRows, { header: ['CANTIDAD', 'CÓDIGO'] });
-            worksheet['!cols'] = [{ wch: 12 }, { wch: 14 }];
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Carga_Web');
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'CargaWeb');
 
-            const safeCampName = String(camp.name || 'campana')
+            const safeSlug = String(camp.name || 'campana')
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/gi, '_')
-                .replace(/^_+|_+$/g, '');
-            const fileName = `planilla_${safeCampName || 'web'}.xlsx`;
-            XLSX.writeFile(workbook, fileName);
-
-            if (missingCodeCount > 0) {
-                showToastMessage(`Planilla "${fileName}" descargada (${validRows.length} códigos). Nota: se omitieron ${missingCodeCount} ítem(s) sin SKU.`, 'info');
-            } else {
-                showToastMessage(`¡Planilla "${fileName}" descargada con ${validRows.length} artículo(s) lista para carga web!`);
-            }
+                .replace(/^_|_$/g, '');
+            XLSX.writeFile(workbook, `planilla_${safeSlug || 'campana'}.xlsx`);
+            showToastMessage(`¡Planilla Excel de ${camp.name} descargada!`);
         }
 
         function renderCampaigns() {
@@ -1699,9 +1752,13 @@
                 return;
             }
 
-            campaigns.forEach(c => {
+            const orderedCampaigns = getOrderedCampaigns();
+            const collapsedIds = getCollapsedCampaignIds();
+
+            orderedCampaigns.forEach(c => {
                 const badge = c.status === 'Activa' ? 'bg-success' : 'bg-secondary';
                 const invoicePaid = Number(c.invoicePaid) || 0;
+                const isCollapsed = collapsedIds.has(c.id);
 
                 const arrivalIso = getEstimatedArrivalDate(c.endDate);
                 const dueIso = getPaymentDueDate(c.endDate);
@@ -1723,7 +1780,6 @@
                 const companyReference = invoicePaid > 0 ? invoicePaid : estimatedWholesaleCost;
                 const netCampaignBalance = totalPaidByClients - companyReference;
 
-                // Cálculo de progreso de puntos (Mínimo 85 pts • Ideal 110 pts)
                 const pointsPct = Math.min(100, Math.round((totalCampaignPoints / CAMPAIGN_IDEAL_POINTS) * 100));
                 let pointsBarClass = 'bg-danger';
                 let pointsStatusText = `Faltan ${Math.max(0, CAMPAIGN_MIN_POINTS - totalCampaignPoints)} pts para el mínimo (85)`;
@@ -1741,113 +1797,121 @@
                 if (c.linkCasa) linksHtml += `<a href="${c.linkCasa}" target="_blank" class="btn btn-sm btn-outline-dark">Casa & Estilo 🏠</a>`;
 
                 container.innerHTML += `
-                    <div class="col-md-6 mb-4">
+                    <div class="col-md-6 mb-4 campaign-draggable-col" draggable="true" ondragstart="handleCampaignDragStart(event, '${c.id}')" ondragend="handleCampaignDragEnd(event)" ondragover="handleCampaignDragOver(event)" ondrop="handleCampaignDrop(event, '${c.id}')">
                         <div class="card p-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="fw-bold mb-0">${c.name}</h5>
-                                <div>
-                                    <span class="badge ${badge} me-1">${c.status}</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted" style="cursor: grab;" title="Arrastrá para reordenar"><i class="bi bi-grip-vertical"></i></span>
+                                    <h5 class="fw-bold mb-0">${c.name}</h5>
+                                </div>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge ${badge}">${c.status}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="toggleCampaignDetails('${c.id}')" title="${isCollapsed ? 'Mostrar detalle de la campaña' : 'Ocultar detalle de la campaña'}">
+                                        <i class="bi ${isCollapsed ? 'bi-eye' : 'bi-eye-slash'} me-1"></i>${isCollapsed ? 'Mostrar' : 'Ocultar'}
+                                    </button>
                                     <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="editCampaign('${c.id}')"><i class="bi bi-pencil"></i></button>
                                 </div>
                             </div>
                             <small class="text-muted mb-2 d-block">📅 Del ${formatDateAR(c.startDate)} al ${formatDateAR(c.endDate)}</small>
 
-                            <!-- Indicador de Puntos de la Campaña (85 mínimo / 110 ideal) -->
-                            <div class="p-2 bg-white rounded border mb-2 small">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="fw-bold" style="color: #7B3A1D;"><i class="bi bi-stars me-1"></i>Puntos del Pedido:</span>
-                                    <span class="badge ${totalCampaignPoints >= CAMPAIGN_IDEAL_POINTS ? 'bg-success' : (totalCampaignPoints >= CAMPAIGN_MIN_POINTS ? 'bg-warning text-dark' : 'bg-danger')}">
-                                        ${totalCampaignPoints} / ${CAMPAIGN_IDEAL_POINTS} pts
-                                    </span>
+                            <div class="${isCollapsed ? 'd-none' : ''}">
+                                <!-- Indicador de Puntos de la Campaña (85 mínimo / 110 ideal) -->
+                                <div class="p-2 bg-white rounded border mb-2 small">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold" style="color: #7B3A1D;"><i class="bi bi-stars me-1"></i>Puntos del Pedido:</span>
+                                        <span class="badge ${totalCampaignPoints >= CAMPAIGN_IDEAL_POINTS ? 'bg-success' : (totalCampaignPoints >= CAMPAIGN_MIN_POINTS ? 'bg-warning text-dark' : 'bg-danger')}">
+                                            ${totalCampaignPoints} / ${CAMPAIGN_IDEAL_POINTS} pts
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar ${pointsBarClass}" role="progressbar" style="width: ${pointsPct}%;" aria-valuenow="${totalCampaignPoints}" aria-valuemin="0" aria-valuemax="${CAMPAIGN_IDEAL_POINTS}"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between text-muted mt-1" style="font-size: 11px;">
+                                        <span>${pointsStatusText}</span>
+                                        <span>Mín: <strong>85</strong> • Ideal: <strong>110</strong></span>
+                                    </div>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar ${pointsBarClass}" role="progressbar" style="width: ${pointsPct}%;" aria-valuenow="${totalCampaignPoints}" aria-valuemin="0" aria-valuemax="${CAMPAIGN_IDEAL_POINTS}"></div>
-                                </div>
-                                <div class="d-flex justify-content-between text-muted mt-1" style="font-size: 11px;">
-                                    <span>${pointsStatusText}</span>
-                                    <span>Mín: <strong>85</strong> • Ideal: <strong>110</strong></span>
-                                </div>
-                            </div>
 
-                            <div class="p-2 rounded border mb-2 small" style="background-color: rgba(227, 157, 52, 0.12); border-color: rgba(174, 56, 32, 0.2) !important;">
-                                <div class="d-flex justify-content-between">
-                                    <span>🚚 Llegada estimada (3 días hábiles):</span>
-                                    <strong>${arrivalIso ? formatDateAR(arrivalIso) : '-'}</strong>
+                                <div class="p-2 rounded border mb-2 small" style="background-color: rgba(227, 157, 52, 0.12); border-color: rgba(174, 56, 32, 0.2) !important;">
+                                    <div class="d-flex justify-content-between">
+                                        <span>🚚 Llegada estimada (3 días hábiles):</span>
+                                        <strong>${arrivalIso ? formatDateAR(arrivalIso) : '-'}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <span>💳 Límite de pago (20 días corridos tras entrega):</span>
+                                        <strong style="color: var(--avon-color);">${dueIso ? formatDateAR(dueIso) : '-'}</strong>
+                                    </div>
                                 </div>
-                                <div class="d-flex justify-content-between mt-1">
-                                    <span>💳 Límite de pago (20 días corridos tras entrega):</span>
-                                    <strong style="color: var(--avon-color);">${dueIso ? formatDateAR(dueIso) : '-'}</strong>
-                                </div>
-                            </div>
 
-                            <div class="p-2 bg-white rounded border mb-2 small">
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">Total Vendido en Campaña:</span>
-                                    <strong class="text-dark">$${totalSold.toFixed(2)}</strong>
+                                <div class="p-2 bg-white rounded border mb-2 small">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">Total Vendido en Campaña:</span>
+                                        <strong class="text-dark">$${totalSold.toFixed(2)}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between text-success">
+                                        <span>Pagos Recibidos de Clientes:</span>
+                                        <strong>-$${totalPaidByClients.toFixed(2)}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-top pt-1 mt-1">
+                                        <span class="fw-bold">Saldo Pendiente por Cobrar:</span>
+                                        <strong class="text-danger">$${pendingFromClients.toFixed(2)}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-top pt-1 mt-1">
+                                        <span class="text-muted">Balance Neto (Cobrado vs. Empresa):</span>
+                                        <strong class="${netCampaignBalance >= 0 ? 'text-success' : 'text-danger'}">${netCampaignBalance >= 0 ? '+' : ''}$${netCampaignBalance.toFixed(2)}</strong>
+                                    </div>
                                 </div>
-                                <div class="d-flex justify-content-between text-success">
-                                    <span>Pagos Recibidos de Clientes:</span>
-                                    <strong>-$${totalPaidByClients.toFixed(2)}</strong>
-                                </div>
-                                <div class="d-flex justify-content-between border-top pt-1 mt-1">
-                                    <span class="fw-bold">Saldo Pendiente por Cobrar:</span>
-                                    <strong class="text-danger">$${pendingFromClients.toFixed(2)}</strong>
-                                </div>
-                                <div class="d-flex justify-content-between border-top pt-1 mt-1">
-                                    <span class="text-muted">Balance Neto (Cobrado vs. Empresa):</span>
-                                    <strong class="${netCampaignBalance >= 0 ? 'text-success' : 'text-danger'}">${netCampaignBalance >= 0 ? '+' : ''}$${netCampaignBalance.toFixed(2)}</strong>
-                                </div>
-                            </div>
 
-                            <div class="p-2 bg-light rounded border mb-2 d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="small text-muted d-block">Factura Pagada (Costo Est.: $${estimatedWholesaleCost.toFixed(2)}):</span>
-                                    <strong class="text-danger">-$${invoicePaid.toFixed(2)}</strong>
-                                </div>
-                                <button class="btn btn-sm btn-outline-danger" onclick="openInvoiceModal('${c.id}', '${c.name}', ${invoicePaid})">
-                                    <i class="bi bi-receipt"></i> Pagar Factura
-                                </button>
-                            </div>
-
-                            <div class="d-flex gap-2 flex-wrap mb-3">
-                                ${linksHtml || '<span class="text-muted small">Sin links cargados</span>'}
-                            </div>
-
-                            <div class="border-top pt-2">
-                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                                    <h6 class="fw-bold small text-secondary mb-0 d-flex align-items-center gap-1" data-bs-toggle="collapse" data-bs-target="#collapseConsolidated_${c.id}" style="cursor: pointer;">
-                                        <span><i class="bi bi-list-check me-1"></i> Lista para Cargar en la Web (${consolidatedList.length} ítems • ${totalCampaignPoints} pts)</span>
-                                        <i class="bi bi-chevron-down"></i>
-                                    </h6>
-                                    <button type="button" class="btn btn-sm btn-success py-0 px-2 fw-bold" onclick="exportCampaignWebExcel('${c.id}')" title="Descargar planilla Excel (CANTIDAD y CÓDIGO) para carga automática en web">
-                                        <i class="bi bi-file-earmark-excel me-1"></i> Planilla Web (.xlsx)
+                                <div class="p-2 bg-light rounded border mb-2 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="small text-muted d-block">Factura Pagada (Costo Est.: $${estimatedWholesaleCost.toFixed(2)}):</span>
+                                        <strong class="text-danger">-$${invoicePaid.toFixed(2)}</strong>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="openInvoiceModal('${c.id}', '${c.name}', ${invoicePaid})">
+                                        <i class="bi bi-receipt"></i> Pagar Factura
                                     </button>
                                 </div>
-                                <div class="collapse mt-2" id="collapseConsolidated_${c.id}">
-                                    <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
-                                        <table class="table table-sm table-bordered align-middle mb-0" style="font-size: 11px;">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>Marca</th>
-                                                    <th>Cód.</th>
-                                                    <th>Producto</th>
-                                                    <th class="text-center">Pts</th>
-                                                    <th class="text-center">Cant.</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${consolidatedList.length === 0 ? '<tr><td colspan="5" class="text-center text-muted">No hay pedidos para encargar en esta campaña.</td></tr>' :
-                                                  consolidatedList.map(item => `
+
+                                <div class="d-flex gap-2 flex-wrap mb-3">
+                                    ${linksHtml || '<span class="text-muted small">Sin links cargados</span>'}
+                                </div>
+
+                                <div class="border-top pt-2">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                        <h6 class="fw-bold small text-secondary mb-0 d-flex align-items-center gap-1" data-bs-toggle="collapse" data-bs-target="#collapseConsolidated_${c.id}" style="cursor: pointer;">
+                                            <span><i class="bi bi-list-check me-1"></i> Lista para Cargar en la Web (${consolidatedList.length} ítems • ${totalCampaignPoints} pts)</span>
+                                            <i class="bi bi-chevron-down"></i>
+                                        </h6>
+                                        <button type="button" class="btn btn-sm btn-success py-0 px-2 fw-bold" onclick="exportCampaignWebExcel('${c.id}')" title="Descargar planilla Excel (CANTIDAD y CÓDIGO) para carga automática en web">
+                                            <i class="bi bi-file-earmark-excel me-1"></i> Planilla Web (.xlsx)
+                                        </button>
+                                    </div>
+                                    <div class="collapse mt-2" id="collapseConsolidated_${c.id}">
+                                        <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                                            <table class="table table-sm table-bordered align-middle mb-0" style="font-size: 11px;">
+                                                <thead class="table-light">
                                                     <tr>
-                                                        <td><span class="badge ${item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa')}">${item.brand}</span></td>
-                                                        <td><strong>${item.code}</strong></td>
-                                                        <td>${item.name}</td>
-                                                        <td class="text-center fw-semibold" style="color: #7B3A1D;">${item.points || 0}</td>
-                                                        <td class="text-center fw-bold text-danger">${item.qty}</td>
+                                                        <th>Marca</th>
+                                                        <th>Cód.</th>
+                                                        <th>Producto</th>
+                                                        <th class="text-center">Pts</th>
+                                                        <th class="text-center">Cant.</th>
                                                     </tr>
-                                                  `).join('')}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    ${consolidatedList.length === 0 ? '<tr><td colspan="5" class="text-center text-muted">No hay pedidos para encargar en esta campaña.</td></tr>' :
+                                                      consolidatedList.map(item => `
+                                                        <tr>
+                                                            <td><span class="badge ${item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa')}">${item.brand}</span></td>
+                                                            <td><strong>${item.code}</strong></td>
+                                                            <td>${item.name}</td>
+                                                            <td class="text-center fw-semibold" style="color: #7B3A1D;">${item.points || 0}</td>
+                                                            <td class="text-center fw-bold text-danger">${item.qty}</td>
+                                                        </tr>
+                                                      `).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1886,6 +1950,10 @@
                     select.innerHTML += `<option value="${c.name}">${c.name} (${c.status})</option>`;
                 });
                 if (currentVal) select.value = currentVal;
+                else if (select.id === 'kitCampaignSelect') {
+                    const activeOrFirst = campaigns.find(c => c.status === 'Activa') || campaigns[0];
+                    if (activeOrFirst) select.value = activeOrFirst.name;
+                }
             });
         }
 
@@ -1953,6 +2021,158 @@
             document.getElementById('itemCode').focus();
         }
 
+        function openUnpackKitModal() {
+            updateCampaignSelects();
+            const activeOrFirst = campaigns.find(c => c.status === 'Activa') || campaigns[0];
+            if (activeOrFirst) {
+                document.getElementById('kitCampaignSelect').value = activeOrFirst.name;
+            }
+            document.getElementById('kitBrandSelect').value = DEFAULT_KIT_C17.brand;
+            document.getElementById('kitSkuInput').value = DEFAULT_KIT_C17.code;
+            document.getElementById('kitNameInput').value = DEFAULT_KIT_C17.name;
+            document.getElementById('kitQtyInput').value = DEFAULT_KIT_C17.qty;
+            document.getElementById('kitPointsInput').value = DEFAULT_KIT_C17.points;
+            document.getElementById('kitPaidInput').value = DEFAULT_KIT_C17.paidTotal;
+
+            const listEl = document.getElementById('kitComponentsList');
+            listEl.innerHTML = '';
+            DEFAULT_KIT_C17.components.forEach(comp => addKitComponentRow(comp));
+            recalcKitPreview();
+            new bootstrap.Modal(document.getElementById('unpackKitModal')).show();
+        }
+
+        function addKitComponentRow(comp = {}) {
+            const listEl = document.getElementById('kitComponentsList');
+            const row = document.createElement('div');
+            row.className = 'row g-2 align-items-center kit-comp-row';
+            row.innerHTML = `
+                <div class="col-6 col-md-7">
+                    <input type="text" class="form-control form-control-sm comp-name" placeholder="Nombre del producto" value="${String(comp.name || '').replace(/"/g, '&quot;')}" oninput="recalcKitPreview()">
+                </div>
+                <div class="col-2">
+                    <input type="number" class="form-control form-control-sm comp-qty" placeholder="Cant." value="${comp.qty || 1}" min="1" oninput="recalcKitPreview()">
+                </div>
+                <div class="col-3 col-md-2">
+                    <input type="number" class="form-control form-control-sm comp-price" placeholder="Venta $" value="${comp.suggestedPrice || ''}" step="0.01" oninput="recalcKitPreview()">
+                </div>
+                <div class="col-1 text-end">
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('.kit-comp-row').remove(); recalcKitPreview();" title="Quitar">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            `;
+            listEl.appendChild(row);
+            recalcKitPreview();
+        }
+
+        function getKitComponentsFromModal() {
+            const rows = Array.from(document.querySelectorAll('#kitComponentsList .kit-comp-row'));
+            return rows.map(r => ({
+                name: r.querySelector('.comp-name').value.trim(),
+                qty: Math.max(1, parseInt(r.querySelector('.comp-qty').value, 10) || 1),
+                suggestedPrice: parseFloat(r.querySelector('.comp-price').value) || 0
+            })).filter(c => c.name);
+        }
+
+        function recalcKitPreview() {
+            const kitQty = Math.max(1, parseInt(document.getElementById('kitQtyInput').value, 10) || 1);
+            const kitPts = Math.max(0, parseInt(document.getElementById('kitPointsInput').value, 10) || 0);
+            const kitPaid = parseFloat(document.getElementById('kitPaidInput').value) || 0;
+            const comps = getKitComponentsFromModal();
+
+            const totalSuggestedPerKit = comps.reduce((acc, c) => acc + (c.suggestedPrice * c.qty), 0);
+            document.getElementById('kitPreviewCost').textContent = `$${(kitPaid * kitQty).toFixed(2)}`;
+            document.getElementById('kitPreviewSuggested').textContent = `$${totalSuggestedPerKit.toFixed(2)}`;
+            document.getElementById('kitPreviewPoints').textContent = `${kitPts * kitQty} pts`;
+        }
+
+        async function confirmUnpackKitToStock() {
+            const campaign = document.getElementById('kitCampaignSelect').value;
+            const brand = document.getElementById('kitBrandSelect').value || 'Natura';
+            const kitSku = document.getElementById('kitSkuInput').value.trim();
+            const kitName = document.getElementById('kitNameInput').value.trim() || 'Kit';
+            const kitQty = Math.max(1, parseInt(document.getElementById('kitQtyInput').value, 10) || 1);
+            const kitPts = Math.max(0, parseInt(document.getElementById('kitPointsInput').value, 10) || 0);
+            const kitPaidPerUnit = parseFloat(document.getElementById('kitPaidInput').value) || 0;
+            const comps = getKitComponentsFromModal();
+
+            if (!campaign || !kitSku || comps.length === 0) {
+                showToastMessage('Completá la campaña, el código del kit y al menos un producto.', 'warning');
+                return;
+            }
+
+            const totalSuggestedPerKit = comps.reduce((acc, c) => acc + (c.suggestedPrice * c.qty), 0);
+            const totalKitCost = kitPaidPerUnit * kitQty;
+
+            const itemsToSave = [];
+
+            itemsToSave.push({
+                isOwnStock: false,
+                isKitHeaderOnly: true,
+                isGift: false,
+                brand,
+                code: kitSku,
+                page: '',
+                name: `${kitName} (Kit para desarmar)`,
+                qty: kitQty,
+                points: kitPts,
+                totalPoints: kitPts * kitQty,
+                price: 0,
+                clientDiscountPct: 0,
+                wholesaleDiscountPct: 0,
+                finalClientPrice: 0,
+                cost: totalKitCost,
+                profit: 0
+            });
+
+            comps.forEach(c => {
+                const lineSuggestedPerKit = c.suggestedPrice * c.qty;
+                const propCostPerKit = totalSuggestedPerKit > 0
+                    ? (kitPaidPerUnit * (lineSuggestedPerKit / totalSuggestedPerKit))
+                    : (kitPaidPerUnit / comps.length);
+                const totalItemQty = c.qty * kitQty;
+                const totalItemCost = propCostPerKit * kitQty;
+
+                itemsToSave.push({
+                    isOwnStock: true,
+                    isGift: false,
+                    fromKitCode: kitSku,
+                    brand,
+                    code: `KIT-${kitSku}`,
+                    page: '',
+                    name: c.name,
+                    qty: totalItemQty,
+                    points: 0,
+                    totalPoints: 0,
+                    price: c.suggestedPrice,
+                    clientDiscountPct: 0,
+                    wholesaleDiscountPct: 0,
+                    finalClientPrice: 0,
+                    cost: totalItemCost,
+                    profit: 0
+                });
+            });
+
+            await db.collection('orders').add({
+                campaign,
+                clientName: 'Stock Propio',
+                clientPhone: '',
+                items: itemsToSave,
+                isPureOwnStock: true,
+                total: 0,
+                totalProfit: 0,
+                totalCost: totalKitCost,
+                totalPoints: kitPts * kitQty,
+                paidAmount: 0,
+                paymentStatus: 'Stock Propio',
+                lastPaymentMethod: '-',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            bootstrap.Modal.getInstance(document.getElementById('unpackKitModal')).hide();
+            showToastMessage(`¡Kit ${kitSku} sumado a ${campaign} y ${comps.length} productos pasados a Mi Stock!`);
+        }
+
         function resetItemFormFields() {
             document.getElementById('editingItemIndex').value = '-1';
             document.getElementById('itemFormTitle').textContent = 'Agregar Artículo del Folleto';
@@ -1964,10 +2184,10 @@
             document.getElementById('itemIsGift').checked = false;
             document.getElementById('itemBrand').value = 'Natura';
             document.getElementById('itemCode').value = '';
-            document.getElementById('itemPoints').value = '0';
             document.getElementById('itemPage').value = '';
             document.getElementById('itemName').value = '';
             document.getElementById('itemQty').value = '1';
+            document.getElementById('itemPoints').value = '0';
             document.getElementById('itemPrice').value = '';
             document.getElementById('itemClientDiscount').value = '0';
             calculateItemPreview();
@@ -1987,10 +2207,10 @@
             document.getElementById('itemIsGift').checked = Boolean(item.isGift);
             document.getElementById('itemBrand').value = item.brand || 'Natura';
             document.getElementById('itemCode').value = item.code || '';
-            document.getElementById('itemPoints').value = item.points ?? item.unitPoints ?? 0;
             document.getElementById('itemPage').value = item.page || '';
             document.getElementById('itemName').value = item.name || '';
             document.getElementById('itemQty').value = item.qty || 1;
+            document.getElementById('itemPoints').value = item.points || 0;
             document.getElementById('itemPrice').value = item.price || '';
             document.getElementById('itemClientDiscount').value = item.clientDiscountPct || 0;
 
@@ -2019,14 +2239,14 @@
             const isGift = !isOwnStock && document.getElementById('itemIsGift').checked;
             const brand = document.getElementById('itemBrand').value;
             const code = document.getElementById('itemCode').value.trim();
-            const unitPoints = isGift ? 0 : Math.max(0, Number(document.getElementById('itemPoints').value) || 0);
             const page = document.getElementById('itemPage').value.trim();
             const name = document.getElementById('itemName').value.trim();
             const qty = parseInt(document.getElementById('itemQty').value, 10) || 1;
+            const unitPts = Math.max(0, parseInt(document.getElementById('itemPoints').value, 10) || 0);
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
             const clientDiscountPct = parseFloat(document.getElementById('itemClientDiscount').value) || 0;
 
-            if (!name || price <= 0) {
+            if (!name || (!isOwnStock && price <= 0)) {
                 showToastMessage('Ingresá el nombre del producto y un precio de venta válido.', 'warning');
                 return;
             }
@@ -2035,11 +2255,12 @@
             const wholesaleCostUnit = isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100));
             const finalClientPriceUnit = isOwnStock ? 0 : (price * (1 - (clientDiscountPct / 100)));
             const unitProfit = isOwnStock ? 0 : (finalClientPriceUnit - wholesaleCostUnit);
+            const linePoints = isOwnStock ? 0 : (unitPts * qty);
 
             const newItem = {
                 isOwnStock, isGift, brand, code, page, name, qty,
-                points: unitPoints,
-                totalPoints: unitPoints * qty,
+                points: unitPts,
+                totalPoints: linePoints,
                 price, clientDiscountPct, wholesaleDiscountPct,
                 finalClientPrice: finalClientPriceUnit * qty,
                 profit: unitProfit * qty,
@@ -2081,9 +2302,7 @@
                 const subtotal = item.isOwnStock ? 0 : (Number(item.finalClientPrice) || 0);
                 const itemProfit = item.isOwnStock ? 0 : (Number(item.profit) || 0);
                 const itemCost = Number(item.cost) || 0;
-                const qtyItem = Number(item.qty) || 1;
-                const itemPts = item.isGift ? 0 : (item.totalPoints !== undefined ? Number(item.totalPoints) : ((Number(item.points) || 0) * qtyItem));
-
+                const itemPts = item.isOwnStock ? 0 : (Number(item.totalPoints ?? ((Number(item.points) || 0) * (Number(item.qty) || 1))) || 0);
                 totalCatalog += subtotal;
                 totalProfit += itemProfit;
                 totalCost += itemCost;
@@ -2098,9 +2317,9 @@
                     <tr>
                         <td><span class="badge ${badgeClass}">${item.brand}</span></td>
                         <td>${item.name} ${specialBadge}</td>
+                        <td>${item.qty}</td>
                         <td class="fw-semibold" style="color: #7B3A1D;">${itemPts}</td>
-                        <td>${qtyItem}</td>
-                        <td>$${((Number(item.price) || 0) * qtyItem).toFixed(2)}</td>
+                        <td>$${((Number(item.price) || 0) * (Number(item.qty) || 1)).toFixed(2)}</td>
                         <td>${(Number(item.clientDiscountPct) || 0) > 0 ? `<span class="text-danger fw-bold">${item.clientDiscountPct}%</span>` : 'Sin desc.'}</td>
                         <td class="fw-bold">$${subtotal.toFixed(2)}</td>
                         <td class="text-success fw-bold">+$${itemProfit.toFixed(2)}</td>
@@ -2120,9 +2339,9 @@
         function buildOrderWhatsAppText(order) {
             let text = `*¡Hola ${order.clientName}!* 🌸 Registré tu pedido para la campaña *${order.campaign}*:\n`;
             (order.items || []).forEach(i => {
-                if (i.isOwnStock) return;
+                if (i.isOwnStock || i.isKitHeaderOnly) return;
                 const linePrice = Number(i.finalClientPrice ?? ((Number(i.price) || 0) * (Number(i.qty) || 1))) || 0;
-                text += `\n• *[${i.brand || 'Natura'}]* ${i.name} ${i.code ? `(Cód: ${i.code})` : ''} x${i.qty || 1} - $${linePrice.toFixed(2)}`;
+                text += `\n• *[${i.brand || 'Natura'}]* ${i.name} ${i.code && !/^KIT-/i.test(i.code) ? `(Cód: ${i.code})` : ''} x${i.qty || 1} - $${linePrice.toFixed(2)}`;
             });
             text += `\n\n💳 *TOTAL A ABONAR: $${(Number(order.total) || 0).toFixed(2)}*`;
             text += `\nConsultora: *M. Eugenia Carol* • WhatsApp: 381-519-3109`;
@@ -2140,7 +2359,7 @@
             document.getElementById('ticketCampaignName').textContent = o.campaign;
 
             const itemsContainer = document.getElementById('ticketItemsList');
-            const billableItems = (o.items || []).filter(i => !i.isOwnStock);
+            const billableItems = (o.items || []).filter(i => !i.isOwnStock && !i.isKitHeaderOnly);
             if (billableItems.length === 0) {
                 itemsContainer.innerHTML = `<div class="text-muted">Sin detalle de artículos facturables.</div>`;
             } else {
@@ -2151,7 +2370,7 @@
                         <div class="d-flex justify-content-between align-items-start py-1 border-bottom" style="border-color: rgba(31,24,21,0.08) !important;">
                             <div class="pe-2">
                                 <strong>${i.qty || 1}x</strong> ${i.name}${giftTag}
-                                <div style="font-size: 10px; color: #6E5A52;">${i.brand || 'Natura'}${i.code ? ` • Cód: ${i.code}` : ''}</div>
+                                <div style="font-size: 10px; color: #6E5A52;">${i.brand || 'Natura'}${i.code && !/^KIT-/i.test(i.code) ? ` • Cód: ${i.code}` : ''}</div>
                             </div>
                             <strong class="text-nowrap">$${linePrice.toFixed(2)}</strong>
                         </div>
@@ -2223,12 +2442,7 @@
             const total = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.finalClientPrice) || 0)), 0);
             const totalProfit = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.profit) || 0)), 0);
             const totalCost = currentOrderItems.reduce((acc, item) => acc + (Number(item.cost) || 0), 0);
-            const totalPoints = currentOrderItems.reduce((acc, item) => {
-                if (item.isGift || item.skipWebOrder) return acc;
-                const qtyItem = Number(item.qty) || 1;
-                const itemPts = item.totalPoints !== undefined ? Number(item.totalPoints) : ((Number(item.points) || 0) * qtyItem);
-                return acc + itemPts;
-            }, 0);
+            const totalPoints = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.totalPoints ?? ((Number(item.points) || 0) * (Number(item.qty) || 1))) || 0)), 0);
 
             const orderData = {
                 campaign,
@@ -2501,7 +2715,7 @@
             const stockEntries = [];
             orders.map(normalizeOrderData).forEach(o => {
                 (o.items || []).forEach((item, idx) => {
-                    if (item.isOwnStock && !item.isKitHeaderOnly && (parseInt(item.qty, 10) || 0) > 0) {
+                    if (item.isOwnStock && (parseInt(item.qty, 10) || 0) > 0) {
                         stockEntries.push({
                             orderId: o.id,
                             campaign: o.campaign,
@@ -2539,16 +2753,49 @@
                         <td class="text-danger fw-semibold">$${unitCost.toFixed(2)} c/u</td>
                         <td class="text-success fw-bold">$${suggestedPrice.toFixed(2)} c/u</td>
                         <td class="text-nowrap">
-                            <button class="btn btn-sm btn-success fw-bold me-1" onclick="openSellStockModal('${entry.orderId}', ${entry.itemIndex})">
-                                <i class="bi bi-bag-check me-1"></i> Vender a Cliente
-                            </button>
-                            <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar en pedido">
-                                <i class="bi bi-pencil"></i>
-                            </button>
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <button class="btn btn-sm btn-success fw-bold" onclick="openSellStockModal('${entry.orderId}', ${entry.itemIndex})">
+                                    <i class="bi bi-bag-check me-1"></i> Vender a Cliente
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar en pedido">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteStockItem('${entry.orderId}', ${entry.itemIndex})" title="Eliminar producto del stock">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
             }).join('');
+        }
+
+        async function deleteStockItem(orderId, itemIndex) {
+            const stockOrder = orders.find(o => o.id === orderId);
+            if (!stockOrder || !Array.isArray(stockOrder.items) || !stockOrder.items[itemIndex]) return;
+
+            const updatedItems = [...stockOrder.items];
+            updatedItems.splice(itemIndex, 1);
+
+            const hasRemainingStock = updatedItems.some(i => i.isOwnStock && (parseInt(i.qty, 10) || 0) > 0);
+            const hasRemainingClientItems = updatedItems.some(i => !i.isOwnStock && !i.isKitHeaderOnly);
+
+            if (!hasRemainingStock && !hasRemainingClientItems) {
+                await db.collection('orders').doc(orderId).delete();
+            } else {
+                const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
+                const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
+                const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
+                const updatedPoints = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.totalPoints ?? ((Number(i.points) || 0) * (Number(i.qty) || 1))) || 0)), 0);
+                await db.collection('orders').doc(orderId).update({
+                    items: updatedItems,
+                    total: updatedTotal,
+                    totalProfit: updatedProfit,
+                    totalCost: updatedCost,
+                    totalPoints: updatedPoints
+                });
+            }
+            showToastMessage('Producto eliminado de Mi Stock.', 'secondary');
         }
 
         function openSellStockModal(orderId, itemIndex) {
@@ -2623,22 +2870,91 @@
                 profit: saleProfit
             };
 
-            const newOrderRef = await db.collection('orders').add({
-                campaign: stockOrder.campaign,
-                clientName,
-                clientPhone,
-                items: [soldItem],
-                isPureOwnStock: false,
-                fromOwnStock: true,
-                total: saleTotal,
-                totalProfit: saleProfit,
-                totalCost: 0,
-                totalPoints: 0,
-                paidAmount: markPaid ? saleTotal : 0,
-                paymentStatus: markPaid ? 'Pagado' : 'Pendiente',
-                lastPaymentMethod: markPaid ? 'Efectivo' : '-',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            // Busca un pedido existente del mismo cliente en la misma campaña para unificar productos
+            const existingClientOrderRaw = orders.find(o =>
+                !o.isPureOwnStock &&
+                o.campaign === stockOrder.campaign &&
+                String(o.clientName || '').trim().toLowerCase() === clientName.toLowerCase()
+            );
+
+            let targetOrderId = '';
+            let mergedOrderSnapshot = null;
+
+            if (existingClientOrderRaw) {
+                const existingNorm = normalizeOrderData(existingClientOrderRaw);
+                const mergedItems = Array.isArray(existingNorm.items) ? [...existingNorm.items] : [];
+                const sameProductIdx = mergedItems.findIndex(it =>
+                    !it.isOwnStock &&
+                    !it.isKitHeaderOnly &&
+                    String(it.name || '').trim().toLowerCase() === soldItem.name.toLowerCase() &&
+                    String(it.brand || 'Natura').toLowerCase() === soldItem.brand.toLowerCase() &&
+                    Number(it.price) === Number(soldItem.price)
+                );
+
+                if (sameProductIdx >= 0) {
+                    const prev = mergedItems[sameProductIdx];
+                    const nextQty = (parseInt(prev.qty, 10) || 1) + soldItem.qty;
+                    mergedItems[sameProductIdx] = {
+                        ...prev,
+                        qty: nextQty,
+                        finalClientPrice: (Number(prev.finalClientPrice) || 0) + soldItem.finalClientPrice,
+                        cost: (Number(prev.cost) || 0) + soldItem.cost,
+                        profit: (Number(prev.profit) || 0) + soldItem.profit
+                    };
+                } else {
+                    mergedItems.push(soldItem);
+                }
+
+                const nextTotal = (Number(existingNorm.total) || 0) + saleTotal;
+                const nextProfit = (Number(existingNorm.totalProfit) || 0) + saleProfit;
+                const nextPaid = (Number(existingNorm.paidAmount) || 0) + (markPaid ? saleTotal : 0);
+
+                await db.collection('orders').doc(existingClientOrderRaw.id).update({
+                    items: mergedItems,
+                    clientPhone: clientPhone || existingClientOrderRaw.clientPhone || '',
+                    total: nextTotal,
+                    totalProfit: nextProfit,
+                    paidAmount: nextPaid,
+                    lastPaymentMethod: markPaid ? 'Efectivo' : (existingClientOrderRaw.lastPaymentMethod || '-')
+                });
+
+                targetOrderId = existingClientOrderRaw.id;
+                mergedOrderSnapshot = normalizeOrderData({
+                    ...existingClientOrderRaw,
+                    items: mergedItems,
+                    clientPhone: clientPhone || existingClientOrderRaw.clientPhone || '',
+                    total: nextTotal,
+                    totalProfit: nextProfit,
+                    paidAmount: nextPaid
+                });
+            } else {
+                const newOrderRef = await db.collection('orders').add({
+                    campaign: stockOrder.campaign,
+                    clientName,
+                    clientPhone,
+                    items: [soldItem],
+                    isPureOwnStock: false,
+                    fromOwnStock: true,
+                    total: saleTotal,
+                    totalProfit: saleProfit,
+                    totalCost: 0,
+                    totalPoints: 0,
+                    paidAmount: markPaid ? saleTotal : 0,
+                    paymentStatus: markPaid ? 'Pagado' : 'Pendiente',
+                    lastPaymentMethod: markPaid ? 'Efectivo' : '-',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                targetOrderId = newOrderRef.id;
+                mergedOrderSnapshot = normalizeOrderData({
+                    id: newOrderRef.id,
+                    campaign: stockOrder.campaign,
+                    clientName,
+                    clientPhone,
+                    items: [soldItem],
+                    total: saleTotal,
+                    paidAmount: markPaid ? saleTotal : 0
+                });
+            }
 
             const updatedItems = [...stockOrder.items];
             if (sellQty >= availableQty) {
@@ -2667,198 +2983,16 @@
             }
 
             bootstrap.Modal.getInstance(document.getElementById('sellStockModal')).hide();
-            showToastMessage(`¡Vendido a ${clientName}! Ya figura en Cobranzas.`);
+            showToastMessage(
+                existingClientOrderRaw
+                    ? `¡Agregado al pedido de ${clientName} en ${stockOrder.campaign}!`
+                    : `¡Vendido a ${clientName}! Ya figura en Cobranzas.`
+            );
 
-            const createdSale = normalizeOrderData({
-                id: newOrderRef.id,
-                campaign: stockOrder.campaign,
-                clientName,
-                clientPhone,
-                items: [soldItem],
-                total: saleTotal,
-                paidAmount: markPaid ? saleTotal : 0
-            });
-            orders.unshift(createdSale);
-            openClientTicket(createdSale.id);
-        }
-
-        function openKitUnpackModal() {
-            updateCampaignSelects();
-            const campSelect = document.getElementById('kitCampaignSelect');
-            const c17 = campaigns.find(c => /17/i.test(c.name)) || campaigns.find(c => c.status === 'Activa') || campaigns[0];
-            if (campSelect && c17) campSelect.value = c17.name;
-
-            loadKitEsencialesC17Preset();
-            new bootstrap.Modal(document.getElementById('kitUnpackModal')).show();
-        }
-
-        function loadKitEsencialesC17Preset() {
-            document.getElementById('kitBrandSelect').value = 'Natura';
-            document.getElementById('kitTitleInput').value = 'Kit esenciales';
-            document.getElementById('kitCodeInput').value = '283558';
-            document.getElementById('kitPointsInput').value = '36';
-            document.getElementById('kitQtyInput').value = '1';
-            const tierCost = currentRevellerDiscount >= 30 ? 41300 : 44250;
-            document.getElementById('kitPaidCostInput').value = String(tierCost);
-
-            const presetItems = [
-                { name: 'Tododia body splash frambuesa y pimienta rosa 200 ml', qty: 1, price: 25900 },
-                { name: 'Tododia crema nutritiva avellana y casis 400 ml', qty: 1, price: 23900 },
-                { name: 'Tododia shampoo nutrición durazno y almendra 300 ml', qty: 1, price: 13000 },
-                { name: 'Tododia acondicionador nutrición durazno y almendra 280 ml', qty: 1, price: 13000 },
-                { name: 'Tododia desodorante roll on piel uniforme 70 ml', qty: 1, price: 7500 },
-                { name: 'Erva Doce desodorante en crema 50 g', qty: 1, price: 7500 }
-            ];
-
-            const tbody = document.getElementById('kitComponentsTableBody');
-            tbody.innerHTML = '';
-            presetItems.forEach(p => addKitComponentRow(p.name, p.qty, p.price));
-            updateKitUnpackSummary();
-        }
-
-        function addKitComponentRow(name = '', qty = 1, price = '') {
-            const tbody = document.getElementById('kitComponentsTableBody');
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><input type="text" class="form-control form-control-sm kit-comp-name" value="${String(name).replace(/"/g, '&quot;')}" placeholder="Nombre del producto individual"></td>
-                <td><input type="number" class="form-control form-control-sm kit-comp-qty" value="${qty}" min="1" oninput="updateKitUnpackSummary()"></td>
-                <td><input type="number" class="form-control form-control-sm kit-comp-price" value="${price}" step="0.01" placeholder="0.00" oninput="updateKitUnpackSummary()"></td>
-                <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('tr').remove(); updateKitUnpackSummary();"><i class="bi bi-x-circle"></i></button></td>
-            `;
-            tbody.appendChild(tr);
-            updateKitUnpackSummary();
-        }
-
-        function readKitComponentRows() {
-            const rows = Array.from(document.querySelectorAll('#kitComponentsTableBody tr'));
-            return rows.map(tr => ({
-                name: tr.querySelector('.kit-comp-name')?.value.trim() || '',
-                qty: Math.max(1, parseInt(tr.querySelector('.kit-comp-qty')?.value, 10) || 1),
-                price: parseFloat(tr.querySelector('.kit-comp-price')?.value) || 0
-            })).filter(r => r.name);
-        }
-
-        function updateKitUnpackSummary() {
-            const kitQty = Math.max(1, parseInt(document.getElementById('kitQtyInput')?.value, 10) || 1);
-            const pointsPerKit = Math.max(0, Number(document.getElementById('kitPointsInput')?.value) || 0);
-            const paidPerKit = parseFloat(document.getElementById('kitPaidCostInput')?.value) || 0;
-            const comps = readKitComponentRows();
-
-            const totalPoints = pointsPerKit * kitQty;
-            const totalCost = paidPerKit * kitQty;
-            const totalSalePerKit = comps.reduce((acc, c) => acc + (c.price * c.qty), 0);
-            const totalSale = totalSalePerKit * kitQty;
-            const profit = totalSale - totalCost;
-
-            const ptsEl = document.getElementById('kitSummaryPoints');
-            if (ptsEl) ptsEl.textContent = `${totalPoints} pts`;
-            document.getElementById('kitSummaryCost').textContent = `$${totalCost.toFixed(2)}`;
-            document.getElementById('kitSummarySale').textContent = `$${totalSale.toFixed(2)}`;
-            document.getElementById('kitSummaryProfit').textContent = `${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}`;
-        }
-
-        async function confirmKitUnpackToStock() {
-            const campaign = document.getElementById('kitCampaignSelect').value;
-            const brand = document.getElementById('kitBrandSelect').value || 'Natura';
-            const kitTitle = document.getElementById('kitTitleInput').value.trim() || 'Kit Promocional';
-            const kitCode = document.getElementById('kitCodeInput').value.trim();
-            const pointsPerKit = Math.max(0, Number(document.getElementById('kitPointsInput').value) || 0);
-            const kitQty = Math.max(1, parseInt(document.getElementById('kitQtyInput').value, 10) || 1);
-            const paidPerKit = parseFloat(document.getElementById('kitPaidCostInput').value) || 0;
-            const comps = readKitComponentRows();
-
-            if (!campaign || paidPerKit <= 0 || comps.length === 0) {
-                showToastMessage('Seleccioná la campaña, el monto que pagás por el kit y al menos un producto individual.', 'warning');
-                return;
-            }
-
-            const totalPaidCost = paidPerKit * kitQty;
-            const totalKitPoints = pointsPerKit * kitQty;
-            const totalSuggestedPerKit = comps.reduce((acc, c) => acc + (c.price * c.qty), 0);
-            const totalUnitsPerKit = comps.reduce((acc, c) => acc + c.qty, 0);
-
-            const orderItems = [];
-
-            // 1) Ítem exclusivo para la Lista de Carga Web de la campaña (con el SKU del kit y sus puntos)
-            const kitHeaderItem = {
-                isOwnStock: true,
-                isKitHeaderOnly: true,
-                skipWebOrder: false,
-                isGift: false,
-                brand,
-                code: kitCode,
-                page: '',
-                name: `${kitTitle} (Kit para desarmar)`,
-                qty: kitQty,
-                points: pointsPerKit,
-                totalPoints: totalKitPoints,
-                price: totalSuggestedPerKit,
-                clientDiscountPct: 0,
-                wholesaleDiscountPct: 0,
-                finalClientPrice: 0,
-                profit: 0,
-                cost: 0
-            };
-            rememberProductEntry({
-                code: kitCode,
-                name: kitTitle,
-                brand,
-                price: totalSuggestedPerKit,
-                points: pointsPerKit
-            });
-            orderItems.push(kitHeaderItem);
-
-            // 2) Cada producto suelto entra a Mi Stock Propio con su costo proporcional y marcado skipWebOrder para no pedirlo doble
-            comps.forEach(c => {
-                const totalLineUnits = c.qty * kitQty;
-                const weight = totalSuggestedPerKit > 0
-                    ? ((c.price * c.qty) / totalSuggestedPerKit)
-                    : (c.qty / Math.max(1, totalUnitsPerKit));
-                const allocatedLineCost = totalPaidCost * weight;
-
-                const stockItem = {
-                    isOwnStock: true,
-                    skipWebOrder: true,
-                    fromKitCode: kitCode,
-                    isGift: false,
-                    brand,
-                    code: kitCode ? `KIT-${kitCode}` : '',
-                    page: '',
-                    name: c.name,
-                    qty: totalLineUnits,
-                    points: 0,
-                    totalPoints: 0,
-                    price: c.price,
-                    clientDiscountPct: 0,
-                    wholesaleDiscountPct: getWholesaleDiscountForBrand(brand),
-                    finalClientPrice: 0,
-                    profit: 0,
-                    cost: allocatedLineCost
-                };
-                rememberProductEntry(stockItem);
-                orderItems.push(stockItem);
-            });
-
-            rebuildAutocompleteLists();
-
-            await db.collection('orders').add({
-                campaign,
-                clientName: 'Stock Propio',
-                clientPhone: '',
-                items: orderItems,
-                isPureOwnStock: true,
-                total: 0,
-                totalProfit: 0,
-                totalCost: totalPaidCost,
-                totalPoints: totalKitPoints,
-                paidAmount: 0,
-                paymentStatus: 'Stock Propio',
-                lastPaymentMethod: '-',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            bootstrap.Modal.getInstance(document.getElementById('kitUnpackModal')).hide();
-            showToastMessage(`¡Kit ${kitCode || kitTitle} (${totalKitPoints} pts) agregado a ${campaign} y desarmado en ${comps.length} productos en Mi Stock!`);
+            const idxExisting = orders.findIndex(o => o.id === targetOrderId);
+            if (idxExisting >= 0) orders[idxExisting] = mergedOrderSnapshot;
+            else orders.unshift(mergedOrderSnapshot);
+            openClientTicket(targetOrderId);
         }
 
         function openPaymentModal(orderId, clientName, currentSaldo) {
@@ -2917,7 +3051,7 @@
                 const stockLines = [];
                 orders.map(normalizeOrderData).forEach(o => {
                     (o.items || []).forEach(it => {
-                        if (it.isOwnStock && !it.isKitHeaderOnly && (parseInt(it.qty, 10) || 0) > 0) {
+                        if (it.isOwnStock && (parseInt(it.qty, 10) || 0) > 0) {
                             stockLines.push(`• *[${it.brand || 'Natura'}]* ${it.name} - $${(Number(it.price) || 0).toFixed(2)}`);
                         }
                     });
