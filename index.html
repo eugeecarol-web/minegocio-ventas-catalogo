@@ -1,11 +1,11 @@
-<html>
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Negocio por Catálogo - Natura, Avon & Casa & Estilo</title>
-    <!-- Firebase SDK compat -->
+    <!-- Firebase SDK compat para sincronización en tiempo real -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <!-- html2canvas para descargar el ticket y el cupón en PNG -->
@@ -986,7 +986,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Monto Total de la Factura a Pagar ($)</label>
-                        <input type="number" id="invAmount" class="form-control form-control-lg" placeholder="Ej: 45000" step="0.01" required>
+                        <input type="number" id="invAmount" class="form-control form-control-lg" placeholder="Ej: 107812.02" step="0.01" required>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -1109,7 +1109,7 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Nombre de la Campaña / Ciclo</label>
-                                <input type="text" id="campName" class="form-control" placeholder="Ej: Ciclo 16" required>
+                                <input type="text" id="campName" class="form-control" placeholder="Ej: C17" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Estado</label>
@@ -1128,6 +1128,15 @@
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold">Fecha de Cierre</label>
                                 <input type="date" id="endDate" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3 p-3 bg-light rounded border">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Costo de Envío de Campaña ($)</label>
+                                <input type="number" id="campShippingCost" class="form-control" value="4612" min="0" step="0.01" placeholder="Ej: 4612">
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="small text-muted">Se suma al costo mayorista de los productos de la campaña (podés editarlo si cambia).</div>
                             </div>
                         </div>
                         <div class="mb-3 p-3 bg-light rounded border">
@@ -1589,12 +1598,17 @@
                 const isOwnStock = Boolean(item?.isOwnStock);
                 const isPersonalUse = Boolean(item?.isPersonalUse);
                 const isKitHeaderOnly = Boolean(item?.isKitHeaderOnly);
+                const isUnpackedKitComponent = Boolean(item?.fromKitCode) || /^KIT-/i.test(String(item?.code || '').trim());
                 const isNonBillableItem = isOwnStock || isPersonalUse || isKitHeaderOnly;
                 const wholesaleDisc = isGift ? 100 : (Number(item?.wholesaleDiscountPct) || getWholesaleDiscountForBrand(brand));
 
-                const itemCost = item?.cost !== undefined && (Number(item.cost) > 0 || isGift)
-                    ? Number(item.cost)
-                    : ((isGift ? 0 : basePrice * (1 - (wholesaleDisc / 100))) * qty);
+                // Los productos sueltos ya prorrateados de un kit desarmado tienen su costo en Mi Stock,
+                // pero no deben volver a sumarse como costo extra de campaña si el kit ya aportó su costo.
+                const itemCost = isUnpackedKitComponent
+                    ? 0
+                    : (item?.cost !== undefined && (Number(item.cost) > 0 || isGift)
+                        ? Number(item.cost)
+                        : ((isGift ? 0 : basePrice * (1 - (wholesaleDisc / 100))) * qty));
 
                 const itemFinal = isNonBillableItem
                     ? 0
@@ -1629,8 +1643,7 @@
             const savedTotal = Number(o.total ?? o.totalClient ?? 0) || 0;
             const total = isNonBillableOrder ? 0 : (savedTotal > 0 ? savedTotal : calcItems.total);
 
-            const savedCost = Number(o.totalCost ?? o.cost ?? 0) || 0;
-            const totalCost = savedCost > 0 ? savedCost : calcItems.cost;
+            const totalCost = calcItems.cost;
 
             const savedProfit = Number(o.totalProfit ?? o.netProfit ?? o.profit ?? 0) || 0;
             const totalProfit = isNonBillableOrder ? 0 : (savedProfit !== 0 ? savedProfit : (total - totalCost));
@@ -1884,6 +1897,7 @@
             orderedCampaigns.forEach(c => {
                 const badge = c.status === 'Activa' ? 'bg-success' : 'bg-secondary';
                 const invoicePaid = Number(c.invoicePaid) || 0;
+                const shippingCost = Number(c.shippingCost ?? 4612) || 0;
                 const isCollapsed = collapsedIds.has(c.id);
 
                 const arrivalIso = getEstimatedArrivalDate(c.endDate);
@@ -1892,13 +1906,16 @@
                 const campOrders = orders.map(normalizeOrderData).filter(o => o.campaign === c.name);
                 let totalSold = 0;
                 let totalPaidByClients = 0;
-                let estimatedWholesaleCost = 0;
+                let productsWholesaleCost = 0;
 
                 campOrders.forEach(o => {
                     totalSold += Number(o.total) || 0;
                     totalPaidByClients += Number(o.paidAmount) || 0;
-                    estimatedWholesaleCost += Number(o.totalCost) || 0;
+                    productsWholesaleCost += Number(o.totalCost) || 0;
                 });
+
+                const hasCampaignItems = campOrders.some(o => Array.isArray(o.items) && o.items.length > 0);
+                const estimatedWholesaleCost = productsWholesaleCost + (hasCampaignItems ? shippingCost : 0);
 
                 const { list: consolidatedList, totalCampaignPoints } = getConsolidatedWebItemsForCampaign(c.name);
 
@@ -1989,7 +2006,8 @@
 
                                 <div class="p-2 bg-light rounded border mb-2 d-flex justify-content-between align-items-center">
                                     <div>
-                                        <span class="small text-muted d-block">Factura Pagada (Costo Est.: $${estimatedWholesaleCost.toFixed(2)}):</span>
+                                        <span class="small text-muted d-block">Factura Est. (Prod. $${productsWholesaleCost.toFixed(2)} + Envío $${shippingCost.toFixed(2)} = <strong>$${estimatedWholesaleCost.toFixed(2)}</strong>):</span>
+                                        <span class="small text-muted d-block">Factura Pagada:</span>
                                         <strong class="text-danger">-$${invoicePaid.toFixed(2)}</strong>
                                     </div>
                                     <button class="btn btn-sm btn-outline-danger" onclick="openInvoiceModal('${c.id}', '${c.name}', ${invoicePaid})">
@@ -2089,6 +2107,7 @@
                 status: document.getElementById('campStatus').value,
                 startDate: document.getElementById('startDate').value,
                 endDate: document.getElementById('endDate').value,
+                shippingCost: Math.max(0, parseFloat(document.getElementById('campShippingCost')?.value) || 0),
                 linkNatura: document.getElementById('linkNatura').value.trim(),
                 linkAvon: document.getElementById('linkAvon').value.trim(),
                 linkCasa: document.getElementById('linkCasa').value.trim(),
@@ -2118,6 +2137,9 @@
             document.getElementById('campStatus').value = c.status;
             document.getElementById('startDate').value = c.startDate || '';
             document.getElementById('endDate').value = c.endDate || '';
+            if (document.getElementById('campShippingCost')) {
+                document.getElementById('campShippingCost').value = c.shippingCost ?? 4612;
+            }
             document.getElementById('linkNatura').value = c.linkNatura || '';
             document.getElementById('linkAvon').value = c.linkAvon || '';
             document.getElementById('linkCasa').value = c.linkCasa || '';
@@ -2129,6 +2151,9 @@
         function resetCampaignForm() {
             document.getElementById('campaignForm').reset();
             document.getElementById('campId').value = '';
+            if (document.getElementById('campShippingCost')) {
+                document.getElementById('campShippingCost').value = '4612';
+            }
             document.getElementById('modalCampaignTitle').textContent = 'Configurar Campaña';
         }
 
@@ -2580,7 +2605,7 @@
 
             const total = currentOrderItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.finalClientPrice) || 0)), 0);
             const totalProfit = currentOrderItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.profit) || 0)), 0);
-            const totalCost = currentOrderItems.reduce((acc, item) => acc + (Number(item.cost) || 0), 0);
+            const totalCost = currentOrderItems.reduce((acc, item) => acc + ((item.fromKitCode || /^KIT-/i.test(String(item.code || '').trim())) ? 0 : (Number(item.cost) || 0)), 0);
             const totalPoints = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.totalPoints ?? ((Number(item.points) || 0) * (Number(item.qty) || 1))) || 0)), 0);
 
             const orderData = {
@@ -2642,7 +2667,7 @@
 
             const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
             const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
-            const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
+            const updatedCost = updatedItems.reduce((a, i) => a + ((i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
             const updatedPoints = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.totalPoints ?? ((Number(i.points) || 0) * (Number(i.qty) || 1))) || 0)), 0);
 
             await db.collection('orders').doc(orderId).update({
@@ -3141,7 +3166,7 @@
             } else {
                 const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
                 const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
-                const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
+                const updatedCost = updatedItems.reduce((a, i) => a + ((i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
                 await db.collection('orders').doc(orderId).update({
                     items: updatedItems,
                     total: updatedTotal,
@@ -3393,4 +3418,4 @@ Devuelve únicamente el texto listo para copiar y enviar.`;
         }
     </script>
 </body>
-    </html>
+</html>
