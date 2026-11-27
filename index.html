@@ -1193,7 +1193,7 @@
             code: '283558',
             name: 'Kit esenciales',
             qty: 1,
-            points: 36,
+            points: 50,
             paidTotal: 44250,
             components: [
                 { name: 'Tododia body splash frambuesa y pimienta rosa 200 ml', qty: 1, suggestedPrice: 25900 },
@@ -2302,10 +2302,12 @@
 
         function addItemToOrder() {
             const editingIndex = parseInt(document.getElementById('editingItemIndex').value, 10);
-            const isOwnStock = document.getElementById('itemIsOwnStock').checked;
-            const isPersonalUse = !isOwnStock && document.getElementById('itemIsPersonalUse').checked;
+            const existingItem = (!isNaN(editingIndex) && editingIndex >= 0) ? currentOrderItems[editingIndex] : null;
+            const isKitHeaderOnly = Boolean(existingItem?.isKitHeaderOnly);
+            const isOwnStock = !isKitHeaderOnly && document.getElementById('itemIsOwnStock').checked;
+            const isPersonalUse = !isKitHeaderOnly && !isOwnStock && document.getElementById('itemIsPersonalUse').checked;
             const isGift = !isOwnStock && !isPersonalUse && document.getElementById('itemIsGift').checked;
-            const isNonBillable = isOwnStock || isPersonalUse;
+            const isNonBillable = isOwnStock || isPersonalUse || isKitHeaderOnly;
             const brand = document.getElementById('itemBrand').value;
             const code = document.getElementById('itemCode').value.trim();
             const page = document.getElementById('itemPage').value.trim();
@@ -2320,14 +2322,15 @@
                 return;
             }
 
-            const wholesaleDiscountPct = isGift ? 100 : getWholesaleDiscountForBrand(brand);
-            const wholesaleCostUnit = isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100));
+            const wholesaleDiscountPct = isGift ? 100 : (isKitHeaderOnly ? 0 : getWholesaleDiscountForBrand(brand));
+            const wholesaleCostUnit = isGift ? 0 : (isKitHeaderOnly ? ((Number(existingItem?.cost) || 0) / Math.max(1, Number(existingItem?.qty) || 1)) : price * (1 - (wholesaleDiscountPct / 100)));
             const finalClientPriceUnit = isNonBillable ? 0 : (price * (1 - (clientDiscountPct / 100)));
             const unitProfit = isNonBillable ? 0 : (finalClientPriceUnit - wholesaleCostUnit);
             const linePoints = isOwnStock ? 0 : (unitPts * qty);
 
             const newItem = {
-                isOwnStock, isPersonalUse, isGift, brand, code, page, name, qty,
+                ...(existingItem || {}),
+                isOwnStock, isPersonalUse, isGift, isKitHeaderOnly, brand, code, page, name, qty,
                 points: unitPts,
                 totalPoints: linePoints,
                 price, clientDiscountPct, wholesaleDiscountPct,
@@ -2368,7 +2371,7 @@
             }
 
             currentOrderItems.forEach((item, index) => {
-                const isNonBillable = Boolean(item.isOwnStock || item.isPersonalUse);
+                const isNonBillable = Boolean(item.isOwnStock || item.isPersonalUse || item.isKitHeaderOnly);
                 const subtotal = isNonBillable ? 0 : (Number(item.finalClientPrice) || 0);
                 const itemProfit = isNonBillable ? 0 : (Number(item.profit) || 0);
                 const itemCost = Number(item.cost) || 0;
@@ -2379,11 +2382,13 @@
                 totalPoints += itemPts;
 
                 const badgeClass = item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
-                const specialBadge = item.isOwnStock
-                    ? `<span class="badge bg-info text-dark ms-1">📦 Stock</span>`
-                    : (item.isPersonalUse
-                        ? `<span class="badge bg-success ms-1">🙋‍♀️ Consumo</span>`
-                        : (item.isGift ? `<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : ''));
+                const specialBadge = item.isKitHeaderOnly
+                    ? `<span class="badge bg-warning text-dark ms-1">🎁 Kit (Puntos)</span>`
+                    : (item.isOwnStock
+                        ? `<span class="badge bg-info text-dark ms-1">📦 Stock</span>`
+                        : (item.isPersonalUse
+                            ? `<span class="badge bg-success ms-1">🙋‍♀️ Consumo</span>`
+                            : (item.isGift ? `<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : '')));
 
                 tbody.innerHTML += `
                     <tr>
