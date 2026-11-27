@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Negocio por Catálogo - Natura, Avon & Casa & Estilo</title>
-    <!-- Firebase SDK compat para sincronización en tiempo real -->
+    <!-- Firebase SDK compat -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <!-- html2canvas para descargar el ticket y el cupón en PNG -->
@@ -986,7 +986,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Monto Total de la Factura a Pagar ($)</label>
-                        <input type="number" id="invAmount" class="form-control form-control-lg" placeholder="Ej: 107812.02" step="0.01" required>
+                        <input type="number" id="invAmount" class="form-control form-control-lg" placeholder="Ej: 45000" step="0.01" required>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -1109,7 +1109,7 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Nombre de la Campaña / Ciclo</label>
-                                <input type="text" id="campName" class="form-control" placeholder="Ej: C17" required>
+                                <input type="text" id="campName" class="form-control" placeholder="Ej: Ciclo 16" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Estado</label>
@@ -1118,6 +1118,11 @@
                                     <option value="Enviada">Enviada a la Empresa</option>
                                     <option value="Cerrada">Cerrada / Entregada</option>
                                 </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Envío Natura por campaña ($)</label>
+                                <input type="number" id="campNaturaShipping" class="form-control" min="0" step="0.01" value="4612">
+                                <div class="form-text">Se suma una sola vez al estimado de la factura si la campaña incluye productos Natura.</div>
                             </div>
                         </div>
                         <div class="row g-3 mb-3 p-3 bg-light rounded border">
@@ -1128,15 +1133,6 @@
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold">Fecha de Cierre</label>
                                 <input type="date" id="endDate" class="form-control" required>
-                            </div>
-                        </div>
-                        <div class="row g-3 mb-3 p-3 bg-light rounded border">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Costo de Envío de Campaña ($)</label>
-                                <input type="number" id="campShippingCost" class="form-control" value="4612" min="0" step="0.01" placeholder="Ej: 4612">
-                            </div>
-                            <div class="col-md-6 d-flex align-items-end">
-                                <div class="small text-muted">Se suma al costo mayorista de los productos de la campaña (podés editarlo si cambia).</div>
                             </div>
                         </div>
                         <div class="mb-3 p-3 bg-light rounded border">
@@ -1598,13 +1594,14 @@
                 const isOwnStock = Boolean(item?.isOwnStock);
                 const isPersonalUse = Boolean(item?.isPersonalUse);
                 const isKitHeaderOnly = Boolean(item?.isKitHeaderOnly);
-                const isUnpackedKitComponent = Boolean(item?.fromKitCode) || /^KIT-/i.test(String(item?.code || '').trim());
+                const isKitComponent = Boolean(item?.fromKitCode);
+                const costUnknown = Boolean(item?.costUnknown || isKitComponent);
                 const isNonBillableItem = isOwnStock || isPersonalUse || isKitHeaderOnly;
                 const wholesaleDisc = isGift ? 100 : (Number(item?.wholesaleDiscountPct) || getWholesaleDiscountForBrand(brand));
 
-                // Los productos sueltos ya prorrateados de un kit desarmado tienen su costo en Mi Stock,
-                // pero no deben volver a sumarse como costo extra de campaña si el kit ya aportó su costo.
-                const itemCost = isUnpackedKitComponent
+                // Los componentes de un kit no tienen costo individual conocido.
+                // El costo completo ya está registrado una sola vez en el encabezado del kit.
+                const itemCost = costUnknown
                     ? 0
                     : (item?.cost !== undefined && (Number(item.cost) > 0 || isGift)
                         ? Number(item.cost)
@@ -1616,7 +1613,7 @@
                         ? Number(item.finalClientPrice)
                         : (basePrice * (1 - (clientDisc / 100)) * qty));
 
-                const itemProfit = isNonBillableItem
+                const itemProfit = (isNonBillableItem || costUnknown || item?.profitUnknown)
                     ? 0
                     : (item?.profit !== undefined && Number(item.profit) !== 0
                         ? Number(item.profit)
@@ -1643,10 +1640,12 @@
             const savedTotal = Number(o.total ?? o.totalClient ?? 0) || 0;
             const total = isNonBillableOrder ? 0 : (savedTotal > 0 ? savedTotal : calcItems.total);
 
-            const totalCost = calcItems.cost;
+            const savedCost = Number(o.totalCost ?? o.cost ?? 0) || 0;
+            const totalCost = savedCost > 0 ? savedCost : calcItems.cost;
 
             const savedProfit = Number(o.totalProfit ?? o.netProfit ?? o.profit ?? 0) || 0;
-            const totalProfit = isNonBillableOrder ? 0 : (savedProfit !== 0 ? savedProfit : (total - totalCost));
+            const hasUnknownCostItems = items.some(item => item?.costUnknown || item?.profitUnknown || item?.fromKitCode);
+            const totalProfit = isNonBillableOrder ? 0 : (hasUnknownCostItems ? savedProfit : (savedProfit !== 0 ? savedProfit : (total - totalCost)));
 
             const totalPoints = Number(o.totalPoints ?? calcItems.points) || 0;
             const paidAmount = Number(o.paidAmount ?? o.paid ?? 0) || 0;
@@ -1897,7 +1896,6 @@
             orderedCampaigns.forEach(c => {
                 const badge = c.status === 'Activa' ? 'bg-success' : 'bg-secondary';
                 const invoicePaid = Number(c.invoicePaid) || 0;
-                const shippingCost = Number(c.shippingCost ?? 4612) || 0;
                 const isCollapsed = collapsedIds.has(c.id);
 
                 const arrivalIso = getEstimatedArrivalDate(c.endDate);
@@ -1906,16 +1904,47 @@
                 const campOrders = orders.map(normalizeOrderData).filter(o => o.campaign === c.name);
                 let totalSold = 0;
                 let totalPaidByClients = 0;
-                let productsWholesaleCost = 0;
+                let estimatedProductsCost = 0;
+                const invoiceDetailRows = [];
 
                 campOrders.forEach(o => {
                     totalSold += Number(o.total) || 0;
                     totalPaidByClients += Number(o.paidAmount) || 0;
-                    productsWholesaleCost += Number(o.totalCost) || 0;
+                    const orderCost = Math.max(0, Number(o.totalCost) || 0);
+                    estimatedProductsCost += orderCost;
+
+                    // Desglose por artículo. Los componentes de kits no tienen costo individual:
+                    // se excluyen porque el costo completo está en la línea encabezado del kit.
+                    let detailCostForOrder = 0;
+                    (o.items || []).forEach(item => {
+                        if (item?.fromKitCode || item?.costUnknown) return;
+                        const qty = Math.max(1, parseInt(item?.qty ?? item?.quantity ?? 1, 10) || 1);
+                        const isGift = Boolean(item?.isGift ?? item?.isCompanyGift);
+                        const brand = item?.brand || 'Natura';
+                        const wholesaleDisc = isGift ? 100 : (Number(item?.wholesaleDiscountPct) || getWholesaleDiscountForBrand(brand));
+                        const lineCost = item?.cost !== undefined && (Number(item.cost) > 0 || isGift)
+                            ? Math.max(0, Number(item.cost) || 0)
+                            : ((isGift ? 0 : (Number(item?.price ?? item?.salePrice ?? item?.unitPrice ?? 0) || 0) * (1 - wholesaleDisc / 100)) * qty);
+                        if (lineCost <= 0) return;
+                        detailCostForOrder += lineCost;
+                        const itemName = String(item?.name || item?.code || 'Artículo').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+                        const clientName = String(o.clientName || 'Pedido').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+                        const kitLabel = item?.isKitHeaderOnly ? ' <span class="badge bg-warning text-dark">Kit completo</span>' : '';
+                        invoiceDetailRows.push({ clientName, itemName, qty, lineCost, kitLabel });
+                    });
+
+                    // Si un pedido antiguo tiene un total guardado distinto de la suma de sus líneas,
+                    // se muestra la diferencia para que el detalle siempre concilie con la factura estimada.
+                    const difference = orderCost - detailCostForOrder;
+                    if (difference > 0.009) {
+                        const clientName = String(o.clientName || 'Pedido').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+                        invoiceDetailRows.push({ clientName, itemName: 'Ajuste / costo registrado del pedido', qty: 1, lineCost: difference, kitLabel: '' });
+                    }
                 });
 
-                const hasCampaignItems = campOrders.some(o => Array.isArray(o.items) && o.items.length > 0);
-                const estimatedWholesaleCost = productsWholesaleCost + (hasCampaignItems ? shippingCost : 0);
+                const hasNaturaProducts = campOrders.some(o => Array.isArray(o.items) && o.items.some(item => (item.brand || 'Natura') === 'Natura'));
+                const naturaShipping = hasNaturaProducts ? Math.max(0, Number(c.naturaShippingCost ?? 4612) || 0) : 0;
+                const estimatedWholesaleCost = estimatedProductsCost + naturaShipping;
 
                 const { list: consolidatedList, totalCampaignPoints } = getConsolidatedWebItemsForCampaign(c.name);
 
@@ -2005,10 +2034,27 @@
                                 </div>
 
                                 <div class="p-2 bg-light rounded border mb-2 d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <span class="small text-muted d-block">Factura Est. (Prod. $${productsWholesaleCost.toFixed(2)} + Envío $${shippingCost.toFixed(2)} = <strong>$${estimatedWholesaleCost.toFixed(2)}</strong>):</span>
-                                        <span class="small text-muted d-block">Factura Pagada:</span>
-                                        <strong class="text-danger">-$${invoicePaid.toFixed(2)}</strong>
+                                    <div class="flex-grow-1">
+                                        <span class="small text-muted d-block">Factura estimada: Productos $${estimatedProductsCost.toFixed(2)} + Envío Natura $${naturaShipping.toFixed(2)} = <strong>$${estimatedWholesaleCost.toFixed(2)}</strong></span>
+                                        <strong class="text-danger">Factura pagada: -$${invoicePaid.toFixed(2)}</strong>
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-link p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#invoiceDetail_${c.id}" aria-expanded="false">
+                                                <i class="bi bi-list-ul me-1"></i>Ver detalle ítem por ítem
+                                            </button>
+                                            <div class="collapse mt-2" id="invoiceDetail_${c.id}">
+                                                <div class="table-responsive bg-white rounded border p-2">
+                                                    <table class="table table-sm table-striped align-middle mb-1">
+                                                        <thead><tr><th>Pedido / Cliente</th><th>Artículo</th><th class="text-center">Cant.</th><th class="text-end">Costo</th></tr></thead>
+                                                        <tbody>
+                                                            ${invoiceDetailRows.length ? invoiceDetailRows.map(row => `<tr><td class="small">${row.clientName}</td><td class="small">${row.itemName}${row.kitLabel}</td><td class="text-center">${row.qty}</td><td class="text-end text-nowrap">$${row.lineCost.toFixed(2)}</td></tr>`).join('') : '<tr><td colspan="4" class="text-muted small text-center">No hay artículos con costo registrado para detallar.</td></tr>'}
+                                                            <tr class="fw-bold border-top"><td colspan="3" class="text-end">Subtotal productos</td><td class="text-end">$${estimatedProductsCost.toFixed(2)}</td></tr>
+                                                            ${naturaShipping > 0 ? `<tr><td colspan="3" class="text-end">Envío Natura (una vez por campaña)</td><td class="text-end">$${naturaShipping.toFixed(2)}</td></tr>` : ''}
+                                                            <tr class="table-light fw-bold"><td colspan="3" class="text-end">TOTAL FACTURA ESTIMADA</td><td class="text-end">$${estimatedWholesaleCost.toFixed(2)}</td></tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <button class="btn btn-sm btn-outline-danger" onclick="openInvoiceModal('${c.id}', '${c.name}', ${invoicePaid})">
                                         <i class="bi bi-receipt"></i> Pagar Factura
@@ -2107,10 +2153,10 @@
                 status: document.getElementById('campStatus').value,
                 startDate: document.getElementById('startDate').value,
                 endDate: document.getElementById('endDate').value,
-                shippingCost: Math.max(0, parseFloat(document.getElementById('campShippingCost')?.value) || 0),
                 linkNatura: document.getElementById('linkNatura').value.trim(),
                 linkAvon: document.getElementById('linkAvon').value.trim(),
                 linkCasa: document.getElementById('linkCasa').value.trim(),
+                naturaShippingCost: Math.max(0, parseFloat(document.getElementById('campNaturaShipping').value) || 0),
             };
             if (!data.name) {
                 showToastMessage('Completá el nombre de la campaña.', 'warning');
@@ -2137,12 +2183,10 @@
             document.getElementById('campStatus').value = c.status;
             document.getElementById('startDate').value = c.startDate || '';
             document.getElementById('endDate').value = c.endDate || '';
-            if (document.getElementById('campShippingCost')) {
-                document.getElementById('campShippingCost').value = c.shippingCost ?? 4612;
-            }
             document.getElementById('linkNatura').value = c.linkNatura || '';
             document.getElementById('linkAvon').value = c.linkAvon || '';
             document.getElementById('linkCasa').value = c.linkCasa || '';
+            document.getElementById('campNaturaShipping').value = c.naturaShippingCost ?? 4612;
 
             document.getElementById('modalCampaignTitle').textContent = 'Editar Campaña';
             new bootstrap.Modal(document.getElementById('campaignModal')).show();
@@ -2151,9 +2195,7 @@
         function resetCampaignForm() {
             document.getElementById('campaignForm').reset();
             document.getElementById('campId').value = '';
-            if (document.getElementById('campShippingCost')) {
-                document.getElementById('campShippingCost').value = '4612';
-            }
+            document.getElementById('campNaturaShipping').value = 4612;
             document.getElementById('modalCampaignTitle').textContent = 'Configurar Campaña';
         }
 
@@ -2251,7 +2293,6 @@
                 return;
             }
 
-            const totalSuggestedPerKit = comps.reduce((acc, c) => acc + (c.suggestedPrice * c.qty), 0);
             const totalKitCost = kitPaidPerUnit * kitQty;
 
             const itemsToSave = [];
@@ -2276,12 +2317,7 @@
             });
 
             comps.forEach(c => {
-                const lineSuggestedPerKit = c.suggestedPrice * c.qty;
-                const propCostPerKit = totalSuggestedPerKit > 0
-                    ? (kitPaidPerUnit * (lineSuggestedPerKit / totalSuggestedPerKit))
-                    : (kitPaidPerUnit / comps.length);
                 const totalItemQty = c.qty * kitQty;
-                const totalItemCost = propCostPerKit * kitQty;
 
                 itemsToSave.push({
                     isOwnStock: true,
@@ -2298,7 +2334,9 @@
                     clientDiscountPct: 0,
                     wholesaleDiscountPct: 0,
                     finalClientPrice: 0,
-                    cost: totalItemCost,
+                    cost: 0,
+                    costUnknown: true,
+                    profitUnknown: true,
                     profit: 0
                 });
             });
@@ -2605,7 +2643,7 @@
 
             const total = currentOrderItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.finalClientPrice) || 0)), 0);
             const totalProfit = currentOrderItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.profit) || 0)), 0);
-            const totalCost = currentOrderItems.reduce((acc, item) => acc + ((item.fromKitCode || /^KIT-/i.test(String(item.code || '').trim())) ? 0 : (Number(item.cost) || 0)), 0);
+            const totalCost = currentOrderItems.reduce((acc, item) => acc + (Number(item.cost) || 0), 0);
             const totalPoints = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.totalPoints ?? ((Number(item.points) || 0) * (Number(item.qty) || 1))) || 0)), 0);
 
             const orderData = {
@@ -2667,7 +2705,7 @@
 
             const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
             const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
-            const updatedCost = updatedItems.reduce((a, i) => a + ((i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
+            const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
             const updatedPoints = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.totalPoints ?? ((Number(i.points) || 0) * (Number(i.qty) || 1))) || 0)), 0);
 
             await db.collection('orders').doc(orderId).update({
@@ -2948,7 +2986,8 @@
                 tbody.innerHTML = stockEntries.map(entry => {
                     const it = entry.item;
                     const qty = parseInt(it.qty, 10) || 1;
-                    const unitCost = (Number(it.cost) || 0) / qty;
+                    const costIsUnknown = Boolean(it.costUnknown || it.fromKitCode);
+                    const unitCost = costIsUnknown ? null : ((Number(it.cost) || 0) / qty);
                     const suggestedPrice = Number(it.price) || 0;
                     const brandBadge = it.brand === 'Natura' ? 'badge-natura' : (it.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
                     const rawCode = String(it.code || '').trim();
@@ -2965,7 +3004,7 @@
                             <td class="fw-bold">${it.name}</td>
                             <td><span class="badge bg-light text-dark border">${entry.campaign}</span></td>
                             <td class="text-center"><span class="badge bg-dark fs-6">${qty}</span></td>
-                            <td class="text-danger fw-semibold">$${unitCost.toFixed(2)} c/u</td>
+                            <td class="${costIsUnknown ? 'text-muted' : 'text-danger'} fw-semibold">${costIsUnknown ? 'No determinado' : `$${unitCost.toFixed(2)} c/u`}</td>
                             <td class="text-success fw-bold">$${suggestedPrice.toFixed(2)} c/u</td>
                             <td class="text-nowrap">
                                 <div class="d-inline-flex align-items-center gap-1">
@@ -3074,10 +3113,11 @@
             rememberClientEntry(clientName, clientPhone);
             rebuildAutocompleteLists();
 
-            const unitCost = (Number(stockItem.cost) || 0) / availableQty;
+            const costIsUnknown = Boolean(stockItem.costUnknown || stockItem.fromKitCode);
+            const unitCost = costIsUnknown ? 0 : ((Number(stockItem.cost) || 0) / availableQty);
             const saleTotal = unitPrice * sellQty;
-            const saleCost = unitCost * sellQty;
-            const saleProfit = saleTotal - saleCost;
+            const saleCost = costIsUnknown ? 0 : (unitCost * sellQty);
+            const saleProfit = costIsUnknown ? 0 : (saleTotal - saleCost);
 
             const soldItem = {
                 isOwnStock: false,
@@ -3095,6 +3135,8 @@
                 wholesaleDiscountPct: stockItem.wholesaleDiscountPct || getWholesaleDiscountForBrand(stockItem.brand),
                 finalClientPrice: saleTotal,
                 cost: saleCost,
+                costUnknown: costIsUnknown,
+                profitUnknown: costIsUnknown,
                 profit: saleProfit
             };
 
@@ -3157,7 +3199,9 @@
                 updatedItems[itemIndex] = {
                     ...stockItem,
                     qty: remainingQty,
-                    cost: unitCost * remainingQty
+                    cost: costIsUnknown ? 0 : (unitCost * remainingQty),
+                    costUnknown: costIsUnknown,
+                    profitUnknown: costIsUnknown
                 };
             }
 
@@ -3166,7 +3210,7 @@
             } else {
                 const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
                 const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
-                const updatedCost = updatedItems.reduce((a, i) => a + ((i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
+                const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
                 await db.collection('orders').doc(orderId).update({
                     items: updatedItems,
                     total: updatedTotal,
@@ -3418,4 +3462,4 @@ Devuelve únicamente el texto listo para copiar y enviar.`;
         }
     </script>
 </body>
-</html>
+    </html>
