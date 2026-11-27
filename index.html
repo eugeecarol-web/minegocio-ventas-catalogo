@@ -1765,7 +1765,7 @@
             };
         }
 
-        // Genera y descarga el archivo Excel (.xlsx) con columnas CANTIDAD y CÓDIGO para carga automática en web
+        // Genera y descarga el archivo Excel (.xlsx) con encabezados exactos CÓDIGO y CANTIDAD (sin modificar el formato)
         function exportCampaignWebExcel(campaignId) {
             const camp = campaigns.find(c => c.id === campaignId);
             if (!camp || typeof XLSX === 'undefined') {
@@ -1779,27 +1779,30 @@
                 return;
             }
 
-            const rows = list.map(item => {
+            // Matriz exacta respetando el modelo: Columna A = CÓDIGO, Columna B = QTDE
+            const aoaData = [
+                ['CÓDIGO', 'QTDE']
+            ];
+
+            list.forEach(item => {
                 const cleanCode = String(item.code || '').trim();
                 const numericCode = /^\d+$/.test(cleanCode) ? Number(cleanCode) : cleanCode;
-                return {
-                    'CANTIDAD': Number(item.qty) || 1,
-                    'CÓDIGO': numericCode
-                };
+                const qtyValue = Number(item.qty) || 1;
+                aoaData.push([numericCode, qtyValue]);
             });
 
-            const worksheet = XLSX.utils.json_to_sheet(rows, { header: ['CANTIDAD', 'CÓDIGO'] });
-            worksheet['!cols'] = [{ wch: 12 }, { wch: 16 }];
+            const worksheet = XLSX.utils.aoa_to_sheet(aoaData);
+            worksheet['!cols'] = [{ wch: 15 }, { wch: 12 }];
 
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'CargaWeb');
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
 
             const safeSlug = String(camp.name || 'campana')
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/gi, '_')
                 .replace(/^_|_$/g, '');
-            XLSX.writeFile(workbook, `planilla_${safeSlug || 'campana'}.xlsx`);
-            showToastMessage(`¡Planilla Excel de ${camp.name} descargada!`);
+            XLSX.writeFile(workbook, `planilha_${safeSlug || 'campana'}.xlsx`);
+            showToastMessage(`¡Planilla Excel de ${camp.name} descargada con el formato exacto!`);
         }
 
         function renderCampaigns() {
@@ -1947,7 +1950,7 @@
                                             <span><i class="bi bi-list-check me-1"></i> Lista para Cargar en la Web (${consolidatedList.length} ítems • ${totalCampaignPoints} pts)</span>
                                             <i class="bi bi-chevron-down"></i>
                                         </h6>
-                                        <button type="button" class="btn btn-sm btn-success py-0 px-2 fw-bold" onclick="exportCampaignWebExcel('${c.id}')" title="Descargar planilla Excel (CANTIDAD y CÓDIGO) para carga automática en web">
+                                        <button type="button" class="btn btn-sm btn-success py-0 px-2 fw-bold" onclick="exportCampaignWebExcel('${c.id}')" title="Descargar planilla Excel (CÓDIGO y QTDE) para carga automática en web">
                                             <i class="bi bi-file-earmark-excel me-1"></i> Planilla Web (.xlsx)
                                         </button>
                                     </div>
@@ -2567,6 +2570,34 @@
             }
         }
 
+        async function deleteStockItem(orderId, itemIndex) {
+            const stockOrder = orders.find(o => o.id === orderId);
+            if (!stockOrder || !Array.isArray(stockOrder.items) || !stockOrder.items[itemIndex]) return;
+
+            const updatedItems = [...stockOrder.items];
+            updatedItems.splice(itemIndex, 1);
+
+            if (updatedItems.length === 0) {
+                await db.collection('orders').doc(orderId).delete();
+                showToastMessage('Producto eliminado.', 'secondary');
+                return;
+            }
+
+            const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
+            const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
+            const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
+            const updatedPoints = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.totalPoints ?? ((Number(i.points) || 0) * (Number(i.qty) || 1))) || 0)), 0);
+
+            await db.collection('orders').doc(orderId).update({
+                items: updatedItems,
+                total: updatedTotal,
+                totalProfit: updatedProfit,
+                totalCost: updatedCost,
+                totalPoints: updatedPoints
+            });
+            showToastMessage('Producto eliminado.', 'secondary');
+        }
+
         function editOrder(orderId) {
             const o = orders.find(item => item.id === orderId);
             if (!o) return;
@@ -2582,7 +2613,7 @@
             document.getElementById('saveOrderBtn').textContent = 'Guardar Cambios del Pedido';
 
             const tabEl = document.querySelector('button[data-bs-target="#ordersTab"]');
-            new bootstrap.Tab(tabEl).show();
+            if (tabEl) new bootstrap.Tab(tabEl).show();
         }
 
         function cancelOrderEdit() {
@@ -2734,7 +2765,7 @@
             const tbody = document.getElementById('collectionsTable');
             if (!tbody) return;
             tbody.innerHTML = '';
-            const filterCamp = document.getElementById('filterCampaignSelect').value;
+            const filterCamp = document.getElementById('filterCampaignSelect')?.value || '';
 
             const filtered = orders
                 .map(normalizeOrderData)
@@ -2795,18 +2826,16 @@
             const tbody = document.getElementById('ownStockTable');
             const personalTbody = document.getElementById('personalUseStockTable');
             const badge = document.getElementById('stockCountBadge');
-            const saleUnitsBadge = document.getElementById('saleStockUnitsBadge');
-            const personalUnitsBadge = document.getElementById('personalStockUnitsBadge');
+            const saleBadge = document.getElementById('saleStockUnitsBadge');
+            const personalBadge = document.getElementById('personalStockUnitsBadge');
             if (!tbody) return;
 
             const stockEntries = [];
             const personalEntries = [];
-
             orders.map(normalizeOrderData).forEach(o => {
                 (o.items || []).forEach((item, idx) => {
                     const qty = parseInt(item.qty, 10) || 0;
                     if (qty <= 0) return;
-
                     if (item.isOwnStock) {
                         stockEntries.push({
                             orderId: o.id,
@@ -2815,25 +2844,21 @@
                             item
                         });
                     } else if (item.isPersonalUse) {
-                        const unitPts = Math.max(0, Number(item.points) || 0);
-                        const linePts = Number(item.totalPoints ?? (unitPts * qty)) || 0;
                         personalEntries.push({
                             orderId: o.id,
                             campaign: o.campaign,
                             itemIndex: idx,
-                            item,
-                            points: linePts
+                            item
                         });
                     }
                 });
             });
 
-            const totalSaleUnits = stockEntries.reduce((acc, e) => acc + (parseInt(e.item.qty, 10) || 1), 0);
-            const totalPersonalUnits = personalEntries.reduce((acc, e) => acc + (parseInt(e.item.qty, 10) || 1), 0);
-
+            const totalSaleUnits = stockEntries.reduce((acc, e) => acc + (parseInt(e.item.qty, 10) || 0), 0);
+            const totalPersonalUnits = personalEntries.reduce((acc, e) => acc + (parseInt(e.item.qty, 10) || 0), 0);
             if (badge) badge.textContent = String(totalSaleUnits);
-            if (saleUnitsBadge) saleUnitsBadge.textContent = `${totalSaleUnits} uds. a la venta`;
-            if (personalUnitsBadge) personalUnitsBadge.textContent = `${totalPersonalUnits} uds. personales`;
+            if (saleBadge) saleBadge.textContent = `${totalSaleUnits} uds. a la venta`;
+            if (personalBadge) personalBadge.textContent = `${totalPersonalUnits} uds. personales`;
 
             if (stockEntries.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No tenés productos disponibles para vender en Stock Propio todavía.</td></tr>`;
@@ -2844,12 +2869,16 @@
                     const unitCost = (Number(it.cost) || 0) / qty;
                     const suggestedPrice = Number(it.price) || 0;
                     const brandBadge = it.brand === 'Natura' ? 'badge-natura' : (it.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
+                    const rawCode = String(it.code || '').trim();
+                    const skuLabel = it.fromKitCode
+                        ? `Kit ${it.fromKitCode}`
+                        : (rawCode && !/^KIT-/i.test(rawCode) ? `SKU: ${rawCode}` : 'S/C');
 
                     return `
                         <tr>
                             <td>
                                 <span class="badge ${brandBadge}">${it.brand || 'Natura'}</span>
-                                <div class="small fw-bold text-secondary mt-1">SKU: ${it.code || 'S/C'}</div>
+                                <div class="small fw-bold text-secondary mt-1">${skuLabel}</div>
                             </td>
                             <td class="fw-bold">${it.name}</td>
                             <td><span class="badge bg-light text-dark border">${entry.campaign}</span></td>
@@ -2861,10 +2890,10 @@
                                     <button class="btn btn-sm btn-success fw-bold" onclick="openSellStockModal('${entry.orderId}', ${entry.itemIndex})">
                                         <i class="bi bi-bag-check me-1"></i> Vender a Cliente
                                     </button>
-                                    <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar en pedido">
+                                    <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar producto">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteStockItem('${entry.orderId}', ${entry.itemIndex})" title="Eliminar producto del stock">
+                                    <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteStockItem('${entry.orderId}', ${entry.itemIndex})" title="Borrar de Mi Stock">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -2876,31 +2905,33 @@
 
             if (personalTbody) {
                 if (personalEntries.length === 0) {
-                    personalTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">No tenés productos de Consumo Personal registrados.</td></tr>`;
+                    personalTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">No tenés artículos marcados como Consumo Personal.</td></tr>`;
                 } else {
                     personalTbody.innerHTML = personalEntries.map(entry => {
                         const it = entry.item;
                         const qty = parseInt(it.qty, 10) || 1;
                         const totalCost = Number(it.cost) || 0;
+                        const totalPts = Number(it.totalPoints ?? ((Number(it.points) || 0) * qty)) || 0;
                         const brandBadge = it.brand === 'Natura' ? 'badge-natura' : (it.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
+                        const rawCode = String(it.code || '').trim();
 
                         return `
                             <tr>
                                 <td>
                                     <span class="badge ${brandBadge}">${it.brand || 'Natura'}</span>
-                                    <div class="small fw-bold text-secondary mt-1">SKU: ${it.code || 'S/C'}</div>
+                                    <div class="small fw-bold text-secondary mt-1">${rawCode ? `SKU: ${rawCode}` : 'S/C'}</div>
                                 </td>
-                                <td class="fw-semibold">${it.name} <span class="badge bg-success ms-1">Consumo Personal</span></td>
+                                <td class="fw-semibold">${it.name} <span class="badge bg-success bg-opacity-15 text-success border border-success ms-1">Uso propio</span></td>
                                 <td><span class="badge bg-light text-dark border">${entry.campaign}</span></td>
                                 <td class="text-center"><span class="badge bg-secondary">${qty}</span></td>
-                                <td class="text-center fw-bold" style="color: #7B3A1D;">${entry.points} pts</td>
+                                <td class="text-center fw-bold" style="color: #7B3A1D;">${totalPts} pts</td>
                                 <td class="text-danger fw-semibold">$${totalCost.toFixed(2)}</td>
                                 <td class="text-nowrap">
                                     <div class="d-inline-flex align-items-center gap-1">
-                                        <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar en pedido">
+                                        <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar consumo personal">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteStockItem('${entry.orderId}', ${entry.itemIndex})" title="Quitar de consumo personal">
+                                        <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteStockItem('${entry.orderId}', ${entry.itemIndex})" title="Borrar de Consumo Personal">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -2909,6 +2940,312 @@
                         `;
                     }).join('');
                 }
+            }
+        }
+
+        function openSellStockModal(orderId, itemIndex) {
+            const o = orders.find(item => item.id === orderId);
+            if (!o || !Array.isArray(o.items) || !o.items[itemIndex]) return;
+            const it = o.items[itemIndex];
+            const maxQty = parseInt(it.qty, 10) || 1;
+
+            document.getElementById('sellStockOrderId').value = orderId;
+            document.getElementById('sellStockItemIndex').value = String(itemIndex);
+            document.getElementById('sellStockProductLabel').textContent = `[${it.brand || 'Natura'}] ${it.name}`;
+            document.getElementById('sellStockMaxQty').textContent = String(maxQty);
+            document.getElementById('sellStockClientName').value = '';
+            document.getElementById('sellStockClientPhone').value = '';
+
+            const qtyInput = document.getElementById('sellStockQty');
+            qtyInput.max = String(maxQty);
+            qtyInput.value = '1';
+
+            document.getElementById('sellStockUnitPrice').value = Number(it.price) || '';
+            document.getElementById('sellStockMarkPaid').checked = false;
+
+            new bootstrap.Modal(document.getElementById('sellStockModal')).show();
+        }
+
+        async function confirmSellFromStock() {
+            const orderId = document.getElementById('sellStockOrderId').value;
+            const itemIndex = parseInt(document.getElementById('sellStockItemIndex').value, 10);
+            const clientName = document.getElementById('sellStockClientName').value.trim();
+            const clientPhone = document.getElementById('sellStockClientPhone').value.trim();
+            const sellQty = Math.max(1, parseInt(document.getElementById('sellStockQty').value, 10) || 1);
+            const unitPrice = parseFloat(document.getElementById('sellStockUnitPrice').value) || 0;
+            const markPaid = document.getElementById('sellStockMarkPaid').checked;
+
+            const stockOrder = orders.find(o => o.id === orderId);
+            if (!stockOrder || !stockOrder.items[itemIndex]) return;
+            const stockItem = stockOrder.items[itemIndex];
+            const availableQty = parseInt(stockItem.qty, 10) || 1;
+
+            if (!clientName || unitPrice <= 0) {
+                showToastMessage('Completá el nombre del cliente y un precio válido.', 'warning');
+                return;
+            }
+            if (sellQty > availableQty) {
+                showToastMessage(`Solo tenés ${availableQty} unidad(es) disponibles en stock.`, 'warning');
+                return;
+            }
+
+            rememberClientEntry(clientName, clientPhone);
+            rebuildAutocompleteLists();
+
+            const unitCost = (Number(stockItem.cost) || 0) / availableQty;
+            const saleTotal = unitPrice * sellQty;
+            const saleCost = unitCost * sellQty;
+            const saleProfit = saleTotal - saleCost;
+
+            const soldItem = {
+                isOwnStock: false,
+                isPersonalUse: false,
+                isGift: false,
+                brand: stockItem.brand || 'Natura',
+                code: stockItem.code || '',
+                page: stockItem.page || '',
+                name: stockItem.name,
+                qty: sellQty,
+                points: 0,
+                totalPoints: 0,
+                price: unitPrice,
+                clientDiscountPct: 0,
+                wholesaleDiscountPct: stockItem.wholesaleDiscountPct || getWholesaleDiscountForBrand(stockItem.brand),
+                finalClientPrice: saleTotal,
+                cost: saleCost,
+                profit: saleProfit
+            };
+
+            const existingClientOrder = orders
+                .map(normalizeOrderData)
+                .find(o => !o.isPureOwnStock && !o.isPurePersonalUse && o.campaign === stockOrder.campaign && o.clientName.trim().toLowerCase() === clientName.toLowerCase());
+
+            let targetOrderId = '';
+            if (existingClientOrder) {
+                const mergedItems = [...(existingClientOrder.items || []), soldItem];
+                const mergedTotal = (Number(existingClientOrder.total) || 0) + saleTotal;
+                const mergedProfit = (Number(existingClientOrder.totalProfit) || 0) + saleProfit;
+                const mergedPaid = (Number(existingClientOrder.paidAmount) || 0) + (markPaid ? saleTotal : 0);
+                const mergedPhone = existingClientOrder.clientPhone || clientPhone;
+
+                await db.collection('orders').doc(existingClientOrder.id).update({
+                    clientPhone: mergedPhone,
+                    items: mergedItems,
+                    total: mergedTotal,
+                    totalProfit: mergedProfit,
+                    paidAmount: mergedPaid,
+                    paymentStatus: mergedPaid >= mergedTotal ? 'Pagado' : (mergedPaid > 0 ? 'Parcial' : 'Pendiente')
+                });
+                targetOrderId = existingClientOrder.id;
+            } else {
+                const newOrderRef = await db.collection('orders').add({
+                    campaign: stockOrder.campaign,
+                    clientName,
+                    clientPhone,
+                    items: [soldItem],
+                    isPureOwnStock: false,
+                    isPurePersonalUse: false,
+                    fromOwnStock: true,
+                    total: saleTotal,
+                    totalProfit: saleProfit,
+                    totalCost: 0,
+                    totalPoints: 0,
+                    paidAmount: markPaid ? saleTotal : 0,
+                    paymentStatus: markPaid ? 'Pagado' : 'Pendiente',
+                    lastPaymentMethod: markPaid ? 'Efectivo' : '-',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                targetOrderId = newOrderRef.id;
+                orders.unshift(normalizeOrderData({
+                    id: targetOrderId,
+                    campaign: stockOrder.campaign,
+                    clientName,
+                    clientPhone,
+                    items: [soldItem],
+                    total: saleTotal,
+                    paidAmount: markPaid ? saleTotal : 0
+                }));
+            }
+
+            const updatedItems = [...stockOrder.items];
+            if (sellQty >= availableQty) {
+                updatedItems.splice(itemIndex, 1);
+            } else {
+                const remainingQty = availableQty - sellQty;
+                updatedItems[itemIndex] = {
+                    ...stockItem,
+                    qty: remainingQty,
+                    cost: unitCost * remainingQty
+                };
+            }
+
+            if (updatedItems.length === 0) {
+                await db.collection('orders').doc(orderId).delete();
+            } else {
+                const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
+                const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
+                const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
+                await db.collection('orders').doc(orderId).update({
+                    items: updatedItems,
+                    total: updatedTotal,
+                    totalProfit: updatedProfit,
+                    totalCost: updatedCost
+                });
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('sellStockModal')).hide();
+            showToastMessage(existingClientOrder
+                ? `¡Agregado al pedido existente de ${clientName}!`
+                : `¡Vendido a ${clientName}! Ya figura en Cobranzas.`);
+            openClientTicket(targetOrderId);
+        }
+
+        function openPaymentModal(orderId, clientName, currentSaldo) {
+            document.getElementById('payOrderId').value = orderId;
+            document.getElementById('payClientName').textContent = clientName;
+            document.getElementById('payCurrentDebt').textContent = `$${(Number(currentSaldo) || 0).toFixed(2)}`;
+            document.getElementById('payAmount').value = Number(currentSaldo) || 0;
+            new bootstrap.Modal(document.getElementById('paymentModal')).show();
+        }
+
+        async function confirmPayment() {
+            const orderId = document.getElementById('payOrderId').value;
+            const amountToAdd = parseFloat(document.getElementById('payAmount').value) || 0;
+            const method = document.getElementById('payMethod').value;
+
+            const orderDoc = orders.find(o => o.id === orderId);
+            if (!orderDoc) return;
+
+            const newPaidAmount = (Number(orderDoc.paidAmount) || 0) + amountToAdd;
+            await db.collection('orders').doc(orderId).update({
+                paidAmount: newPaidAmount,
+                lastPaymentMethod: method
+            });
+
+            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+            showToastMessage('¡Pago registrado con éxito!');
+        }
+
+        async function deleteOrder(id) {
+            await db.collection('orders').doc(id).delete();
+            showToastMessage('Pedido eliminado.', 'secondary');
+        }
+
+        function buildFallbackWhatsAppMessage(campaignName, camp, messageType, brand, extraNotes) {
+            const closeFormatted = camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente';
+            const arrivalFormatted = camp && camp.endDate ? formatDateAR(getEstimatedArrivalDate(camp.endDate)) : '';
+            const dueFormatted = camp && camp.endDate ? formatDateAR(getPaymentDueDate(camp.endDate)) : '';
+
+            let headerLine = `🌸 *¡Hola! Arrancamos la campaña ${campaignName}* 🌸`;
+            if (messageType === 'Cierre Inminente') {
+                headerLine = `⏳ *¡Últimos días para pedir en ${campaignName}!* ⏳`;
+            } else if (messageType === 'Promos Destacadas') {
+                headerLine = `🔥 *¡Ofertas destacadas de ${campaignName}!* 🔥`;
+            } else if (messageType === 'Entrega Inmediata') {
+                headerLine = `📦 *¡Stock disponible para ENTREGA INMEDIATA!* 📦`;
+            }
+
+            let brandLine = 'Marcas disponibles: *Natura 🌸, Avon 💄 y Casa & Estilo 🏠*';
+            if (brand === 'Natura') brandLine = 'Destacados de *Natura 🌸*';
+            else if (brand === 'Avon') brandLine = 'Destacados de *Avon 💄*';
+            else if (brand === 'Casa & Estilo') brandLine = 'Destacados de *Casa & Estilo 🏠*';
+
+            let msg = `${headerLine}\n${brandLine}`;
+
+            if (messageType === 'Entrega Inmediata') {
+                const stockLines = [];
+                orders.map(normalizeOrderData).forEach(o => {
+                    (o.items || []).forEach(it => {
+                        if (it.isOwnStock && (parseInt(it.qty, 10) || 0) > 0) {
+                            stockLines.push(`• *[${it.brand || 'Natura'}]* ${it.name} - $${(Number(it.price) || 0).toFixed(2)}`);
+                        }
+                    });
+                });
+                if (stockLines.length > 0) {
+                    msg += `\n\n🎁 *Productos disponibles hoy:*\n${stockLines.join('\n')}`;
+                }
+            } else {
+                msg += `\n\n📅 *Cierre de pedidos:* ${closeFormatted}`;
+                if (arrivalFormatted) msg += `\n🚚 *Entrega estimada:* ${arrivalFormatted}`;
+                if (dueFormatted) msg += `\n💳 *Límite de pago:* ${dueFormatted}`;
+            }
+
+            const links = [];
+            if (camp?.linkNatura && (brand === 'Todas' || brand === 'Natura')) {
+                links.push(`• 🌸 Revista Natura: ${camp.linkNatura}`);
+            }
+            if (camp?.linkAvon && (brand === 'Todas' || brand === 'Avon')) {
+                links.push(`• 💄 Revista Avon: ${camp.linkAvon}`);
+            }
+            if (camp?.linkCasa && (brand === 'Todas' || brand === 'Casa & Estilo')) {
+                links.push(`• 🏠 Casa & Estilo: ${camp.linkCasa}`);
+            }
+
+            if (links.length > 0 && messageType !== 'Entrega Inmediata') {
+                msg += `\n\n📖 *Catálogos interactivos:*\n${links.join('\n')}`;
+            }
+
+            if (extraNotes) {
+                msg += `\n\n✨ *Novedades:* ${extraNotes}`;
+            }
+
+            msg += `\n\nEscribime por acá y coordinamos con gusto 😊\n*M. Eugenia Carol* • 📱 381-519-3109`;
+            return msg;
+        }
+
+        async function generateAIMessage() {
+            const campaignName = document.getElementById('aiCampaignSelect').value;
+            const messageType = document.getElementById('aiMessageType').value;
+            const brand = document.getElementById('aiBrandSelect').value;
+            const extraNotes = document.getElementById('aiExtraNotes').value.trim();
+
+            if (!campaignName && messageType !== 'Entrega Inmediata') {
+                showToastMessage('Seleccioná una campaña.', 'warning');
+                return;
+            }
+
+            const camp = campaigns.find(c => c.name === campaignName);
+            const linkInfo = camp
+                ? `Links:\n- Natura: ${camp.linkNatura || 'N/A'}\n- Avon: ${camp.linkAvon || 'N/A'}\n- Casa & Estilo: ${camp.linkCasa || 'N/A'}`
+                : '';
+
+            const prompt = `Actúa como M. Eugenia Carol (WhatsApp 381-519-3109), consultora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp cálido, cercano y atractivo con emojis.
+- Campaña: ${campaignName || 'General'} (Cierra el: ${camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente'})
+- Tipo: ${messageType}
+- Marca: ${brand}
+- Notas extra: ${extraNotes || 'Ninguna'}
+${linkInfo}
+Devuelve únicamente el texto listo para copiar y enviar.`;
+
+            const outputEl = document.getElementById('aiResultOutput');
+            outputEl.value = "Generando mensaje con la IA... 🤖✨";
+
+            const apiKey = "";
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    const apiErrMsg = data?.error?.message || `Error HTTP ${response.status}`;
+                    outputEl.value = buildFallbackWhatsAppMessage(campaignName, camp, messageType, brand, extraNotes);
+                    showToastMessage(`Aviso IA (${apiErrMsg}): se generó un borrador listo para WhatsApp.`, 'info');
+                    return;
+                }
+
+                const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                outputEl.value = generatedText
+                    ? generatedText.trim()
+                    : buildFallbackWhatsAppMessage(campaignName, camp, messageType, brand, extraNotes);
+            } catch (error) {
+                console.error('Error en generateAIMessage:', error);
+                outputEl.value = buildFallbackWhatsAppMessage(campaignName, camp, messageType, brand, extraNotes);
+                showToastMessage('Sin conexión con IA externa: se generó un borrador listo para WhatsApp.', 'info');
             }
         }
 
