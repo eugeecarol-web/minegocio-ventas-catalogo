@@ -1,3 +1,4 @@
+<html>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -805,7 +806,7 @@
                         </div>
                         <div class="col-4 col-md-2">
                             <label class="form-label fw-bold small">Puntos Kit</label>
-                            <input type="number" id="kitPointsInput" class="form-control form-control-sm" value="36" min="0" oninput="recalcKitPreview()">
+                            <input type="number" id="kitPointsInput" class="form-control form-control-sm" value="50" min="0" oninput="recalcKitPreview()">
                         </div>
                         <div class="col-5 col-md-2">
                             <label class="form-label fw-bold small">Vos Pagás ($)</label>
@@ -1017,10 +1018,73 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Método de Pago</label>
-                        <select id="payMethod" class="form-select">
+                        <select id="payMethod" class="form-select" onchange="toggleNaturaPaySimulator()">
                             <option value="Efectivo">Efectivo 💵</option>
                             <option value="Transferencia">Transferencia / Mercado Pago 📱</option>
+                            <option value="Natura Pay (Link de Pago)">Link de Pago — Natura Pay 💳</option>
                         </select>
+                    </div>
+
+                    <div id="naturaPaySimulatorBox" class="p-3 rounded border bg-light d-none mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold small" style="color: #1B5E20;">
+                                <i class="bi bi-credit-card-2-front me-1"></i> Simulador Natura Pay
+                            </span>
+                            <span class="badge bg-warning text-dark" style="font-size: 10px;">Acredita en 48 hs hábiles</span>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold mb-1">Tipo de tarjeta / comisión:</label>
+                                <select id="naturaPayCardType" class="form-select form-select-sm" onchange="updateNaturaPaySimulation()">
+                                    <option value="debit">Débito (2,9% + IVA)</option>
+                                    <option value="credit">Crédito (4,9% + IVA)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold mb-1">¿Quién asume el recargo del link?</label>
+                                <select id="naturaPayPassFeeToClient" class="form-select form-select-sm" onchange="updateNaturaPaySimulation()">
+                                    <option value="no">Lo absorbo yo (recibís menos)</option>
+                                    <option value="yes">Lo suma al link (recibís el 100%)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="p-2 bg-white rounded border small mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-muted">Monto a incluir en el link:</span>
+                                <strong id="npLinkAmount" class="text-dark fs-6">$0.00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">¿Cuánto vas a recibir? <span id="npFeeLabel" class="text-danger fw-semibold">(2.9% + IVA)</span>:</span>
+                                <strong id="npNetReceived" class="text-success fs-6">$0.00</strong>
+                            </div>
+                            <div class="text-muted mt-1" style="font-size: 10px;">
+                                * Monto estimado sujeto a retenciones. El recargo de cuotas lo asume directamente quien paga.
+                            </div>
+                        </div>
+
+                        <div class="small">
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                                <span class="fw-bold text-secondary">Valores de las cuotas para el cliente:</span>
+                                <div class="d-flex align-items-center gap-1" style="font-size: 11px;">
+                                    <label for="naturaPayCfteaInput" class="text-muted fw-semibold mb-0">CFTEA (%):</label>
+                                    <input type="number" id="naturaPayCfteaInput" class="form-control form-control-sm py-0 px-1 text-end fw-bold" style="width: 68px;" value="57.87" step="0.01" min="0" oninput="updateNaturaPaySimulation()">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between py-1 border-bottom">
+                                <span><strong>1 x</strong> <span id="np1Installment">$0.00</span></span>
+                                <span class="text-success fw-semibold">Sin interés (<span id="np1Total">$0.00</span>)</span>
+                            </div>
+                            <div class="d-flex justify-content-between py-1 border-bottom">
+                                <span><strong>3 x</strong> <span id="np3Installment">$0.00</span></span>
+                                <span class="text-muted">CFTEA <span id="np3CfteaLabel">57.87%</span> • Total: <strong class="text-dark" id="np3Total">$0.00</strong></span>
+                            </div>
+                            <div class="d-flex justify-content-between pt-1">
+                                <span><strong>6 x</strong> <span id="np6Installment">$0.00</span></span>
+                                <span class="text-muted">CFTEA <span id="np6CfteaLabel">57.87%</span> • Total: <strong class="text-dark" id="np6Total">$0.00</strong></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -1616,7 +1680,6 @@
             });
         }
 
-        // Lee el orden personalizado guardado en el navegador para las tarjetas de campaña
         function getSavedCampaignOrderIds() {
             try {
                 const raw = localStorage.getItem(LOCAL_CAMPAIGN_ORDER_KEY);
@@ -1633,7 +1696,6 @@
             } catch (_) {}
         }
 
-        // Lee qué tarjetas de campaña fueron colapsadas por el usuario
         function getCollapsedCampaignIds() {
             try {
                 const raw = localStorage.getItem(LOCAL_CAMPAIGN_COLLAPSED_KEY);
@@ -1644,7 +1706,6 @@
             }
         }
 
-        // Alterna la visibilidad del detalle de una tarjeta de campaña
         function toggleCampaignDetails(campId) {
             if (!campId) return;
             const collapsed = getCollapsedCampaignIds();
@@ -1723,7 +1784,6 @@
             showToastMessage('¡Orden de campañas actualizado!');
         }
 
-        // Consolida los artículos a encargar en la web (excluyendo regalos e ítems desarmados de kits)
         function getConsolidatedWebItemsForCampaign(campaignName) {
             const campOrders = orders.map(normalizeOrderData).filter(o => o.campaign === campaignName);
             const consolidatedMap = {};
@@ -1765,7 +1825,6 @@
             };
         }
 
-        // Genera y descarga el archivo Excel (.xlsx) con encabezados exactos CÓDIGO y CANTIDAD (sin modificar el formato)
         function exportCampaignWebExcel(campaignId) {
             const camp = campaigns.find(c => c.id === campaignId);
             if (!camp || typeof XLSX === 'undefined') {
@@ -1779,7 +1838,6 @@
                 return;
             }
 
-            // Matriz exacta respetando el modelo: Columna A = CÓDIGO, Columna B = QTDE
             const aoaData = [
                 ['CÓDIGO', 'QTDE']
             ];
@@ -1883,7 +1941,6 @@
                             <small class="text-muted mb-2 d-block">📅 Del ${formatDateAR(c.startDate)} al ${formatDateAR(c.endDate)}</small>
 
                             <div class="${isCollapsed ? 'd-none' : ''}">
-                                <!-- Indicador de Puntos de la Campaña (85 mínimo / 110 ideal) -->
                                 <div class="p-2 bg-white rounded border mb-2 small">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <span class="fw-bold" style="color: #7B3A1D;"><i class="bi bi-stars me-1"></i>Puntos del Pedido:</span>
@@ -3104,8 +3161,81 @@
             document.getElementById('payOrderId').value = orderId;
             document.getElementById('payClientName').textContent = clientName;
             document.getElementById('payCurrentDebt').textContent = `$${(Number(currentSaldo) || 0).toFixed(2)}`;
-            document.getElementById('payAmount').value = Number(currentSaldo) || 0;
+            const amountInput = document.getElementById('payAmount');
+            amountInput.value = (Number(currentSaldo) || 0).toFixed(2);
+            amountInput.oninput = updateNaturaPaySimulation;
+            document.getElementById('payMethod').value = 'Efectivo';
+            document.getElementById('naturaPayCardType').value = 'debit';
+            toggleNaturaPaySimulator();
             new bootstrap.Modal(document.getElementById('paymentModal')).show();
+        }
+
+        function toggleNaturaPaySimulator() {
+            const method = document.getElementById('payMethod')?.value || '';
+            const box = document.getElementById('naturaPaySimulatorBox');
+            if (!box) return;
+            if (method.includes('Natura Pay')) {
+                box.classList.remove('d-none');
+                updateNaturaPaySimulation();
+            } else {
+                box.classList.add('d-none');
+            }
+        }
+
+        function formatMoneyAR(val) {
+            return Number(val || 0).toLocaleString('es-AR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function updateNaturaPaySimulation() {
+            const box = document.getElementById('naturaPaySimulatorBox');
+            if (!box || box.classList.contains('d-none')) return;
+
+            const baseAmount = Math.max(0, parseFloat(document.getElementById('payAmount')?.value) || 0);
+            const cardType = document.getElementById('naturaPayCardType')?.value || 'debit';
+            const passFeeToClient = (document.getElementById('naturaPayPassFeeToClient')?.value || 'no') === 'yes';
+            const cfteaPct = Math.max(0, parseFloat(document.getElementById('naturaPayCfteaInput')?.value) || 0);
+
+            const netFactor = cardType === 'credit'
+                ? (31137.50 / 33100)
+                : (31938.52 / 33100);
+
+            // Si trasladamos el recargo del link para recibir el monto completo, dividimos por el factor neto.
+            const linkAmount = passFeeToClient && netFactor > 0
+                ? (baseAmount / netFactor)
+                : baseAmount;
+            const netReceived = passFeeToClient
+                ? baseAmount
+                : (linkAmount * netFactor);
+
+            const refCftea = 57.87;
+            const cfteaRatio = refCftea > 0 ? (cfteaPct / refCftea) : 0;
+            const surcharge3x = ((36075.69 / 33100) - 1) * cfteaRatio;
+            const surcharge6x = ((38154.37 / 33100) - 1) * cfteaRatio;
+
+            const total3x = linkAmount * (1 + surcharge3x);
+            const installment3x = total3x / 3;
+
+            const total6x = linkAmount * (1 + surcharge6x);
+            const installment6x = total6x / 6;
+
+            const formattedCftea = `${cfteaPct.toFixed(2)}%`;
+            document.getElementById('npFeeLabel').textContent = cardType === 'credit' ? '(4.9% + IVA)' : '(2.9% + IVA)';
+            document.getElementById('npLinkAmount').textContent = `$${formatMoneyAR(linkAmount)}`;
+            document.getElementById('npNetReceived').textContent = `$${formatMoneyAR(netReceived)}`;
+            document.getElementById('np3CfteaLabel').textContent = formattedCftea;
+            document.getElementById('np6CfteaLabel').textContent = formattedCftea;
+
+            document.getElementById('np1Installment').textContent = `$${formatMoneyAR(linkAmount)}`;
+            document.getElementById('np1Total').textContent = `$${formatMoneyAR(linkAmount)}`;
+
+            document.getElementById('np3Installment').textContent = `$${formatMoneyAR(installment3x)}`;
+            document.getElementById('np3Total').textContent = `$${formatMoneyAR(total3x)}`;
+
+            document.getElementById('np6Installment').textContent = `$${formatMoneyAR(installment6x)}`;
+            document.getElementById('np6Total').textContent = `$${formatMoneyAR(total6x)}`;
         }
 
         async function confirmPayment() {
