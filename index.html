@@ -455,6 +455,14 @@
                                 <div class="form-text small mt-0">Se encarga en la campaña y suma costo, pero no genera deuda ($0 a cobrar) hasta que lo vendas desde "4. Mi Stock".</div>
                             </div>
 
+                            <div class="form-check form-switch mb-2 p-2 bg-success bg-opacity-10 border border-success rounded ps-5">
+                                <input class="form-check-input" type="checkbox" role="switch" id="itemIsPersonalUse" onchange="handleItemModeSwitch('personal')">
+                                <label class="form-check-label fw-bold text-dark" for="itemIsPersonalUse">
+                                    🙋‍♀️ Consumo Personal (Para uso propio)
+                                </label>
+                                <div class="form-text small mt-0">Se encarga en la campaña, suma puntos y costo mayorista, pero no figura como cobro ni deuda de cliente ($0 a cobrar).</div>
+                            </div>
+
                             <div class="form-check form-switch mb-3 p-2 bg-warning bg-opacity-10 border border-warning rounded ps-5">
                                 <input class="form-check-input" type="checkbox" role="switch" id="itemIsGift" onchange="handleItemModeSwitch('gift')">
                                 <label class="form-check-label fw-bold text-dark" for="itemIsGift">
@@ -1278,7 +1286,8 @@
         function rememberClientEntry(name, phone) {
             const cleanName = String(name || '').trim();
             const cleanPhone = String(phone || '').trim();
-            if (!cleanName || cleanName.toLowerCase() === 'stock propio' || cleanName.toLowerCase() === 'cliente') return;
+            const lowerName = cleanName.toLowerCase();
+            if (!cleanName || lowerName === 'stock propio' || lowerName === 'consumo personal' || lowerName === 'cliente') return;
 
             const key = cleanName.toLowerCase();
             const existingIdx = savedClients.findIndex(c => c.name.toLowerCase() === key);
@@ -1418,22 +1427,34 @@
 
         function handleItemModeSwitch(source) {
             const stockEl = document.getElementById('itemIsOwnStock');
+            const personalEl = document.getElementById('itemIsPersonalUse');
             const giftEl = document.getElementById('itemIsGift');
+            const clientInput = document.getElementById('clientName');
+
             if (source === 'stock' && stockEl.checked) {
+                personalEl.checked = false;
                 giftEl.checked = false;
-                const clientInput = document.getElementById('clientName');
-                if (!clientInput.value.trim()) {
+                if (!clientInput.value.trim() || clientInput.value.trim().toLowerCase() === 'consumo personal') {
                     clientInput.value = 'Stock Propio';
+                }
+            } else if (source === 'personal' && personalEl.checked) {
+                stockEl.checked = false;
+                giftEl.checked = false;
+                if (!clientInput.value.trim() || clientInput.value.trim().toLowerCase() === 'stock propio') {
+                    clientInput.value = 'Consumo Personal';
                 }
             } else if (source === 'gift' && giftEl.checked) {
                 stockEl.checked = false;
+                personalEl.checked = false;
             }
             calculateItemPreview();
         }
 
         function calculateItemPreview() {
             const isOwnStock = document.getElementById('itemIsOwnStock').checked;
-            const isGift = document.getElementById('itemIsGift').checked;
+            const isPersonalUse = !isOwnStock && document.getElementById('itemIsPersonalUse').checked;
+            const isGift = !isOwnStock && !isPersonalUse && document.getElementById('itemIsGift').checked;
+            const isNonBillable = isOwnStock || isPersonalUse;
             const brand = document.getElementById('itemBrand').value;
             const qty = Math.max(1, parseInt(document.getElementById('itemQty').value) || 1);
             const unitPts = Math.max(0, parseInt(document.getElementById('itemPoints').value) || 0);
@@ -1442,15 +1463,17 @@
             const wholesaleDiscountPct = isGift ? 100 : getWholesaleDiscountForBrand(brand);
 
             const wholesaleCost = (isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100))) * qty;
-            const finalClientPrice = isOwnStock ? 0 : (price * (1 - (clientDiscountPct / 100)) * qty);
-            const profit = isOwnStock ? 0 : (finalClientPrice - wholesaleCost);
+            const finalClientPrice = isNonBillable ? 0 : (price * (1 - (clientDiscountPct / 100)) * qty);
+            const profit = isNonBillable ? 0 : (finalClientPrice - wholesaleCost);
             const totalPts = isOwnStock ? 0 : (unitPts * qty);
 
             document.getElementById('previewWholesaleDiscount').textContent = isGift ? '100% (Regalo)' : `${wholesaleDiscountPct}%`;
             document.getElementById('previewItemPoints').textContent = `${totalPts} pts`;
-            document.getElementById('previewProfit').textContent = isOwnStock ? '$0.00 (Al venderse)' : `$${profit.toFixed(2)}`;
+            document.getElementById('previewProfit').textContent = isOwnStock ? '$0.00 (Al venderse)' : (isPersonalUse ? '$0.00 (Consumo Personal)' : `$${profit.toFixed(2)}`);
             document.getElementById('previewCost').textContent = `$${wholesaleCost.toFixed(2)}`;
-            document.getElementById('previewFinalClientPrice').textContent = isOwnStock ? '$0.00 (Stock Propio)' : `$${finalClientPrice.toFixed(2)}`;
+            document.getElementById('previewFinalClientPrice').textContent = isOwnStock
+                ? '$0.00 (Stock Propio)'
+                : (isPersonalUse ? '$0.00 (Consumo Personal)' : `$${finalClientPrice.toFixed(2)}`);
         }
 
         function normalizeOrderData(rawOrder) {
@@ -1464,20 +1487,22 @@
                 const brand = item?.brand || 'Natura';
                 const isGift = Boolean(item?.isGift ?? item?.isCompanyGift);
                 const isOwnStock = Boolean(item?.isOwnStock);
+                const isPersonalUse = Boolean(item?.isPersonalUse);
                 const isKitHeaderOnly = Boolean(item?.isKitHeaderOnly);
+                const isNonBillableItem = isOwnStock || isPersonalUse || isKitHeaderOnly;
                 const wholesaleDisc = isGift ? 100 : (Number(item?.wholesaleDiscountPct) || getWholesaleDiscountForBrand(brand));
 
                 const itemCost = item?.cost !== undefined && (Number(item.cost) > 0 || isGift)
                     ? Number(item.cost)
                     : ((isGift ? 0 : basePrice * (1 - (wholesaleDisc / 100))) * qty);
 
-                const itemFinal = (isOwnStock || isKitHeaderOnly)
+                const itemFinal = isNonBillableItem
                     ? 0
                     : (item?.finalClientPrice !== undefined && Number(item.finalClientPrice) > 0
                         ? Number(item.finalClientPrice)
                         : (basePrice * (1 - (clientDisc / 100)) * qty));
 
-                const itemProfit = (isOwnStock || isKitHeaderOnly)
+                const itemProfit = isNonBillableItem
                     ? 0
                     : (item?.profit !== undefined && Number(item.profit) !== 0
                         ? Number(item.profit)
@@ -1492,20 +1517,23 @@
                 acc.profit += itemProfit;
                 acc.points += itemPts;
                 if (isOwnStock || isKitHeaderOnly) acc.hasOwnStock = true;
+                else if (isPersonalUse) acc.hasPersonalUse = true;
                 else acc.hasClientItems = true;
                 return acc;
-            }, { total: 0, cost: 0, profit: 0, points: 0, hasOwnStock: false, hasClientItems: false });
+            }, { total: 0, cost: 0, profit: 0, points: 0, hasOwnStock: false, hasPersonalUse: false, hasClientItems: false });
 
-            const isPureOwnStock = Boolean(o.isPureOwnStock) || (calcItems.hasOwnStock && !calcItems.hasClientItems);
+            const isPureOwnStock = Boolean(o.isPureOwnStock) || (calcItems.hasOwnStock && !calcItems.hasClientItems && !calcItems.hasPersonalUse);
+            const isPurePersonalUse = Boolean(o.isPurePersonalUse) || (calcItems.hasPersonalUse && !calcItems.hasClientItems && !calcItems.hasOwnStock);
+            const isNonBillableOrder = isPureOwnStock || isPurePersonalUse;
 
             const savedTotal = Number(o.total ?? o.totalClient ?? 0) || 0;
-            const total = isPureOwnStock ? 0 : (savedTotal > 0 ? savedTotal : calcItems.total);
+            const total = isNonBillableOrder ? 0 : (savedTotal > 0 ? savedTotal : calcItems.total);
 
             const savedCost = Number(o.totalCost ?? o.cost ?? 0) || 0;
             const totalCost = savedCost > 0 ? savedCost : calcItems.cost;
 
             const savedProfit = Number(o.totalProfit ?? o.netProfit ?? o.profit ?? 0) || 0;
-            const totalProfit = isPureOwnStock ? 0 : (savedProfit !== 0 ? savedProfit : (total - totalCost));
+            const totalProfit = isNonBillableOrder ? 0 : (savedProfit !== 0 ? savedProfit : (total - totalCost));
 
             const totalPoints = Number(o.totalPoints ?? calcItems.points) || 0;
             const paidAmount = Number(o.paidAmount ?? o.paid ?? 0) || 0;
@@ -1513,10 +1541,11 @@
             return {
                 ...o,
                 campaign: o.campaign || (campaigns[0]?.name || 'Campaña'),
-                clientName: o.clientName || o.client || (isPureOwnStock ? 'Stock Propio' : 'Cliente'),
+                clientName: o.clientName || o.client || (isPureOwnStock ? 'Stock Propio' : (isPurePersonalUse ? 'Consumo Personal' : 'Cliente')),
                 clientPhone: o.clientPhone || o.phone || '',
                 items,
                 isPureOwnStock,
+                isPurePersonalUse,
                 total,
                 totalCost,
                 totalProfit,
@@ -2181,6 +2210,7 @@
             document.getElementById('saveItemBtn').innerHTML = '<i class="bi bi-plus-lg me-1"></i> Añadir Artículo';
 
             document.getElementById('itemIsOwnStock').checked = false;
+            document.getElementById('itemIsPersonalUse').checked = false;
             document.getElementById('itemIsGift').checked = false;
             document.getElementById('itemBrand').value = 'Natura';
             document.getElementById('itemCode').value = '';
@@ -2204,6 +2234,7 @@
             document.getElementById('saveItemBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Guardar Cambios del Artículo';
 
             document.getElementById('itemIsOwnStock').checked = Boolean(item.isOwnStock);
+            document.getElementById('itemIsPersonalUse').checked = Boolean(item.isPersonalUse);
             document.getElementById('itemIsGift').checked = Boolean(item.isGift);
             document.getElementById('itemBrand').value = item.brand || 'Natura';
             document.getElementById('itemCode').value = item.code || '';
@@ -2236,7 +2267,9 @@
         function addItemToOrder() {
             const editingIndex = parseInt(document.getElementById('editingItemIndex').value, 10);
             const isOwnStock = document.getElementById('itemIsOwnStock').checked;
-            const isGift = !isOwnStock && document.getElementById('itemIsGift').checked;
+            const isPersonalUse = !isOwnStock && document.getElementById('itemIsPersonalUse').checked;
+            const isGift = !isOwnStock && !isPersonalUse && document.getElementById('itemIsGift').checked;
+            const isNonBillable = isOwnStock || isPersonalUse;
             const brand = document.getElementById('itemBrand').value;
             const code = document.getElementById('itemCode').value.trim();
             const page = document.getElementById('itemPage').value.trim();
@@ -2246,19 +2279,19 @@
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
             const clientDiscountPct = parseFloat(document.getElementById('itemClientDiscount').value) || 0;
 
-            if (!name || (!isOwnStock && price <= 0)) {
+            if (!name || (!isNonBillable && price <= 0)) {
                 showToastMessage('Ingresá el nombre del producto y un precio de venta válido.', 'warning');
                 return;
             }
 
             const wholesaleDiscountPct = isGift ? 100 : getWholesaleDiscountForBrand(brand);
             const wholesaleCostUnit = isGift ? 0 : price * (1 - (wholesaleDiscountPct / 100));
-            const finalClientPriceUnit = isOwnStock ? 0 : (price * (1 - (clientDiscountPct / 100)));
-            const unitProfit = isOwnStock ? 0 : (finalClientPriceUnit - wholesaleCostUnit);
+            const finalClientPriceUnit = isNonBillable ? 0 : (price * (1 - (clientDiscountPct / 100)));
+            const unitProfit = isNonBillable ? 0 : (finalClientPriceUnit - wholesaleCostUnit);
             const linePoints = isOwnStock ? 0 : (unitPts * qty);
 
             const newItem = {
-                isOwnStock, isGift, brand, code, page, name, qty,
+                isOwnStock, isPersonalUse, isGift, brand, code, page, name, qty,
                 points: unitPts,
                 totalPoints: linePoints,
                 price, clientDiscountPct, wholesaleDiscountPct,
@@ -2299,8 +2332,9 @@
             }
 
             currentOrderItems.forEach((item, index) => {
-                const subtotal = item.isOwnStock ? 0 : (Number(item.finalClientPrice) || 0);
-                const itemProfit = item.isOwnStock ? 0 : (Number(item.profit) || 0);
+                const isNonBillable = Boolean(item.isOwnStock || item.isPersonalUse);
+                const subtotal = isNonBillable ? 0 : (Number(item.finalClientPrice) || 0);
+                const itemProfit = isNonBillable ? 0 : (Number(item.profit) || 0);
                 const itemCost = Number(item.cost) || 0;
                 const itemPts = item.isOwnStock ? 0 : (Number(item.totalPoints ?? ((Number(item.points) || 0) * (Number(item.qty) || 1))) || 0);
                 totalCatalog += subtotal;
@@ -2311,7 +2345,9 @@
                 const badgeClass = item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
                 const specialBadge = item.isOwnStock
                     ? `<span class="badge bg-info text-dark ms-1">📦 Stock</span>`
-                    : (item.isGift ? `<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : '');
+                    : (item.isPersonalUse
+                        ? `<span class="badge bg-success ms-1">🙋‍♀️ Consumo</span>`
+                        : (item.isGift ? `<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : ''));
 
                 tbody.innerHTML += `
                     <tr>
@@ -2339,7 +2375,7 @@
         function buildOrderWhatsAppText(order) {
             let text = `*¡Hola ${order.clientName}!* 🌸 Registré tu pedido para la campaña *${order.campaign}*:\n`;
             (order.items || []).forEach(i => {
-                if (i.isOwnStock || i.isKitHeaderOnly) return;
+                if (i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) return;
                 const linePrice = Number(i.finalClientPrice ?? ((Number(i.price) || 0) * (Number(i.qty) || 1))) || 0;
                 text += `\n• *[${i.brand || 'Natura'}]* ${i.name} ${i.code && !/^KIT-/i.test(i.code) ? `(Cód: ${i.code})` : ''} x${i.qty || 1} - $${linePrice.toFixed(2)}`;
             });
@@ -2359,7 +2395,7 @@
             document.getElementById('ticketCampaignName').textContent = o.campaign;
 
             const itemsContainer = document.getElementById('ticketItemsList');
-            const billableItems = (o.items || []).filter(i => !i.isOwnStock && !i.isKitHeaderOnly);
+            const billableItems = (o.items || []).filter(i => !i.isOwnStock && !i.isPersonalUse && !i.isKitHeaderOnly);
             if (billableItems.length === 0) {
                 itemsContainer.innerHTML = `<div class="text-muted">Sin detalle de artículos facturables.</div>`;
             } else {
@@ -2426,8 +2462,10 @@
             const editingId = document.getElementById('editingOrderId').value;
             const campaign = document.getElementById('orderCampaignSelect').value;
             const isAllStock = currentOrderItems.length > 0 && currentOrderItems.every(i => i.isOwnStock);
+            const isAllPersonalUse = currentOrderItems.length > 0 && currentOrderItems.every(i => i.isPersonalUse);
+            const isNonBillableOrder = isAllStock || isAllPersonalUse;
             const clientNameInput = document.getElementById('clientName').value.trim();
-            const clientName = clientNameInput || (isAllStock ? 'Stock Propio' : '');
+            const clientName = clientNameInput || (isAllStock ? 'Stock Propio' : (isAllPersonalUse ? 'Consumo Personal' : ''));
             const clientPhone = document.getElementById('clientPhone').value.trim();
 
             if (!campaign || !clientName || currentOrderItems.length === 0) {
@@ -2439,8 +2477,8 @@
             currentOrderItems.forEach(it => rememberProductEntry(it));
             rebuildAutocompleteLists();
 
-            const total = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.finalClientPrice) || 0)), 0);
-            const totalProfit = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.profit) || 0)), 0);
+            const total = currentOrderItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.finalClientPrice) || 0)), 0);
+            const totalProfit = currentOrderItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.profit) || 0)), 0);
             const totalCost = currentOrderItems.reduce((acc, item) => acc + (Number(item.cost) || 0), 0);
             const totalPoints = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.totalPoints ?? ((Number(item.points) || 0) * (Number(item.qty) || 1))) || 0)), 0);
 
@@ -2450,6 +2488,7 @@
                 clientPhone,
                 items: currentOrderItems,
                 isPureOwnStock: isAllStock,
+                isPurePersonalUse: isAllPersonalUse,
                 total,
                 totalProfit,
                 totalCost,
@@ -2463,7 +2502,7 @@
                 cancelOrderEdit();
             } else {
                 orderData.paidAmount = 0;
-                orderData.paymentStatus = isAllStock ? 'Stock Propio' : 'Pendiente';
+                orderData.paymentStatus = isAllStock ? 'Stock Propio' : (isAllPersonalUse ? 'Consumo Personal' : 'Pendiente');
                 orderData.lastPaymentMethod = '-';
                 const docRef = await db.collection('orders').add(orderData);
 
@@ -2475,6 +2514,10 @@
 
                 if (isAllStock) {
                     showToastMessage('¡Productos guardados en Mi Stock Propio y sumados a la campaña!');
+                } else if (isAllPersonalUse) {
+                    showToastMessage('¡Productos de Consumo Personal sumados a la campaña (puntos y costo actualizados)!');
+                } else if (isNonBillableOrder) {
+                    showToastMessage('¡Pedido guardado con éxito!');
                 } else {
                     showToastMessage('¡Pedido guardado con éxito!');
                     orders.unshift(createdOrder);
@@ -2654,7 +2697,7 @@
 
             const filtered = orders
                 .map(normalizeOrderData)
-                .filter(o => !o.isPureOwnStock)
+                .filter(o => !o.isPureOwnStock && !o.isPurePersonalUse)
                 .filter(o => !filterCamp || o.campaign === filterCamp);
 
             if (filtered.length === 0) {
