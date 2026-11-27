@@ -647,6 +647,21 @@
                     </div>
                 </div>
 
+                <!-- Kits registrados: permanece visible aunque se hayan borrado todos sus componentes -->
+                <div class="card p-3 mb-4 border-warning" id="kitCancellationCard">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                        <h5 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-box-seam me-1"></i> Kits registrados</h5>
+                        <span class="badge bg-warning text-dark" id="kitCancellationCount">0 kits</span>
+                    </div>
+                    <small class="text-muted d-block mb-3">Desde acá podés cancelar un kit incluso si ya eliminaste todos sus productos individuales de Mi Stock.</small>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light"><tr><th>Kit</th><th>Campaña</th><th>Costo registrado</th><th>Acción</th></tr></thead>
+                            <tbody id="kitCancellationTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Bloque principal: Productos disponibles para vender -->
                 <div class="card p-3 mb-4">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -2690,6 +2705,32 @@
             }
         }
 
+        async function cancelKitOrder(orderId) {
+            const kitOrder = orders.find(o => o.id === orderId);
+            if (!kitOrder || !Array.isArray(kitOrder.items)) return;
+
+            const kitHeader = kitOrder.items.find(item => item && item.isKitHeaderOnly);
+            const kitComponents = kitOrder.items.filter(item => item && item.fromKitCode);
+            if (!kitOrder.isPureOwnStock || !kitHeader || kitComponents.length === 0) {
+                showToastMessage('No se pudo identificar un kit completo para cancelar.', 'warning');
+                return;
+            }
+
+            const kitName = String(kitHeader.name || kitHeader.code || 'Kit');
+            const confirmed = window.confirm(
+                `¿Cancelar ${kitName}?\n\nSe eliminará el registro completo del kit y todos sus componentes de Mi Stock. También dejará de incluirse su costo en la factura estimada. Esta acción no se puede deshacer.`
+            );
+            if (!confirmed) return;
+
+            try {
+                await db.collection('orders').doc(orderId).delete();
+                showToastMessage('Kit cancelado: se eliminaron el kit y todos sus componentes de Mi Stock.', 'secondary');
+            } catch (error) {
+                console.error('Error al cancelar kit:', error);
+                showToastMessage('No se pudo cancelar el kit. Intentá nuevamente.', 'warning');
+            }
+        }
+
         async function deleteStockItem(orderId, itemIndex) {
             const stockOrder = orders.find(o => o.id === orderId);
             if (!stockOrder || !Array.isArray(stockOrder.items) || !stockOrder.items[itemIndex]) return;
@@ -2950,6 +2991,22 @@
             const personalBadge = document.getElementById('personalStockUnitsBadge');
             if (!tbody) return;
 
+            const kitTbody = document.getElementById('kitCancellationTable');
+            const kitCount = document.getElementById('kitCancellationCount');
+            const registeredKits = orders.map(normalizeOrderData).filter(o => o.isPureOwnStock && Array.isArray(o.items) && o.items.some(item => item && item.isKitHeaderOnly));
+            if (kitCount) kitCount.textContent = `${registeredKits.length} ${registeredKits.length === 1 ? 'kit' : 'kits'}`;
+            if (kitTbody) {
+                kitTbody.innerHTML = registeredKits.length
+                    ? registeredKits.map(o => {
+                        const header = o.items.find(item => item && item.isKitHeaderOnly);
+                        const name = String(header?.name || header?.code || 'Kit').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const cost = Number(header?.cost ?? o.totalCost) || 0;
+                        const safeId = String(o.id).replace(/'/g, "\\'");
+                        return `<tr><td class="fw-semibold">${name}</td><td><span class="badge bg-light text-dark border">${o.campaign || '-'}</span></td><td class="text-danger fw-semibold">$${cost.toFixed(2)}</td><td><button class="btn btn-sm btn-outline-danger" onclick="cancelKitOrder('${safeId}')"><i class="bi bi-x-circle me-1"></i> Cancelar kit</button></td></tr>`;
+                    }).join('')
+                    : `<tr><td colspan="4" class="text-center text-muted py-2">No hay kits registrados pendientes de cancelar.</td></tr>`;
+            }
+
             const stockEntries = [];
             const personalEntries = [];
             orders.map(normalizeOrderData).forEach(o => {
@@ -3014,9 +3071,13 @@
                                     <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar producto">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteStockItem('${entry.orderId}', ${entry.itemIndex})" title="Borrar de Mi Stock">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    ${it.fromKitCode
+                                        ? `<button class="btn btn-sm btn-outline-danger" onclick="cancelKitOrder('${entry.orderId}')" title="Cancelar el kit completo y quitar todos sus componentes de Mi Stock">
+                                            <i class="bi bi-x-circle me-1"></i> Cancelar kit
+                                          </button>`
+                                        : `<button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteStockItem('${entry.orderId}', ${entry.itemIndex})" title="Borrar de Mi Stock">
+                                            <i class="bi bi-trash"></i>
+                                          </button>`}
                                 </div>
                             </td>
                         </tr>
