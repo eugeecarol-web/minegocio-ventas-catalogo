@@ -2709,10 +2709,11 @@
             const kitOrder = orders.find(o => o.id === orderId);
             if (!kitOrder || !Array.isArray(kitOrder.items)) return;
 
+            // El encabezado es el registro maestro del kit. Los componentes pueden
+            // haber sido eliminados individualmente y eso no debe impedir cancelarlo.
             const kitHeader = kitOrder.items.find(item => item && item.isKitHeaderOnly);
-            const kitComponents = kitOrder.items.filter(item => item && item.fromKitCode);
-            if (!kitOrder.isPureOwnStock || !kitHeader || kitComponents.length === 0) {
-                showToastMessage('No se pudo identificar un kit completo para cancelar.', 'warning');
+            if (!kitHeader) {
+                showToastMessage('No se encontró el registro principal de este kit. Actualizá la pantalla e intentá nuevamente.', 'warning');
                 return;
             }
 
