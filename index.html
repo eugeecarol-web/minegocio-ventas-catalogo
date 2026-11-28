@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Negocio por Catálogo - Natura, Avon & Casa & Estilo</title>
-    <!-- Firebase SDK compat -->
+    <!-- Firebase SDK compat para sincronización en tiempo real -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <!-- html2canvas para descargar el ticket y el cupón en PNG -->
@@ -427,8 +427,7 @@
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Nombre del Cliente</label>
-                                <input type="text" id="clientName" list="savedClientsDatalist" class="form-control" placeholder="Escribí para buscar o cargar nuevo..." oninput="handleClientAutocomplete(this.value)" onchange="handleClientAutocomplete(this.value)">
-                                <div class="form-text small">Si es para Stock Propio o regalo propio, podés dejarlo vacío o poner "Stock Propio".</div>
+                                <input type="text" id="clientName" list="savedClientsDatalist" class="form-control" placeholder="Escribí para buscar o cargar nuevo..." oninput="handleClientAutocomplete(this.value)" onchange="handleClientAutocomplete(this.value)" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">WhatsApp del Cliente (sin 0 y sin 15)</label>
@@ -453,7 +452,7 @@
                                 <label class="form-check-label fw-bold text-dark" for="itemIsOwnStock">
                                     📦 Compra para Stock Propio (Sin cliente todavía)
                                 </label>
-                                <div class="form-text small mt-0">Va a Mi Stock ($0 a cobrar hasta venderlo) para luego decidir si lo vendés o pasa a consumo personal.</div>
+                                <div class="form-text small mt-0">Se encarga en la campaña y suma costo, pero no genera deuda ($0 a cobrar) hasta que lo vendas desde "4. Mi Stock".</div>
                             </div>
 
                             <div class="form-check form-switch mb-2 p-2 bg-success bg-opacity-10 border border-success rounded ps-5">
@@ -469,7 +468,7 @@
                                 <label class="form-check-label fw-bold text-dark" for="itemIsGift">
                                     🎁 Es un regalo de la compañía (100% Ganancia)
                                 </label>
-                                <div class="form-text small mt-0">Costo $0. Podés enviarlo a Stock Propio (sin cliente) para decidir luego si venderlo o usarlo, o asignarlo a un cliente.</div>
+                                <div class="form-text small mt-0">Costo $0 y no se suma al pedido online.</div>
                             </div>
 
                             <div class="mb-2">
@@ -635,30 +634,15 @@
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                     <div>
                         <h4 class="mb-0 fw-bold">📦 Mi Stock Propio (Entrega Inmediata)</h4>
-                        <small class="text-muted">Productos disponibles para vender o pasar a Consumo Personal cuando decidas.</small>
+                        <small class="text-muted">Productos disponibles para vender a clientes y bloque separado de Consumo Personal.</small>
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         <button class="btn btn-outline-dark btn-sm fw-bold" onclick="openUnpackKitModal()">
                             <i class="bi bi-boxes me-1"></i> Desarmar Kit en Stock Individual
                         </button>
                         <button class="btn btn-primary btn-sm fw-bold" onclick="goToQuickStockLoad()">
-                            <i class="bi bi-plus-circle me-1"></i> Cargar Producto / Regalo a Stock
+                            <i class="bi bi-plus-circle me-1"></i> Cargar Producto a Stock
                         </button>
-                    </div>
-                </div>
-
-                <!-- Kits registrados -->
-                <div class="card p-3 mb-4 border-warning" id="kitCancellationCard">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                        <h5 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-box-seam me-1"></i> Kits registrados</h5>
-                        <span class="badge bg-warning text-dark" id="kitCancellationCount">0 kits</span>
-                    </div>
-                    <small class="text-muted d-block mb-3">Desde acá podés cancelar un kit incluso si ya eliminaste todos sus productos individuales de Mi Stock.</small>
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead class="table-light"><tr><th>Kit</th><th>Campaña</th><th>Costo registrado</th><th>Acción</th></tr></thead>
-                            <tbody id="kitCancellationTable"></tbody>
-                        </table>
                     </div>
                 </div>
 
@@ -688,14 +672,14 @@
                     </div>
                 </div>
 
-                <!-- Bloque separado: Consumo Personal -->
+                <!-- Bloque separado: Consumo Personal (no disponible para vender) -->
                 <div class="card p-3 border-success border-opacity-50">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                         <div>
                             <h5 class="card-title mb-0 fw-bold text-dark">
                                 <i class="bi bi-person-heart text-success me-1"></i> Consumo Personal
                             </h5>
-                            <small class="text-muted">Apartados para uso propio; no se ofrecen para la venta.</small>
+                            <small class="text-muted">Suman puntos y figuran en la campaña y planilla web, pero están apartados y no se ofrecen para la venta.</small>
                         </div>
                         <span class="badge bg-success bg-opacity-15 text-success border border-success" id="personalStockUnitsBadge">0 uds. personales</span>
                     </div>
@@ -790,7 +774,7 @@
                 <div class="modal-body p-4">
                     <div class="alert alert-info py-2 small mb-3">
                         <i class="bi bi-info-circle me-1"></i>
-                        El código del kit se agrega a la <strong>Lista para Cargar en la Web</strong> de la campaña y sus productos pasan sueltos a <strong>Mi Stock</strong> para vender uno por uno o pasar a consumo personal.
+                        El código del kit se agrega a la <strong>Lista para Cargar en la Web</strong> de la campaña y sus productos pasan sueltos a <strong>Mi Stock</strong> para vender uno por uno.
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-md-5">
@@ -1001,7 +985,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Monto Total de la Factura a Pagar ($)</label>
-                        <input type="number" id="invAmount" class="form-control form-control-lg" placeholder="Ej: 45000" step="0.01" required>
+                        <input type="number" id="invAmount" class="form-control form-control-lg" placeholder="Ej: 107812.02" step="0.01" required>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -1124,7 +1108,7 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Nombre de la Campaña / Ciclo</label>
-                                <input type="text" id="campName" class="form-control" placeholder="Ej: Ciclo 16" required>
+                                <input type="text" id="campName" class="form-control" placeholder="Ej: C17" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Estado</label>
@@ -1133,11 +1117,6 @@
                                     <option value="Enviada">Enviada a la Empresa</option>
                                     <option value="Cerrada">Cerrada / Entregada</option>
                                 </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Envío Natura por campaña ($)</label>
-                                <input type="number" id="campNaturaShipping" class="form-control" min="0" step="0.01" value="4612">
-                                <div class="form-text">Se suma una sola vez al estimado de la factura si la campaña incluye productos Natura.</div>
                             </div>
                         </div>
                         <div class="row g-3 mb-3 p-3 bg-light rounded border">
@@ -1148,6 +1127,15 @@
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold">Fecha de Cierre</label>
                                 <input type="date" id="endDate" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3 p-3 bg-light rounded border">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Costo de Envío de Campaña ($)</label>
+                                <input type="number" id="campShippingCost" class="form-control" value="4612" min="0" step="0.01" placeholder="Ej: 4612">
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="small text-muted">Se suma al costo mayorista de los productos de la campaña (podés editarlo si cambia).</div>
                             </div>
                         </div>
                         <div class="mb-3 p-3 bg-light rounded border">
@@ -1553,6 +1541,7 @@
 
             if (source === 'stock' && stockEl.checked) {
                 personalEl.checked = false;
+                giftEl.checked = false;
                 if (!clientInput.value.trim() || clientInput.value.trim().toLowerCase() === 'consumo personal') {
                     clientInput.value = 'Stock Propio';
                 }
@@ -1563,11 +1552,8 @@
                     clientInput.value = 'Consumo Personal';
                 }
             } else if (source === 'gift' && giftEl.checked) {
+                stockEl.checked = false;
                 personalEl.checked = false;
-                if (!clientInput.value.trim() || clientInput.value.trim().toLowerCase() === 'consumo personal') {
-                    stockEl.checked = true;
-                    clientInput.value = 'Stock Propio';
-                }
             }
             calculateItemPreview();
         }
@@ -1575,7 +1561,7 @@
         function calculateItemPreview() {
             const isOwnStock = document.getElementById('itemIsOwnStock').checked;
             const isPersonalUse = !isOwnStock && document.getElementById('itemIsPersonalUse').checked;
-            const isGift = !isPersonalUse && document.getElementById('itemIsGift').checked;
+            const isGift = !isOwnStock && !isPersonalUse && document.getElementById('itemIsGift').checked;
             const isNonBillable = isOwnStock || isPersonalUse;
             const brand = document.getElementById('itemBrand').value;
             const qty = Math.max(1, parseInt(document.getElementById('itemQty').value) || 1);
@@ -1591,9 +1577,7 @@
 
             document.getElementById('previewWholesaleDiscount').textContent = isGift ? '100% (Regalo)' : `${wholesaleDiscountPct}%`;
             document.getElementById('previewItemPoints').textContent = `${totalPts} pts`;
-            document.getElementById('previewProfit').textContent = isOwnStock
-                ? (isGift ? '100% al venderse (Regalo)' : '$0.00 (Al venderse)')
-                : (isPersonalUse ? '$0.00 (Consumo Personal)' : `$${profit.toFixed(2)}`);
+            document.getElementById('previewProfit').textContent = isOwnStock ? '$0.00 (Al venderse)' : (isPersonalUse ? '$0.00 (Consumo Personal)' : `$${profit.toFixed(2)}`);
             document.getElementById('previewCost').textContent = `$${wholesaleCost.toFixed(2)}`;
             document.getElementById('previewFinalClientPrice').textContent = isOwnStock
                 ? '$0.00 (Stock Propio)'
@@ -1613,15 +1597,17 @@
                 const isOwnStock = Boolean(item?.isOwnStock);
                 const isPersonalUse = Boolean(item?.isPersonalUse);
                 const isKitHeaderOnly = Boolean(item?.isKitHeaderOnly);
-                const isKitComponent = Boolean(item?.fromKitCode);
-                const costUnknown = Boolean(item?.costUnknown || isKitComponent);
+                const isUnpackedKitComponent = Boolean(item?.fromKitCode) || /^KIT-/i.test(String(item?.code || '').trim());
                 const isNonBillableItem = isOwnStock || isPersonalUse || isKitHeaderOnly;
                 const wholesaleDisc = isGift ? 100 : (Number(item?.wholesaleDiscountPct) || getWholesaleDiscountForBrand(brand));
 
-                const itemCost = costUnknown
+                // Mantenemos el costo guardado del ítem (por ejemplo, el costo exacto del kit o artículo cargado)
+                // y solo lo calculamos por fórmula cuando no viene guardado ni es un componente suelto ya prorrateado.
+                const hasSavedCost = item?.cost !== undefined && item?.cost !== null && item?.cost !== '';
+                const itemCost = isUnpackedKitComponent
                     ? 0
-                    : (item?.cost !== undefined && (Number(item.cost) > 0 || isGift)
-                        ? Number(item.cost)
+                    : (hasSavedCost
+                        ? (Number(item.cost) || 0)
                         : ((isGift ? 0 : basePrice * (1 - (wholesaleDisc / 100))) * qty));
 
                 const itemFinal = isNonBillableItem
@@ -1630,7 +1616,7 @@
                         ? Number(item.finalClientPrice)
                         : (basePrice * (1 - (clientDisc / 100)) * qty));
 
-                const itemProfit = (isNonBillableItem || costUnknown || item?.profitUnknown)
+                const itemProfit = isNonBillableItem
                     ? 0
                     : (item?.profit !== undefined && Number(item.profit) !== 0
                         ? Number(item.profit)
@@ -1651,18 +1637,20 @@
             }, { total: 0, cost: 0, profit: 0, points: 0, hasOwnStock: false, hasPersonalUse: false, hasClientItems: false });
 
             const isPureOwnStock = Boolean(o.isPureOwnStock) || (calcItems.hasOwnStock && !calcItems.hasClientItems && !calcItems.hasPersonalUse);
-            const isPurePersonalUse = Boolean(o.isPurePersonalUse) || (calcItems.hasPersonalUse && !calcItems.hasClientItems && !calcItems.hasOwnStock);
+            const rawClientNameLower = String(o.clientName || o.client || '').trim().toLowerCase();
+            const isPurePersonalUse = Boolean(o.isPurePersonalUse)
+                || rawClientNameLower === 'consumo personal'
+                || String(o.paymentStatus || '').trim().toLowerCase() === 'consumo personal'
+                || (calcItems.hasPersonalUse && !calcItems.hasClientItems && !calcItems.hasOwnStock);
             const isNonBillableOrder = isPureOwnStock || isPurePersonalUse;
 
             const savedTotal = Number(o.total ?? o.totalClient ?? 0) || 0;
             const total = isNonBillableOrder ? 0 : (savedTotal > 0 ? savedTotal : calcItems.total);
 
-            const savedCost = Number(o.totalCost ?? o.cost ?? 0) || 0;
-            const totalCost = savedCost > 0 ? savedCost : calcItems.cost;
+            const totalCost = calcItems.cost;
 
             const savedProfit = Number(o.totalProfit ?? o.netProfit ?? o.profit ?? 0) || 0;
-            const hasUnknownCostItems = items.some(item => item?.costUnknown || item?.profitUnknown || item?.fromKitCode);
-            const totalProfit = isNonBillableOrder ? 0 : (hasUnknownCostItems ? savedProfit : (savedProfit !== 0 ? savedProfit : (total - totalCost)));
+            const totalProfit = isNonBillableOrder ? 0 : (savedProfit !== 0 ? savedProfit : (total - totalCost));
 
             const totalPoints = Number(o.totalPoints ?? calcItems.points) || 0;
             const paidAmount = Number(o.paidAmount ?? o.paid ?? 0) || 0;
@@ -1913,6 +1901,7 @@
             orderedCampaigns.forEach(c => {
                 const badge = c.status === 'Activa' ? 'bg-success' : 'bg-secondary';
                 const invoicePaid = Number(c.invoicePaid) || 0;
+                const shippingCost = Number(c.shippingCost ?? 4612) || 0;
                 const isCollapsed = collapsedIds.has(c.id);
 
                 const arrivalIso = getEstimatedArrivalDate(c.endDate);
@@ -1921,43 +1910,16 @@
                 const campOrders = orders.map(normalizeOrderData).filter(o => o.campaign === c.name);
                 let totalSold = 0;
                 let totalPaidByClients = 0;
-                let estimatedProductsCost = 0;
-                const invoiceDetailRows = [];
+                let productsWholesaleCost = 0;
 
                 campOrders.forEach(o => {
                     totalSold += Number(o.total) || 0;
                     totalPaidByClients += Number(o.paidAmount) || 0;
-                    const orderCost = Math.max(0, Number(o.totalCost) || 0);
-                    estimatedProductsCost += orderCost;
-
-                    let detailCostForOrder = 0;
-                    (o.items || []).forEach(item => {
-                        if (item?.fromKitCode || item?.costUnknown) return;
-                        const qty = Math.max(1, parseInt(item?.qty ?? item?.quantity ?? 1, 10) || 1);
-                        const isGift = Boolean(item?.isGift ?? item?.isCompanyGift);
-                        const brand = item?.brand || 'Natura';
-                        const wholesaleDisc = isGift ? 100 : (Number(item?.wholesaleDiscountPct) || getWholesaleDiscountForBrand(brand));
-                        const lineCost = item?.cost !== undefined && (Number(item.cost) > 0 || isGift)
-                            ? Math.max(0, Number(item.cost) || 0)
-                            : ((isGift ? 0 : (Number(item?.price ?? item?.salePrice ?? item?.unitPrice ?? 0) || 0) * (1 - wholesaleDisc / 100)) * qty);
-                        if (lineCost <= 0) return;
-                        detailCostForOrder += lineCost;
-                        const itemName = String(item?.name || item?.code || 'Artículo').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-                        const clientName = String(o.clientName || 'Pedido').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-                        const kitLabel = item?.isKitHeaderOnly ? ' <span class="badge bg-warning text-dark">Kit completo</span>' : '';
-                        invoiceDetailRows.push({ clientName, itemName, qty, lineCost, kitLabel });
-                    });
-
-                    const difference = orderCost - detailCostForOrder;
-                    if (difference > 0.009) {
-                        const clientName = String(o.clientName || 'Pedido').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-                        invoiceDetailRows.push({ clientName, itemName: 'Ajuste / costo registrado del pedido', qty: 1, lineCost: difference, kitLabel: '' });
-                    }
+                    productsWholesaleCost += Number(o.totalCost) || 0;
                 });
 
-                const hasNaturaProducts = campOrders.some(o => Array.isArray(o.items) && o.items.some(item => (item.brand || 'Natura') === 'Natura'));
-                const naturaShipping = hasNaturaProducts ? Math.max(0, Number(c.naturaShippingCost ?? 4612) || 0) : 0;
-                const estimatedWholesaleCost = estimatedProductsCost + naturaShipping;
+                const hasCampaignItems = campOrders.some(o => Array.isArray(o.items) && o.items.length > 0);
+                const estimatedWholesaleCost = productsWholesaleCost + (hasCampaignItems ? shippingCost : 0);
 
                 const { list: consolidatedList, totalCampaignPoints } = getConsolidatedWebItemsForCampaign(c.name);
 
@@ -2047,27 +2009,10 @@
                                 </div>
 
                                 <div class="p-2 bg-light rounded border mb-2 d-flex justify-content-between align-items-center">
-                                    <div class="flex-grow-1">
-                                        <span class="small text-muted d-block">Factura estimada: Productos $${estimatedProductsCost.toFixed(2)} + Envío Natura $${naturaShipping.toFixed(2)} = <strong>$${estimatedWholesaleCost.toFixed(2)}</strong></span>
-                                        <strong class="text-danger">Factura pagada: -$${invoicePaid.toFixed(2)}</strong>
-                                        <div class="mt-2">
-                                            <button class="btn btn-sm btn-link p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#invoiceDetail_${c.id}" aria-expanded="false">
-                                                <i class="bi bi-list-ul me-1"></i>Ver detalle ítem por ítem
-                                            </button>
-                                            <div class="collapse mt-2" id="invoiceDetail_${c.id}">
-                                                <div class="table-responsive bg-white rounded border p-2">
-                                                    <table class="table table-sm table-striped align-middle mb-1">
-                                                        <thead><tr><th>Pedido / Cliente</th><th>Artículo</th><th class="text-center">Cant.</th><th class="text-end">Costo</th></tr></thead>
-                                                        <tbody>
-                                                            ${invoiceDetailRows.length ? invoiceDetailRows.map(row => `<tr><td class="small">${row.clientName}</td><td class="small">${row.itemName}${row.kitLabel}</td><td class="text-center">${row.qty}</td><td class="text-end text-nowrap">$${row.lineCost.toFixed(2)}</td></tr>`).join('') : '<tr><td colspan="4" class="text-muted small text-center">No hay artículos con costo registrado para detallar.</td></tr>'}
-                                                            <tr class="fw-bold border-top"><td colspan="3" class="text-end">Subtotal productos</td><td class="text-end">$${estimatedProductsCost.toFixed(2)}</td></tr>
-                                                            ${naturaShipping > 0 ? `<tr><td colspan="3" class="text-end">Envío Natura (una vez por campaña)</td><td class="text-end">$${naturaShipping.toFixed(2)}</td></tr>` : ''}
-                                                            <tr class="table-light fw-bold"><td colspan="3" class="text-end">TOTAL FACTURA ESTIMADA</td><td class="text-end">$${estimatedWholesaleCost.toFixed(2)}</td></tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div>
+                                        <span class="small text-muted d-block">Factura Est. (Prod. $${productsWholesaleCost.toFixed(2)} + Envío $${shippingCost.toFixed(2)} = <strong>$${estimatedWholesaleCost.toFixed(2)}</strong>):</span>
+                                        <span class="small text-muted d-block">Factura Pagada:</span>
+                                        <strong class="text-danger">-$${invoicePaid.toFixed(2)}</strong>
                                     </div>
                                     <button class="btn btn-sm btn-outline-danger" onclick="openInvoiceModal('${c.id}', '${c.name}', ${invoicePaid})">
                                         <i class="bi bi-receipt"></i> Pagar Factura
@@ -2166,10 +2111,10 @@
                 status: document.getElementById('campStatus').value,
                 startDate: document.getElementById('startDate').value,
                 endDate: document.getElementById('endDate').value,
+                shippingCost: Math.max(0, parseFloat(document.getElementById('campShippingCost')?.value) || 0),
                 linkNatura: document.getElementById('linkNatura').value.trim(),
                 linkAvon: document.getElementById('linkAvon').value.trim(),
                 linkCasa: document.getElementById('linkCasa').value.trim(),
-                naturaShippingCost: Math.max(0, parseFloat(document.getElementById('campNaturaShipping').value) || 0),
             };
             if (!data.name) {
                 showToastMessage('Completá el nombre de la campaña.', 'warning');
@@ -2196,10 +2141,12 @@
             document.getElementById('campStatus').value = c.status;
             document.getElementById('startDate').value = c.startDate || '';
             document.getElementById('endDate').value = c.endDate || '';
+            if (document.getElementById('campShippingCost')) {
+                document.getElementById('campShippingCost').value = c.shippingCost ?? 4612;
+            }
             document.getElementById('linkNatura').value = c.linkNatura || '';
             document.getElementById('linkAvon').value = c.linkAvon || '';
             document.getElementById('linkCasa').value = c.linkCasa || '';
-            document.getElementById('campNaturaShipping').value = c.naturaShippingCost ?? 4612;
 
             document.getElementById('modalCampaignTitle').textContent = 'Editar Campaña';
             new bootstrap.Modal(document.getElementById('campaignModal')).show();
@@ -2208,7 +2155,9 @@
         function resetCampaignForm() {
             document.getElementById('campaignForm').reset();
             document.getElementById('campId').value = '';
-            document.getElementById('campNaturaShipping').value = 4612;
+            if (document.getElementById('campShippingCost')) {
+                document.getElementById('campShippingCost').value = '4612';
+            }
             document.getElementById('modalCampaignTitle').textContent = 'Configurar Campaña';
         }
 
@@ -2306,8 +2255,12 @@
                 return;
             }
 
+            const totalSuggestedPerKit = comps.reduce((acc, c) => acc + (c.suggestedPrice * c.qty), 0);
             const totalKitCost = kitPaidPerUnit * kitQty;
-            const itemsToSave = [{
+
+            const itemsToSave = [];
+
+            itemsToSave.push({
                 isOwnStock: false,
                 isKitHeaderOnly: true,
                 isGift: false,
@@ -2324,10 +2277,16 @@
                 finalClientPrice: 0,
                 cost: totalKitCost,
                 profit: 0
-            }];
+            });
 
             comps.forEach(c => {
+                const lineSuggestedPerKit = c.suggestedPrice * c.qty;
+                const propCostPerKit = totalSuggestedPerKit > 0
+                    ? (kitPaidPerUnit * (lineSuggestedPerKit / totalSuggestedPerKit))
+                    : (kitPaidPerUnit / comps.length);
                 const totalItemQty = c.qty * kitQty;
+                const totalItemCost = propCostPerKit * kitQty;
+
                 itemsToSave.push({
                     isOwnStock: true,
                     isGift: false,
@@ -2343,9 +2302,7 @@
                     clientDiscountPct: 0,
                     wholesaleDiscountPct: 0,
                     finalClientPrice: 0,
-                    cost: 0,
-                    costUnknown: true,
-                    profitUnknown: true,
+                    cost: totalItemCost,
                     profit: 0
                 });
             });
@@ -2436,10 +2393,9 @@
             const editingIndex = parseInt(document.getElementById('editingItemIndex').value, 10);
             const existingItem = (!isNaN(editingIndex) && editingIndex >= 0) ? currentOrderItems[editingIndex] : null;
             const isKitHeaderOnly = Boolean(existingItem?.isKitHeaderOnly);
-            const isPersonalUse = !isKitHeaderOnly && document.getElementById('itemIsPersonalUse').checked;
-            const isGift = !isKitHeaderOnly && !isPersonalUse && document.getElementById('itemIsGift').checked;
-            const typedClient = document.getElementById('clientName').value.trim();
-            const isOwnStock = !isKitHeaderOnly && !isPersonalUse && (document.getElementById('itemIsOwnStock').checked || (isGift && !typedClient));
+            const isOwnStock = !isKitHeaderOnly && document.getElementById('itemIsOwnStock').checked;
+            const isPersonalUse = !isKitHeaderOnly && !isOwnStock && document.getElementById('itemIsPersonalUse').checked;
+            const isGift = !isOwnStock && !isPersonalUse && document.getElementById('itemIsGift').checked;
             const isNonBillable = isOwnStock || isPersonalUse || isKitHeaderOnly;
             const brand = document.getElementById('itemBrand').value;
             const code = document.getElementById('itemCode').value.trim();
@@ -2450,13 +2406,9 @@
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
             const clientDiscountPct = parseFloat(document.getElementById('itemClientDiscount').value) || 0;
 
-            if (!name || (!isNonBillable && !isGift && price <= 0)) {
+            if (!name || (!isNonBillable && price <= 0)) {
                 showToastMessage('Ingresá el nombre del producto y un precio de venta válido.', 'warning');
                 return;
-            }
-
-            if (isOwnStock && !typedClient) {
-                document.getElementById('clientName').value = 'Stock Propio';
             }
 
             const wholesaleDiscountPct = isGift ? 100 : (isKitHeaderOnly ? 0 : getWholesaleDiscountForBrand(brand));
@@ -2639,12 +2591,11 @@
         async function saveOrderAndSendWhatsApp() {
             const editingId = document.getElementById('editingOrderId').value;
             const campaign = document.getElementById('orderCampaignSelect').value;
-            const hasGiftItem = currentOrderItems.some(i => i.isGift);
-            const clientNameInput = document.getElementById('clientName').value.trim();
-            const isAllStock = currentOrderItems.length > 0 && currentOrderItems.every(i => i.isOwnStock || (i.isGift && !clientNameInput));
+            const isAllStock = currentOrderItems.length > 0 && currentOrderItems.every(i => i.isOwnStock);
             const isAllPersonalUse = currentOrderItems.length > 0 && currentOrderItems.every(i => i.isPersonalUse);
             const isNonBillableOrder = isAllStock || isAllPersonalUse;
-            const clientName = clientNameInput || (isAllStock || hasGiftItem ? 'Stock Propio' : (isAllPersonalUse ? 'Consumo Personal' : ''));
+            const clientNameInput = document.getElementById('clientName').value.trim();
+            const clientName = clientNameInput || (isAllStock ? 'Stock Propio' : (isAllPersonalUse ? 'Consumo Personal' : ''));
             const clientPhone = document.getElementById('clientPhone').value.trim();
 
             if (!campaign || !clientName || currentOrderItems.length === 0) {
@@ -2652,22 +2603,20 @@
                 return;
             }
 
-            const preparedItems = currentOrderItems.map(i => (i.isGift && !clientNameInput) ? { ...i, isOwnStock: true } : i);
-
             rememberClientEntry(clientName, clientPhone);
-            preparedItems.forEach(it => rememberProductEntry(it));
+            currentOrderItems.forEach(it => rememberProductEntry(it));
             rebuildAutocompleteLists();
 
-            const total = preparedItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.finalClientPrice) || 0)), 0);
-            const totalProfit = preparedItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.profit) || 0)), 0);
-            const totalCost = preparedItems.reduce((acc, item) => acc + (Number(item.cost) || 0), 0);
-            const totalPoints = preparedItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.totalPoints ?? ((Number(item.points) || 0) * (Number(item.qty) || 1))) || 0)), 0);
+            const total = currentOrderItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.finalClientPrice) || 0)), 0);
+            const totalProfit = currentOrderItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.profit) || 0)), 0);
+            const totalCost = currentOrderItems.reduce((acc, item) => acc + ((item.fromKitCode || /^KIT-/i.test(String(item.code || '').trim())) ? 0 : (Number(item.cost) || 0)), 0);
+            const totalPoints = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.totalPoints ?? ((Number(item.points) || 0) * (Number(item.qty) || 1))) || 0)), 0);
 
             const orderData = {
                 campaign,
                 clientName,
                 clientPhone,
-                items: preparedItems,
+                items: currentOrderItems,
                 isPureOwnStock: isAllStock,
                 isPurePersonalUse: isAllPersonalUse,
                 total,
@@ -2694,7 +2643,7 @@
                 renderOrderTable();
 
                 if (isAllStock) {
-                    showToastMessage('¡Productos / regalos guardados en Mi Stock Propio para decidir vender o pasar a consumo personal!');
+                    showToastMessage('¡Productos guardados en Mi Stock Propio y sumados a la campaña!');
                 } else if (isAllPersonalUse) {
                     showToastMessage('¡Productos de Consumo Personal sumados a la campaña (puntos y costo actualizados)!');
                 } else if (isNonBillableOrder) {
@@ -2704,62 +2653,6 @@
                     orders.unshift(createdOrder);
                     openClientTicket(createdOrder.id);
                 }
-            }
-        }
-
-        async function moveStockItemToPersonalUse(orderId, itemIndex) {
-            const stockOrder = orders.find(o => o.id === orderId);
-            if (!stockOrder || !Array.isArray(stockOrder.items) || !stockOrder.items[itemIndex]) return;
-
-            const targetItem = stockOrder.items[itemIndex];
-            const movedItem = {
-                ...targetItem,
-                isOwnStock: false,
-                isPersonalUse: true,
-                finalClientPrice: 0,
-                profit: 0
-            };
-
-            const updatedItems = [...stockOrder.items];
-            updatedItems[itemIndex] = movedItem;
-
-            const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
-            const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
-            const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
-            const updatedPoints = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.totalPoints ?? ((Number(i.points) || 0) * (Number(i.qty) || 1))) || 0)), 0);
-
-            await db.collection('orders').doc(orderId).update({
-                items: updatedItems,
-                total: updatedTotal,
-                totalProfit: updatedProfit,
-                totalCost: updatedCost,
-                totalPoints: updatedPoints
-            });
-            showToastMessage(`"${targetItem.name}" pasó a Consumo Personal.`);
-        }
-
-        async function cancelKitOrder(orderId) {
-            const kitOrder = orders.find(o => o.id === orderId);
-            if (!kitOrder || !Array.isArray(kitOrder.items)) return;
-
-            const kitHeader = kitOrder.items.find(item => item && item.isKitHeaderOnly);
-            if (!kitHeader) {
-                showToastMessage('No se encontró el registro principal de este kit. Actualizá la pantalla e intentá nuevamente.', 'warning');
-                return;
-            }
-
-            const kitName = String(kitHeader.name || kitHeader.code || 'Kit');
-            const confirmed = window.confirm(
-                `¿Cancelar ${kitName}?\n\nSe eliminará el registro completo del kit y todos sus componentes de Mi Stock. También dejará de incluirse su costo en la factura estimada. Esta acción no se puede deshacer.`
-            );
-            if (!confirmed) return;
-
-            try {
-                await db.collection('orders').doc(orderId).delete();
-                showToastMessage('Kit cancelado: se eliminaron el kit y todos sus componentes de Mi Stock.', 'secondary');
-            } catch (error) {
-                console.error('Error al cancelar kit:', error);
-                showToastMessage('No se pudo cancelar el kit. Intentá nuevamente.', 'warning');
             }
         }
 
@@ -2778,7 +2671,7 @@
 
             const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
             const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
-            const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
+            const updatedCost = updatedItems.reduce((a, i) => a + ((i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
             const updatedPoints = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.totalPoints ?? ((Number(i.points) || 0) * (Number(i.qty) || 1))) || 0)), 0);
 
             await db.collection('orders').doc(orderId).update({
@@ -2962,7 +2855,15 @@
 
             const filtered = orders
                 .map(normalizeOrderData)
-                .filter(o => !o.isPureOwnStock && !o.isPurePersonalUse)
+                .filter(o => {
+                    const clientLower = String(o.clientName || '').trim().toLowerCase();
+                    const statusLower = String(o.paymentStatus || '').trim().toLowerCase();
+                    if (o.isPureOwnStock || o.isPurePersonalUse) return false;
+                    if (clientLower === 'consumo personal' || clientLower === 'stock propio') return false;
+                    if (statusLower === 'consumo personal' || statusLower === 'stock propio') return false;
+                    if (Array.isArray(o.items) && o.items.length > 0 && o.items.every(it => it.isPersonalUse || it.isOwnStock || it.isKitHeaderOnly)) return false;
+                    return true;
+                })
                 .filter(o => !filterCamp || o.campaign === filterCamp);
 
             if (filtered.length === 0) {
@@ -3023,22 +2924,6 @@
             const personalBadge = document.getElementById('personalStockUnitsBadge');
             if (!tbody) return;
 
-            const kitTbody = document.getElementById('kitCancellationTable');
-            const kitCount = document.getElementById('kitCancellationCount');
-            const registeredKits = orders.map(normalizeOrderData).filter(o => o.isPureOwnStock && Array.isArray(o.items) && o.items.some(item => item && item.isKitHeaderOnly));
-            if (kitCount) kitCount.textContent = `${registeredKits.length} ${registeredKits.length === 1 ? 'kit' : 'kits'}`;
-            if (kitTbody) {
-                kitTbody.innerHTML = registeredKits.length
-                    ? registeredKits.map(o => {
-                        const header = o.items.find(item => item && item.isKitHeaderOnly);
-                        const name = String(header?.name || header?.code || 'Kit').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                        const cost = Number(header?.cost ?? o.totalCost) || 0;
-                        const safeId = String(o.id).replace(/'/g, "\\'");
-                        return `<tr><td class="fw-semibold">${name}</td><td><span class="badge bg-light text-dark border">${o.campaign || '-'}</span></td><td class="text-danger fw-semibold">$${cost.toFixed(2)}</td><td><button class="btn btn-sm btn-outline-danger" onclick="cancelKitOrder('${safeId}')"><i class="bi bi-x-circle me-1"></i> Cancelar kit</button></td></tr>`;
-                    }).join('')
-                    : `<tr><td colspan="4" class="text-center text-muted py-2">No hay kits registrados pendientes de cancelar.</td></tr>`;
-            }
-
             const stockEntries = [];
             const personalEntries = [];
             orders.map(normalizeOrderData).forEach(o => {
@@ -3075,16 +2960,13 @@
                 tbody.innerHTML = stockEntries.map(entry => {
                     const it = entry.item;
                     const qty = parseInt(it.qty, 10) || 1;
-                    const isGift = Boolean(it.isGift || it.isCompanyGift);
-                    const costIsUnknown = !isGift && Boolean(it.costUnknown || it.fromKitCode);
-                    const unitCost = isGift ? 0 : (costIsUnknown ? null : ((Number(it.cost) || 0) / qty));
+                    const unitCost = (Number(it.cost) || 0) / qty;
                     const suggestedPrice = Number(it.price) || 0;
                     const brandBadge = it.brand === 'Natura' ? 'badge-natura' : (it.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
                     const rawCode = String(it.code || '').trim();
                     const skuLabel = it.fromKitCode
                         ? `Kit ${it.fromKitCode}`
                         : (rawCode && !/^KIT-/i.test(rawCode) ? `SKU: ${rawCode}` : 'S/C');
-                    const giftBadge = isGift ? `<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : '';
 
                     return `
                         <tr>
@@ -3092,29 +2974,22 @@
                                 <span class="badge ${brandBadge}">${it.brand || 'Natura'}</span>
                                 <div class="small fw-bold text-secondary mt-1">${skuLabel}</div>
                             </td>
-                            <td class="fw-bold">${it.name}${giftBadge}</td>
+                            <td class="fw-bold">${it.name}</td>
                             <td><span class="badge bg-light text-dark border">${entry.campaign}</span></td>
                             <td class="text-center"><span class="badge bg-dark fs-6">${qty}</span></td>
-                            <td class="${costIsUnknown ? 'text-muted' : (isGift ? 'text-success' : 'text-danger')} fw-semibold">${costIsUnknown ? 'No determinado' : `$${unitCost.toFixed(2)} c/u`}</td>
-                            <td class="text-success fw-bold">${suggestedPrice > 0 ? `$${suggestedPrice.toFixed(2)} c/u` : 'A definir'}</td>
+                            <td class="text-danger fw-semibold">$${unitCost.toFixed(2)} c/u</td>
+                            <td class="text-success fw-bold">$${suggestedPrice.toFixed(2)} c/u</td>
                             <td class="text-nowrap">
                                 <div class="d-inline-flex align-items-center gap-1">
                                     <button class="btn btn-sm btn-success fw-bold" onclick="openSellStockModal('${entry.orderId}', ${entry.itemIndex})">
-                                        <i class="bi bi-bag-check me-1"></i> Vender
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-success" onclick="moveStockItemToPersonalUse('${entry.orderId}', ${entry.itemIndex})" title="Pasar a Consumo Personal">
-                                        <i class="bi bi-person-heart me-1"></i> Consumo
+                                        <i class="bi bi-bag-check me-1"></i> Vender a Cliente
                                     </button>
                                     <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar producto">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    ${it.fromKitCode
-                                        ? `<button class="btn btn-sm btn-outline-danger" onclick="cancelKitOrder('${entry.orderId}')" title="Cancelar el kit completo y quitar todos sus componentes de Mi Stock">
-                                            <i class="bi bi-x-circle me-1"></i> Cancelar kit
-                                          </button>`
-                                        : `<button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteStockItem('${entry.orderId}', ${entry.itemIndex})" title="Borrar de Mi Stock">
-                                            <i class="bi bi-trash"></i>
-                                          </button>`}
+                                    <button class="btn btn-sm btn-outline-danger btn-icon-action" onclick="deleteStockItem('${entry.orderId}', ${entry.itemIndex})" title="Borrar de Mi Stock">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -3129,12 +3004,10 @@
                     personalTbody.innerHTML = personalEntries.map(entry => {
                         const it = entry.item;
                         const qty = parseInt(it.qty, 10) || 1;
-                        const isGift = Boolean(it.isGift || it.isCompanyGift);
-                        const totalCost = isGift ? 0 : (Number(it.cost) || 0);
+                        const totalCost = Number(it.cost) || 0;
                         const totalPts = Number(it.totalPoints ?? ((Number(it.points) || 0) * qty)) || 0;
                         const brandBadge = it.brand === 'Natura' ? 'badge-natura' : (it.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
                         const rawCode = String(it.code || '').trim();
-                        const giftBadge = isGift ? `<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : '';
 
                         return `
                             <tr>
@@ -3142,11 +3015,11 @@
                                     <span class="badge ${brandBadge}">${it.brand || 'Natura'}</span>
                                     <div class="small fw-bold text-secondary mt-1">${rawCode ? `SKU: ${rawCode}` : 'S/C'}</div>
                                 </td>
-                                <td class="fw-semibold">${it.name}${giftBadge} <span class="badge bg-success bg-opacity-15 text-success border border-success ms-1">Uso propio</span></td>
+                                <td class="fw-semibold">${it.name} <span class="badge bg-success bg-opacity-15 text-success border border-success ms-1">Uso propio</span></td>
                                 <td><span class="badge bg-light text-dark border">${entry.campaign}</span></td>
                                 <td class="text-center"><span class="badge bg-secondary">${qty}</span></td>
                                 <td class="text-center fw-bold" style="color: #7B3A1D;">${totalPts} pts</td>
-                                <td class="${isGift ? 'text-success' : 'text-danger'} fw-semibold">$${totalCost.toFixed(2)}</td>
+                                <td class="text-danger fw-semibold">$${totalCost.toFixed(2)}</td>
                                 <td class="text-nowrap">
                                     <div class="d-inline-flex align-items-center gap-1">
                                         <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar consumo personal">
@@ -3213,17 +3086,15 @@
             rememberClientEntry(clientName, clientPhone);
             rebuildAutocompleteLists();
 
-            const isGift = Boolean(stockItem.isGift || stockItem.isCompanyGift);
-            const costIsUnknown = !isGift && Boolean(stockItem.costUnknown || stockItem.fromKitCode);
-            const unitCost = isGift ? 0 : (costIsUnknown ? 0 : ((Number(stockItem.cost) || 0) / availableQty));
+            const unitCost = (Number(stockItem.cost) || 0) / availableQty;
             const saleTotal = unitPrice * sellQty;
-            const saleCost = isGift ? 0 : (costIsUnknown ? 0 : (unitCost * sellQty));
-            const saleProfit = costIsUnknown ? 0 : (saleTotal - saleCost);
+            const saleCost = unitCost * sellQty;
+            const saleProfit = saleTotal - saleCost;
 
             const soldItem = {
                 isOwnStock: false,
                 isPersonalUse: false,
-                isGift,
+                isGift: false,
                 brand: stockItem.brand || 'Natura',
                 code: stockItem.code || '',
                 page: stockItem.page || '',
@@ -3233,11 +3104,9 @@
                 totalPoints: 0,
                 price: unitPrice,
                 clientDiscountPct: 0,
-                wholesaleDiscountPct: isGift ? 100 : (stockItem.wholesaleDiscountPct || getWholesaleDiscountForBrand(stockItem.brand)),
+                wholesaleDiscountPct: stockItem.wholesaleDiscountPct || getWholesaleDiscountForBrand(stockItem.brand),
                 finalClientPrice: saleTotal,
                 cost: saleCost,
-                costUnknown: costIsUnknown,
-                profitUnknown: costIsUnknown,
                 profit: saleProfit
             };
 
@@ -3300,9 +3169,7 @@
                 updatedItems[itemIndex] = {
                     ...stockItem,
                     qty: remainingQty,
-                    cost: costIsUnknown ? 0 : (unitCost * remainingQty),
-                    costUnknown: costIsUnknown,
-                    profitUnknown: costIsUnknown
+                    cost: unitCost * remainingQty
                 };
             }
 
@@ -3311,7 +3178,7 @@
             } else {
                 const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
                 const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
-                const updatedCost = updatedItems.reduce((a, i) => a + (Number(i.cost) || 0), 0);
+                const updatedCost = updatedItems.reduce((a, i) => a + ((i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
                 await db.collection('orders').doc(orderId).update({
                     items: updatedItems,
                     total: updatedTotal,
@@ -3372,6 +3239,7 @@
                 ? (31137.50 / 33100)
                 : (31938.52 / 33100);
 
+            // Si trasladamos el recargo del link para recibir el monto completo, dividimos por el factor neto.
             const linkAmount = passFeeToClient && netFactor > 0
                 ? (baseAmount / netFactor)
                 : baseAmount;
