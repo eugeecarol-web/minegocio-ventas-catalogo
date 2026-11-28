@@ -14,90 +14,372 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --natura-color: #E45E27;
-            --avon-color: #AE3820;
-            --casa-color: #8C4A27;
-            --ocre-color: #E39D34;
-            --bg-light: #F4E6E1;
-            --ink-dark: #2B1E19;
+            --natura-color: #D45D35;
+            --avon-color: #9E3724;
+            --casa-color: #7D4E38;
+            --ocre-color: #C99846;
+            --gold-soft: #E5C88B;
+            --bg-light: #F7F1EB;
+            --bg-cream: #FCF9F5;
+            --surface-white: #FFFFFF;
+            --ink-dark: #2A1F1B;
+            --ink-muted: #6F5E57;
+            --border-warm: rgba(158, 55, 36, 0.14);
+            --border-gold: rgba(201, 152, 70, 0.35);
+            --shadow-soft: 0 10px 28px rgba(42, 31, 27, 0.055);
+            --shadow-hover: 0 14px 34px rgba(42, 31, 27, 0.09);
         }
 
         body {
-            background-color: var(--bg-light);
+            background: radial-gradient(circle at 0% 0%, #FBF6F0 0%, var(--bg-light) 55%, #F2E8DF 100%);
             color: var(--ink-dark);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow-x: hidden;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h2, h4, .editorial-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            letter-spacing: -0.01em;
         }
 
         .brand-waves-bg {
             position: fixed;
             top: 0;
             right: 0;
-            width: 380px;
+            width: 390px;
             max-width: 75vw;
             height: 360px;
             pointer-events: none;
             z-index: 0;
-            opacity: 0.92;
+            opacity: 0.78;
         }
 
         .app-content-wrapper {
             position: relative;
             z-index: 1;
+            max-width: 1240px;
         }
 
+        /* 1. Diseño general y tarjetas */
         .card {
-            border: 1px solid rgba(174, 56, 32, 0.12);
-            border-radius: 16px;
-            background-color: #FFFDFB;
-            box-shadow: 0 6px 20px rgba(43, 30, 25, 0.06);
+            border: 1px solid var(--border-warm);
+            border-radius: 20px;
+            background-color: var(--surface-white);
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .card-title {
+            font-weight: 700;
+            color: var(--ink-dark);
+            letter-spacing: -0.01em;
         }
 
         .consultora-header-badge {
-            background: #FFFDFB;
-            border: 1px solid rgba(174, 56, 32, 0.18);
-            border-radius: 16px;
-            padding: 8px 14px;
-            box-shadow: 0 4px 14px rgba(43, 30, 25, 0.06);
+            background: linear-gradient(145deg, #FFFFFF, var(--bg-cream));
+            border: 1px solid var(--border-gold);
+            border-radius: 18px;
+            padding: 9px 16px;
+            box-shadow: 0 6px 18px rgba(42, 31, 27, 0.05);
         }
 
-        .nav-pills .nav-link.active {
-            background: linear-gradient(135deg, var(--ocre-color), var(--natura-color));
-            color: #ffffff;
-            box-shadow: 0 4px 10px rgba(228, 94, 39, 0.25);
+        .tier-pill-box {
+            background: var(--surface-white);
+            border: 1px solid var(--border-gold);
+            border-radius: 999px;
+            padding: 6px 14px;
+            box-shadow: 0 4px 12px rgba(42, 31, 27, 0.04);
+        }
+
+        #activeCampaignBadge {
+            background: linear-gradient(135deg, #352621, #4D3730) !important;
+            border: 1px solid var(--border-gold);
+            color: #FDF8F2;
+            padding: 9px 15px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.85rem !important;
+            box-shadow: 0 4px 12px rgba(42, 31, 27, 0.08);
+        }
+
+        /* 3. Menú de navegación mejorado */
+        #mainTabs {
+            background: rgba(255, 255, 255, 0.92) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-warm);
+            border-radius: 18px !important;
+            padding: 7px !important;
+            gap: 6px;
+            box-shadow: var(--shadow-soft) !important;
         }
 
         .nav-pills .nav-link {
-            color: #4A3E3D;
+            color: var(--ink-muted);
             font-weight: 600;
+            border-radius: 13px;
+            font-size: 0.88rem;
+            padding: 10px 12px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .nav-pills .nav-link:hover {
+            background-color: #F9F2EC;
+            color: var(--avon-color);
+            border-color: rgba(201, 152, 70, 0.25);
+        }
+
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, var(--natura-color) 0%, var(--avon-color) 100%);
+            color: #FFFFFF;
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 6px 16px rgba(158, 55, 36, 0.26);
+        }
+
+        .nav-tabs {
+            border-bottom: 1px solid var(--border-warm);
+            gap: 4px;
+        }
+
+        .nav-tabs .nav-link {
+            border: 1px solid transparent;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            color: var(--ink-muted);
+            padding: 9px 14px;
+            font-size: 0.88rem;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--avon-color);
+            background-color: #FAF4EE;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--avon-color);
+            background-color: var(--bg-cream);
+            border-color: var(--border-warm) var(--border-warm) var(--bg-cream);
+            font-weight: 700;
+        }
+
+        /* 5. Botones, formularios y modales unificados */
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.18s ease;
+        }
+
+        .btn-sm {
             border-radius: 10px;
-            font-size: 0.9rem;
         }
 
         .btn-primary {
+            background: linear-gradient(135deg, var(--natura-color), var(--avon-color));
+            border-color: var(--avon-color);
+            box-shadow: 0 4px 12px rgba(212, 93, 53, 0.24);
+        }
+
+        .btn-primary:hover, .btn-primary:focus {
+            background: linear-gradient(135deg, #C24F29, #892D1C);
+            border-color: #892D1C;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(158, 55, 36, 0.3);
+        }
+
+        .btn-outline-primary {
+            color: var(--avon-color);
+            border-color: rgba(158, 55, 36, 0.38);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--avon-color);
+            border-color: var(--avon-color);
+            color: #fff;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2E7D5B, #226146);
+            border-color: #226146;
+            box-shadow: 0 4px 12px rgba(34, 97, 70, 0.2);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #266A4D, #1B4E38);
+            border-color: #1B4E38;
+        }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            border: 1px solid rgba(125, 78, 56, 0.22);
+            background-color: #FFFEFC;
+            color: var(--ink-dark);
+            padding: 0.55rem 0.85rem;
+            font-size: 0.92rem;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .form-control-sm, .form-select-sm {
+            border-radius: 10px;
+            padding: 0.38rem 0.7rem;
+            font-size: 0.84rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--ocre-color);
+            box-shadow: 0 0 0 0.2rem rgba(201, 152, 70, 0.22);
+            background-color: #FFFFFF;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.84rem;
+            color: #4D3D37;
+            margin-bottom: 0.32rem;
+        }
+
+        .form-check-input:checked {
             background-color: var(--natura-color);
             border-color: var(--natura-color);
         }
 
-        .btn-primary:hover, .btn-primary:focus {
-            background-color: var(--avon-color);
-            border-color: var(--avon-color);
+        #appToastBox {
+            border-radius: 14px;
+            border-left: 4px solid var(--ocre-color);
+            font-weight: 600;
+        }
+
+        .modal-content {
+            border-radius: 20px;
+            border: 1px solid var(--border-gold);
+            overflow: hidden;
+            box-shadow: 0 18px 45px rgba(42, 31, 27, 0.22);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+            padding: 1rem 1.4rem;
+        }
+
+        .modal-header.bg-dark {
+            background: linear-gradient(135deg, #32231E, #4E372F) !important;
+        }
+
+        .modal-header.bg-primary {
+            background: linear-gradient(135deg, var(--natura-color), var(--avon-color)) !important;
+        }
+
+        .modal-header.bg-success {
+            background: linear-gradient(135deg, #2E7D5B, #226146) !important;
+        }
+
+        .modal-footer {
+            background-color: var(--bg-cream) !important;
+            border-top: 1px solid var(--border-warm);
+        }
+
+        /* 4. Tablas y listados más legibles */
+        .table {
+            --bs-table-hover-bg: #FBF5EE;
+            color: var(--ink-dark);
+            font-size: 0.9rem;
+        }
+
+        .table thead th {
+            background-color: #F6ECE2 !important;
+            color: #5C473E;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(158, 55, 36, 0.16);
+            padding-top: 0.72rem;
+            padding-bottom: 0.72rem;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            border-bottom-color: rgba(125, 78, 56, 0.09);
+            padding-top: 0.68rem;
+            padding-bottom: 0.68rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .table-sm thead th {
+            padding-top: 0.52rem;
+            padding-bottom: 0.52rem;
+        }
+
+        .table-sm tbody td {
+            padding-top: 0.52rem;
+            padding-bottom: 0.52rem;
+        }
+
+        .badge {
+            border-radius: 8px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
         }
 
         .badge-natura { background-color: var(--natura-color); color: #fff; }
         .badge-avon { background-color: var(--avon-color); color: #fff; }
         .badge-casa { background-color: var(--casa-color); color: #fff; }
 
+        /* 2. Panel principal y tarjetas de KPI */
+        .kpi-metric-card {
+            background: linear-gradient(160deg, #FFFFFF 0%, var(--bg-cream) 100%);
+            border: 1px solid var(--border-warm);
+            border-top: 3px solid var(--ocre-color);
+            border-radius: 16px;
+            padding: 15px 16px;
+            box-shadow: 0 4px 14px rgba(42, 31, 27, 0.04);
+            transition: transform 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .kpi-metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(42, 31, 27, 0.07);
+        }
+
+        .kpi-metric-card.kpi-terracotta { border-top-color: var(--natura-color); }
+        .kpi-metric-card.kpi-wine { border-top-color: var(--avon-color); }
+        .kpi-metric-card.kpi-gold { border-top-color: var(--ocre-color); }
+        .kpi-metric-card.kpi-sage { border-top-color: #2E7D5B; }
+
+        .kpi-metric-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--ink-muted);
+            font-weight: 700;
+        }
+
+        .kpi-metric-value {
+            font-size: 1.42rem;
+            font-weight: 800;
+            color: var(--ink-dark);
+            font-variant-numeric: tabular-nums;
+            line-height: 1.2;
+        }
+
         .btn-icon-action {
-            width: 31px;
-            height: 31px;
+            width: 32px;
+            height: 32px;
             padding: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 9px;
         }
 
         .campaign-draggable-col {
@@ -350,10 +632,10 @@
 
     <div class="container my-4 app-content-wrapper">
         <!-- Encabezado Principal -->
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-2 border-bottom" style="border-color: rgba(158, 55, 36, 0.12) !important;">
             <div>
-                <h2 class="mb-0 fw-bold"><span style="color: var(--avon-color);">🌸</span> Mi Negocio por Catálogo</h2>
-                <small class="text-muted fw-semibold">Natura 🌸 • Avon 💄 • Casa & Estilo 🏠</small>
+                <h2 class="mb-0 fw-bold" style="font-size: 2rem; color: var(--ink-dark);"><span style="color: var(--avon-color);">🌸</span> Mi Negocio por Catálogo</h2>
+                <small class="fw-semibold" style="color: var(--ink-muted); letter-spacing: 0.03em;">Natura 🌸 • Avon 💄 • Casa & Estilo 🏠</small>
             </div>
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <div class="consultora-header-badge d-flex align-items-center gap-2">
@@ -364,14 +646,14 @@
                         </span>
                         <span class="brand-logo-avon-word">AVON</span>
                     </div>
-                    <div class="lh-1 border-start ps-2">
-                        <div class="small fw-bold" style="color: #1F1815;">Euge Carol</div>
+                    <div class="lh-1 border-start ps-2" style="border-color: rgba(201, 152, 70, 0.35) !important;">
+                        <div class="small fw-bold" style="color: #1F1815;">M. EUGENIA CAROL</div>
                         <div style="font-size: 11px; color: #6E5A52;"><i class="bi bi-whatsapp text-success"></i> 381-519-3109</div>
                     </div>
                 </div>
-                <div class="bg-white px-3 py-1.5 rounded-pill shadow-sm border d-flex align-items-center gap-2">
+                <div class="tier-pill-box d-flex align-items-center gap-2">
                     <span class="small fw-bold text-secondary">Tu Nivel:</span>
-                    <select id="globalRevellerTier" class="form-select form-select-sm border-0 bg-transparent fw-bold" style="color: var(--avon-color);" onchange="updateRevellerTier(this.value)">
+                    <select id="globalRevellerTier" class="form-select form-select-sm border-0 bg-transparent fw-bold p-0 pe-4" style="color: var(--avon-color); box-shadow: none;" onchange="updateRevellerTier(this.value)">
                         <option value="25">Bronce (25%)</option>
                         <option value="30">Plata (30%)</option>
                         <option value="32">Oro (32%)</option>
@@ -395,32 +677,32 @@
         <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 rounded shadow-sm" id="mainTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#campaignsTab" type="button" role="tab">
-                    <i class="bi bi-journal-bookmark me-1"></i>1. Campañas y Facturas
+                    <i class="bi bi-journal-bookmark"></i><span>1. Campañas</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ordersTab" type="button" role="tab">
-                    <i class="bi bi-cart-plus me-1"></i>2. Cargar Pedido
+                    <i class="bi bi-cart-plus"></i><span>2. Cargar Pedido</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#collectionsTab" type="button" role="tab">
-                    <i class="bi bi-wallet2 me-1"></i>3. Cobranzas y Cuentas
+                    <i class="bi bi-wallet2"></i><span>3. Cobranzas</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#stockTab" type="button" role="tab">
-                    <i class="bi bi-box-seam me-1"></i>4. Mi Stock <span class="badge bg-warning text-dark ms-1" id="stockCountBadge">0</span>
+                    <i class="bi bi-box-seam"></i><span>4. Mi Stock</span> <span class="badge bg-warning text-dark ms-1" id="stockCountBadge">0</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dashboardTab" type="button" role="tab">
-                    <i class="bi bi-speedometer2 me-1"></i>5. Dashboard
+                    <i class="bi bi-speedometer2"></i><span>5. Dashboard</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#aiAssistantTab" type="button" role="tab">
-                    <i class="bi bi-robot me-1"></i>6. Asistente IA
+                    <i class="bi bi-robot"></i><span>6. Asistente IA</span>
                 </button>
             </li>
         </ul>
@@ -1073,7 +1355,7 @@
 
                             <div class="coupon-footer-row">
                                 <div style="font-size: 11px; line-height: 1.25; color: #1F1815;">
-                                    <div class="ticket-signature" style="font-size: 1rem;">Euge Carol</div>
+                                    <div class="ticket-signature" style="font-size: 1rem;">M. Eugenia Carol</div>
                                     <div class="fw-bold"><i class="bi bi-whatsapp text-success"></i> 381-519-3109</div>
                                 </div>
                             </div>
@@ -1392,7 +1674,7 @@
                                     <img id="ticketQrImg" src="" alt="QR Revistas Interactivas" class="rounded border bg-white p-1" style="width: 68px; height: 68px; object-fit: contain;">
                                 </div>
                                 <div class="col-7 text-end pe-1">
-                                    <div class="ticket-signature">Euge Carol</div>
+                                    <div class="ticket-signature">M. Eugenia Carol</div>
                                     <div class="fw-semibold mt-1" style="font-size: 0.9rem;"><i class="bi bi-whatsapp text-success"></i> 381-519-3109</div>
                                 </div>
                             </div>
@@ -2444,37 +2726,37 @@
 
             kpiContainer.innerHTML = `
                 <div class="col-6 col-lg">
-                    <div class="p-3 rounded border bg-light h-100">
-                        <div class="small text-muted fw-semibold">Vendido en Campañas</div>
-                        <div class="fs-5 fw-bold text-dark mt-1">$${totalSoldAll.toFixed(2)}</div>
+                    <div class="kpi-metric-card kpi-terracotta h-100">
+                        <div class="kpi-metric-label">Vendido en Campañas</div>
+                        <div class="kpi-metric-value mt-1">$${totalSoldAll.toFixed(2)}</div>
                         <div class="small text-danger mt-1">Por cobrar: <strong>$${totalPendingAll.toFixed(2)}</strong></div>
                     </div>
                 </div>
                 <div class="col-6 col-lg">
-                    <div class="p-3 rounded border bg-light h-100">
-                        <div class="small text-muted fw-semibold">Clientes Activos</div>
-                        <div class="fs-5 fw-bold text-primary mt-1">${clientRows.length}</div>
+                    <div class="kpi-metric-card kpi-wine h-100">
+                        <div class="kpi-metric-label">Clientes Activos</div>
+                        <div class="kpi-metric-value mt-1" style="color: var(--avon-color);">${clientRows.length}</div>
                         <div class="small text-muted mt-1">Con saldo: <strong>${clientRows.filter(c => c.pending > 0).length}</strong></div>
                     </div>
                 </div>
                 <div class="col-6 col-lg">
-                    <div class="p-3 rounded border bg-warning bg-opacity-10 h-100">
-                        <div class="small text-muted fw-semibold">🎁 Regalos Recibidos</div>
-                        <div class="fs-5 fw-bold text-dark mt-1">${totalGiftsUnits} uds.</div>
+                    <div class="kpi-metric-card kpi-gold h-100">
+                        <div class="kpi-metric-label">🎁 Regalos Recibidos</div>
+                        <div class="kpi-metric-value mt-1">${totalGiftsUnits} uds.</div>
                         <div class="small text-success mt-1">Valor ref.: <strong>$${totalGiftsRefValue.toFixed(2)}</strong></div>
                     </div>
                 </div>
                 <div class="col-6 col-lg">
-                    <div class="p-3 rounded border bg-info bg-opacity-10 h-100">
-                        <div class="small text-muted fw-semibold">📦 Stock Propio</div>
-                        <div class="fs-5 fw-bold text-dark mt-1">${totalStockUnits} uds.</div>
+                    <div class="kpi-metric-card kpi-terracotta h-100">
+                        <div class="kpi-metric-label">📦 Stock Propio</div>
+                        <div class="kpi-metric-value mt-1">${totalStockUnits} uds.</div>
                         <div class="small text-success mt-1">Gan. pot.: <strong>+$${totalStockPotentialProfit.toFixed(2)}</strong></div>
                     </div>
                 </div>
                 <div class="col-12 col-lg">
-                    <div class="p-3 rounded border bg-success bg-opacity-10 h-100">
-                        <div class="small text-muted fw-semibold">🙋‍♀️ Consumo Personal</div>
-                        <div class="fs-5 fw-bold text-dark mt-1">${totalPersonalUnits} uds.</div>
+                    <div class="kpi-metric-card kpi-sage h-100">
+                        <div class="kpi-metric-label">🙋‍♀️ Consumo Personal</div>
+                        <div class="kpi-metric-value mt-1">${totalPersonalUnits} uds.</div>
                         <div class="small text-danger mt-1">Costo: <strong>$${totalPersonalCost.toFixed(2)}</strong></div>
                     </div>
                 </div>
@@ -3030,7 +3312,7 @@
                 text += `\n• *[${i.brand || 'Natura'}]* ${i.name} ${i.code && !/^KIT-/i.test(i.code) ? `(Cód: ${i.code})` : ''} x${i.qty || 1} - $${linePrice.toFixed(2)}`;
             });
             text += `\n\n💳 *TOTAL A ABONAR: $${(Number(order.total) || 0).toFixed(2)}*`;
-            text += `\nConsultora: *Euge Carol* • WhatsApp: 381-519-3109`;
+            text += `\nConsultora: *M. Eugenia Carol* • WhatsApp: 381-519-3109`;
             text += `\n¡Muchas gracias por tu compra, que la disfrutes! ✨`;
             return text;
         }
@@ -3298,7 +3580,7 @@
                 text += `\n• Total del pedido: $${total.toFixed(2)}\n• Abonado: $${paid.toFixed(2)}`;
             }
             text += `\n• *Saldo pendiente: $${saldo.toFixed(2)}*${dueLine}`;
-            text += `\n\nCuando puedas realizar el pago (en efectivo o transferencia), avisame por acá. ¡Muchas gracias por tu confianza! ✨\n*Euge Carol* • 📱 381-519-3109`;
+            text += `\n\nCuando puedas realizar el pago (en efectivo o transferencia), avisame por acá. ¡Muchas gracias por tu confianza! ✨\n*M. Eugenia Carol* • 📱 381-519-3109`;
 
             const phoneClean = String(o.clientPhone || '').replace(/\D/g, '');
             const url = phoneClean
@@ -4080,7 +4362,7 @@
                 ? `Links:\n- Natura: ${camp.linkNatura || 'N/A'}\n- Avon: ${camp.linkAvon || 'N/A'}\n- Casa & Estilo: ${camp.linkCasa || 'N/A'}`
                 : '';
 
-            const prompt = `Actúa como Euge Carol (WhatsApp 381-519-3109), consultora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp cálido, cercano y atractivo con emojis.
+            const prompt = `Actúa como M. Eugenia Carol (WhatsApp 381-519-3109), consultora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp cálido, cercano y atractivo con emojis.
 - Campaña: ${campaignName || 'General'} (Cierra el: ${camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente'})
 - Tipo: ${messageType}
 - Marca: ${brand}
