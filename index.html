@@ -365,7 +365,7 @@
                         <span class="brand-logo-avon-word">AVON</span>
                     </div>
                     <div class="lh-1 border-start ps-2">
-                        <div class="small fw-bold" style="color: #1F1815;">M. EUGENIA CAROL</div>
+                        <div class="small fw-bold" style="color: #1F1815;">Euge Carol</div>
                         <div style="font-size: 11px; color: #6E5A52;"><i class="bi bi-whatsapp text-success"></i> 381-519-3109</div>
                     </div>
                 </div>
@@ -1073,7 +1073,7 @@
 
                             <div class="coupon-footer-row">
                                 <div style="font-size: 11px; line-height: 1.25; color: #1F1815;">
-                                    <div class="ticket-signature" style="font-size: 1rem;">M. Eugenia Carol</div>
+                                    <div class="ticket-signature" style="font-size: 1rem;">Euge Carol</div>
                                     <div class="fw-bold"><i class="bi bi-whatsapp text-success"></i> 381-519-3109</div>
                                 </div>
                             </div>
@@ -1392,7 +1392,7 @@
                                     <img id="ticketQrImg" src="" alt="QR Revistas Interactivas" class="rounded border bg-white p-1" style="width: 68px; height: 68px; object-fit: contain;">
                                 </div>
                                 <div class="col-7 text-end pe-1">
-                                    <div class="ticket-signature">M. Eugenia Carol</div>
+                                    <div class="ticket-signature">Euge Carol</div>
                                     <div class="fw-semibold mt-1" style="font-size: 0.9rem;"><i class="bi bi-whatsapp text-success"></i> 381-519-3109</div>
                                 </div>
                             </div>
@@ -3030,7 +3030,7 @@
                 text += `\n• *[${i.brand || 'Natura'}]* ${i.name} ${i.code && !/^KIT-/i.test(i.code) ? `(Cód: ${i.code})` : ''} x${i.qty || 1} - $${linePrice.toFixed(2)}`;
             });
             text += `\n\n💳 *TOTAL A ABONAR: $${(Number(order.total) || 0).toFixed(2)}*`;
-            text += `\nConsultora: *M. Eugenia Carol* • WhatsApp: 381-519-3109`;
+            text += `\nConsultora: *Euge Carol* • WhatsApp: 381-519-3109`;
             text += `\n¡Muchas gracias por tu compra, que la disfrutes! ✨`;
             return text;
         }
@@ -3298,7 +3298,7 @@
                 text += `\n• Total del pedido: $${total.toFixed(2)}\n• Abonado: $${paid.toFixed(2)}`;
             }
             text += `\n• *Saldo pendiente: $${saldo.toFixed(2)}*${dueLine}`;
-            text += `\n\nCuando puedas realizar el pago (en efectivo o transferencia), avisame por acá. ¡Muchas gracias por tu confianza! ✨\n*M. Eugenia Carol* • 📱 381-519-3109`;
+            text += `\n\nCuando puedas realizar el pago (en efectivo o transferencia), avisame por acá. ¡Muchas gracias por tu confianza! ✨\n*Euge Carol* • 📱 381-519-3109`;
 
             const phoneClean = String(o.clientPhone || '').replace(/\D/g, '');
             const url = phoneClean
@@ -4080,7 +4080,7 @@
                 ? `Links:\n- Natura: ${camp.linkNatura || 'N/A'}\n- Avon: ${camp.linkAvon || 'N/A'}\n- Casa & Estilo: ${camp.linkCasa || 'N/A'}`
                 : '';
 
-            const prompt = `Actúa como M. Eugenia Carol (WhatsApp 381-519-3109), consultora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp cálido, cercano y atractivo con emojis.
+            const prompt = `Actúa como Euge Carol (WhatsApp 381-519-3109), consultora de Natura, Avon y Casa & Estilo. Redacta un mensaje de WhatsApp cálido, cercano y atractivo con emojis.
 - Campaña: ${campaignName || 'General'} (Cierra el: ${camp && camp.endDate ? formatDateAR(camp.endDate) : 'próximamente'})
 - Tipo: ${messageType}
 - Marca: ${brand}
