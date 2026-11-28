@@ -73,7 +73,7 @@
             color: #4A3E3D;
             font-weight: 600;
             border-radius: 10px;
-            font-size: 0.92rem;
+            font-size: 0.9rem;
         }
 
         .btn-primary {
@@ -235,6 +235,7 @@
             color: #1F1815;
             box-shadow: 0 8px 24px rgba(31,24,21,.16);
         }
+
         .coupon-wave-corner {
             position: absolute;
             width: 245px;
@@ -243,6 +244,7 @@
             right: -5px;
             pointer-events: none;
         }
+
         .coupon-right-brands-overlay {
             position: absolute;
             z-index: 2;
@@ -254,166 +256,193 @@
             gap: 5px;
             color: #111;
         }
+
         .coupon-right-brands-overlay .brand-logo-natura-img { height: 29px; }
+
         .coupon-right-brands-overlay .brand-logo-avon-word {
             font-size: 1.05rem;
             letter-spacing: .13em;
         }
-            <!-- MÓDULO 5: Asistente IA WhatsApp y Dashboard -->
-            <div class="tab-pane fade" id="aiAssistantTab">
-                <!-- Panel Superior de Métricas Clave del Negocio -->
-                <div class="card p-3 p-md-4 mb-4">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                        <div>
-                            <h4 class="mb-0 fw-bold"><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard de Control y Resumen</h4>
-                            <small class="text-muted">Indicadores útiles filtrados por campaña para tomar decisiones rápidas.</small>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <label for="dashboardCampaignFilter" class="small fw-bold text-secondary mb-0">Campaña:</label>
-                            <select id="dashboardCampaignFilter" class="form-select form-select-sm fw-bold" style="min-width: 170px;" onchange="renderModule5Dashboard()">
-                                <option value="">Todas las campañas</option>
-                            </select>
-                        </div>
+
+        .coupon-main-body {
+            position: relative;
+            z-index: 1;
+            min-height: 275px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding-top: 55px;
+            text-align: center;
+        }
+
+        .coupon-main-heading {
+            margin: 10px auto 15px;
+            max-width: 92%;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: clamp(1.25rem, 4.5vw, 1.9rem);
+            line-height: 1.08;
+            font-weight: 800;
+            letter-spacing: .045em;
+            color: #F4E6E1;
+            -webkit-text-stroke: 1px #1F1815;
+            text-align: center;
+        }
+
+        .coupon-client-loyalty-label {
+            display: inline-block;
+            position: relative;
+            z-index: 3;
+            max-width: 100%;
+            padding: 4px 12px;
+            margin: 0 auto 3px;
+            border-radius: 6px;
+            background: rgba(244, 230, 225, 0.96);
+            color: #7B2B1C;
+            letter-spacing: 0.03em;
+            line-height: 1.25;
+            box-shadow: 0 1px 4px rgba(31, 24, 21, 0.10);
+        }
+
+        .coupon-copy-text {
+            max-width: 390px;
+            margin: 0 auto;
+            font-size: 1.12rem;
+            line-height: 1.5;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .coupon-copy-highlight {
+            display: inline-block;
+            margin: 7px 0;
+            padding: 7px 15px;
+            border-radius: 9px;
+            background: #FFFDFB;
+            border: 1px solid rgba(174, 56, 32, .25);
+            color: #AE3820;
+            font-weight: 900;
+            font-size: 1.35rem;
+            box-shadow: 0 3px 8px rgba(174,56,32,.12);
+        }
+
+        .coupon-footer-row {
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid rgba(31,24,21,.16);
+            padding-top: 10px;
+            margin-top: 18px;
+        }
+
+        @media (max-width: 575px) {
+            .coupon-voucher-canvas { padding: 22px 18px 18px; min-height: 320px; }
+            .coupon-right-brands-overlay { right: 14px; top: 18px; }
+            .coupon-main-body { padding-top: 58px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Ondas decorativas de fondo -->
+    <svg class="brand-waves-bg" viewBox="0 0 400 380" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M92 -20C95 95 165 145 215 190C265 235 235 315 315 340C365 355 410 330 430 310V-20H92Z" fill="#E39D34"/>
+        <path d="M192 -20C188 70 250 115 260 185C270 250 220 285 280 315C330 340 395 305 430 285V-20H192Z" fill="#E45E27"/>
+        <path d="M292 -20C285 45 330 85 335 145C340 195 315 230 365 250C395 262 418 250 435 240V-20H292Z" fill="#AE3820"/>
+    </svg>
+
+    <div class="container my-4 app-content-wrapper">
+        <!-- Encabezado Principal -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div>
+                <h2 class="mb-0 fw-bold"><span style="color: var(--avon-color);">🌸</span> Mi Negocio por Catálogo</h2>
+                <small class="text-muted fw-semibold">Natura 🌸 • Avon 💄 • Casa & Estilo 🏠</small>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div class="consultora-header-badge d-flex align-items-center gap-2">
+                    <div class="brand-logo-pair" aria-label="Natura y AVON">
+                        <span class="brand-logo-natura">
+                            <img src="logoNatura.png" alt="natura" class="brand-logo-natura-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                            <span class="brand-logo-natura-word fw-bold" style="display:none;">natura</span>
+                        </span>
+                        <span class="brand-logo-avon-word">AVON</span>
                     </div>
-
-                    <!-- KPIs Principales -->
-                    <div class="row g-3 mb-4" id="dashboardKpiCards"></div>
-
-                    <!-- Pestañas Internas del Dashboard -->
-                    <ul class="nav nav-tabs mb-3" id="dashboardSubTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#dashCampaignView" type="button" role="tab">
-                                <i class="bi bi-journal-bookmark me-1"></i>Por Campaña
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#dashClientView" type="button" role="tab">
-                                <i class="bi bi-people me-1"></i>Por Cliente
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#dashGiftsView" type="button" role="tab">
-                                <i class="bi bi-gift me-1"></i>Regalos
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#dashOwnStockView" type="button" role="tab">
-                                <i class="bi bi-box-seam me-1"></i>Stock Propio
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#dashPersonalView" type="button" role="tab">
-                                <i class="bi bi-person-heart me-1"></i>Consumo Personal
-                            </button>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content">
-                        <!-- Vista 1: Por Campaña -->
-                        <div class="tab-pane fade show active" id="dashCampaignView" role="tabpanel">
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Campaña</th>
-                                            <th class="text-center">Puntos</th>
-                                            <th>Vendido</th>
-                                            <th>Cobrado</th>
-                                            <th>Por Cobrar</th>
-                                            <th>Costo Est.</th>
-                                            <th>Ganancia Est.</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="dashCampaignTableBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Vista 2: Por Cliente -->
-                        <div class="tab-pane fade" id="dashClientView" role="tabpanel">
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Cliente</th>
-                                            <th class="text-center">Pedidos</th>
-                                            <th class="text-center">Unidades</th>
-                                            <th>Total Comprado</th>
-                                            <th>Pagado</th>
-                                            <th>Saldo Pendiente</th>
-                                            <th>Ganancia Aportada</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="dashClientTableBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Vista 3: Regalos -->
-                        <div class="tab-pane fade" id="dashGiftsView" role="tabpanel">
-                            <div class="row g-2 mb-3" id="dashGiftsSummaryRow"></div>
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Producto / Regalo</th>
-                                            <th>Marca</th>
-                                            <th>Campaña</th>
-                                            <th>Destino / Cliente</th>
-                                            <th class="text-center">Cant.</th>
-                                            <th>Valor Ref. Venta</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="dashGiftsTableBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Vista 4: Stock Propio -->
-                        <div class="tab-pane fade" id="dashOwnStockView" role="tabpanel">
-                            <div class="row g-2 mb-3" id="dashOwnStockSummaryRow"></div>
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Producto en Stock</th>
-                                            <th>Marca</th>
-                                            <th>Campaña</th>
-                                            <th class="text-center">Unid. Disp.</th>
-                                            <th>Inversión / Costo</th>
-                                            <th>Venta Potencial</th>
-                                            <th>Ganancia Potencial</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="dashOwnStockTableBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Vista 5: Consumo Personal -->
-                        <div class="tab-pane fade" id="dashPersonalView" role="tabpanel">
-                            <div class="row g-2 mb-3" id="dashPersonalSummaryRow"></div>
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Producto</th>
-                                            <th>Marca</th>
-                                            <th>Campaña</th>
-                                            <th class="text-center">Unidades</th>
-                                            <th class="text-center">Puntos</th>
-                                            <th>Costo Mayorista</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="dashPersonalTableBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="lh-1 border-start ps-2">
+                        <div class="small fw-bold" style="color: #1F1815;">M. EUGENIA CAROL</div>
+                        <div style="font-size: 11px; color: #6E5A52;"><i class="bi bi-whatsapp text-success"></i> 381-519-3109</div>
                     </div>
                 </div>
+                <div class="bg-white px-3 py-1.5 rounded-pill shadow-sm border d-flex align-items-center gap-2">
+                    <span class="small fw-bold text-secondary">Tu Nivel:</span>
+                    <select id="globalRevellerTier" class="form-select form-select-sm border-0 bg-transparent fw-bold" style="color: var(--avon-color);" onchange="updateRevellerTier(this.value)">
+                        <option value="25">Bronce (25%)</option>
+                        <option value="30">Plata (30%)</option>
+                        <option value="32">Oro (32%)</option>
+                        <option value="35">Zafiro (35%)</option>
+                        <option value="40">Diamante (40%)</option>
+                    </select>
+                </div>
+                <span class="badge bg-dark fs-6" id="activeCampaignBadge">Campaña: Cargando...</span>
+            </div>
+        </div>
 
-                <!-- Asistente IA WhatsApp -->
-                <div class="row">
+        <!-- Mensajes de estado (sin alert()) -->
+        <div id="appToastBox" class="alert alert-info d-none shadow-sm py-2 px-3 mb-3" role="alert"></div>
+
+        <!-- Listas de autocompletado -->
+        <datalist id="savedClientsDatalist"></datalist>
+        <datalist id="savedProductCodesDatalist"></datalist>
+        <datalist id="savedProductNamesDatalist"></datalist>
+
+        <!-- Navegación de los 6 Módulos -->
+        <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 rounded shadow-sm" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#campaignsTab" type="button" role="tab">
+                    <i class="bi bi-journal-bookmark me-1"></i>1. Campañas y Facturas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ordersTab" type="button" role="tab">
+                    <i class="bi bi-cart-plus me-1"></i>2. Cargar Pedido
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#collectionsTab" type="button" role="tab">
+                    <i class="bi bi-wallet2 me-1"></i>3. Cobranzas y Cuentas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#stockTab" type="button" role="tab">
+                    <i class="bi bi-box-seam me-1"></i>4. Mi Stock <span class="badge bg-warning text-dark ms-1" id="stockCountBadge">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dashboardTab" type="button" role="tab">
+                    <i class="bi bi-speedometer2 me-1"></i>5. Dashboard
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#aiAssistantTab" type="button" role="tab">
+                    <i class="bi bi-robot me-1"></i>6. Asistente IA
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- MÓDULO 1: Campañas y Facturas a la Empresa -->
+            <div class="tab-pane fade show active" id="campaignsTab" role="tabpanel">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div>
+                        <h4 class="mb-0 fw-bold">Campañas, Catálogos y Pagos a Empresas</h4>
+                        <small class="text-muted">Arrastrá las tarjetas para ordenarlas o usá el botón de cada campaña para mostrar u ocultar su detalle.</small>
+                    </div>
+                    <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#campaignModal" onclick="resetCampaignForm()">
+                        <i class="bi bi-plus-circle me-1"></i> Nueva Campaña
+                    </button>
+                </div>
+                <div class="row" id="campaignsContainer"></div>
+            </div>
+
+            <!-- MÓDULO 2: Cargar Pedido -->
+            <div class="tab-pane fade" id="ordersTab" role="tabpanel">
+                <div class="row g-3">
                     <div class="col-md-5">
                         <div class="card p-3 mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -429,7 +458,7 @@
                                 <label class="form-label">Nombre del Cliente</label>
                                 <input type="text" id="clientName" list="savedClientsDatalist" class="form-control" placeholder="Escribí para buscar o cargar nuevo..." oninput="handleClientAutocomplete(this.value)" onchange="handleClientAutocomplete(this.value)" required>
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 <label class="form-label">WhatsApp del Cliente (sin 0 y sin 15)</label>
                                 <input type="text" id="clientPhone" class="form-control" placeholder="Ej: 3815000000">
                             </div>
@@ -468,7 +497,7 @@
                                 <label class="form-check-label fw-bold text-dark" for="itemIsGift">
                                     🎁 Es un regalo de la compañía (100% Ganancia)
                                 </label>
-                                <div class="form-text small mt-0">Costo $0 y no se suma al pedido online.</div>
+                                <div class="form-text small mt-0">Costo $0 y podés asignarlo a Stock Propio (incluso sin nombre de cliente).</div>
                             </div>
 
                             <div class="mb-2">
@@ -535,7 +564,9 @@
                                 </div>
                             </div>
 
-                            <button id="saveItemBtn" class="btn btn-outline-primary w-100" onclick="addItemToOrder()"><i class="bi bi-plus-lg me-1"></i> Añadir Artículo</button>
+                            <button id="saveItemBtn" class="btn btn-outline-primary w-100" onclick="addItemToOrder()">
+                                <i class="bi bi-plus-lg me-1"></i> Añadir Artículo
+                            </button>
                         </div>
                     </div>
 
@@ -591,7 +622,7 @@
             </div>
 
             <!-- MÓDULO 3: Cobranzas y Cuentas -->
-            <div class="tab-pane fade" id="collectionsTab">
+            <div class="tab-pane fade" id="collectionsTab" role="tabpanel">
                 <div class="card p-3 mb-4">
                     <h5 class="card-title mb-3"><i class="bi bi-search me-2"></i>Filtrar Cuentas por Campaña</h5>
                     <select id="filterCampaignSelect" class="form-select" onchange="renderCollections()"></select>
@@ -630,11 +661,11 @@
             </div>
 
             <!-- MÓDULO 4: Mi Stock Propio -->
-            <div class="tab-pane fade" id="stockTab">
+            <div class="tab-pane fade" id="stockTab" role="tabpanel">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                     <div>
                         <h4 class="mb-0 fw-bold">📦 Mi Stock Propio (Entrega Inmediata)</h4>
-                        <small class="text-muted">Productos disponibles para vender a clientes y bloque separado de Consumo Personal.</small>
+                        <small class="text-muted">Marcá o desmarcá si un producto ya llegó para entrega inmediata y gestioná el bloque de Consumo Personal.</small>
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         <button class="btn btn-outline-dark btn-sm fw-bold" onclick="openUnpackKitModal()">
@@ -661,6 +692,7 @@
                                     <th>Marca / SKU</th>
                                     <th>Producto</th>
                                     <th>Campaña Origen</th>
+                                    <th class="text-center">Entrega Inm.</th>
                                     <th class="text-center">Unidades</th>
                                     <th>Pagado</th>
                                     <th>Sugerido</th>
@@ -672,7 +704,7 @@
                     </div>
                 </div>
 
-                <!-- Bloque separado: Consumo Personal (no disponible para vender) -->
+                <!-- Bloque separado: Consumo Personal -->
                 <div class="card p-3 border-success border-opacity-50">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                         <div>
@@ -702,9 +734,156 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 5: Asistente IA WhatsApp -->
-            <div class="tab-pane fade" id="aiAssistantTab">
-                <div class="row">
+            <!-- MÓDULO 5: Dashboard -->
+            <div class="tab-pane fade" id="dashboardTab" role="tabpanel">
+                <div class="card p-3 p-md-4 mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <div>
+                            <h4 class="mb-0 fw-bold"><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard de Control y Resumen</h4>
+                            <small class="text-muted">Indicadores útiles filtrados por campaña para tomar decisiones rápidas.</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="dashboardCampaignFilter" class="small fw-bold text-secondary mb-0">Campaña:</label>
+                            <select id="dashboardCampaignFilter" class="form-select form-select-sm fw-bold" style="min-width: 170px;" onchange="renderModule5Dashboard()">
+                                <option value="">Todas las campañas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4" id="dashboardKpiCards"></div>
+
+                    <ul class="nav nav-tabs mb-3" id="dashboardSubTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#dashCampaignView" type="button" role="tab">
+                                <i class="bi bi-journal-bookmark me-1"></i>Por Campaña
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#dashClientView" type="button" role="tab">
+                                <i class="bi bi-people me-1"></i>Por Cliente
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#dashGiftsView" type="button" role="tab">
+                                <i class="bi bi-gift me-1"></i>Regalos
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#dashOwnStockView" type="button" role="tab">
+                                <i class="bi bi-box-seam me-1"></i>Stock Propio
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#dashPersonalView" type="button" role="tab">
+                                <i class="bi bi-person-heart me-1"></i>Consumo Personal
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="dashCampaignView" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Campaña</th>
+                                            <th class="text-center">Puntos</th>
+                                            <th>Vendido</th>
+                                            <th>Cobrado</th>
+                                            <th>Por Cobrar</th>
+                                            <th>Costo Est.</th>
+                                            <th>Ganancia Est.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashCampaignTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="dashClientView" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Cliente</th>
+                                            <th class="text-center">Pedidos</th>
+                                            <th class="text-center">Unidades</th>
+                                            <th>Total Comprado</th>
+                                            <th>Pagado</th>
+                                            <th>Saldo Pendiente</th>
+                                            <th>Ganancia Aportada</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashClientTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="dashGiftsView" role="tabpanel">
+                            <div class="row g-2 mb-3" id="dashGiftsSummaryRow"></div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto / Regalo</th>
+                                            <th>Marca</th>
+                                            <th>Campaña</th>
+                                            <th>Destino / Cliente</th>
+                                            <th class="text-center">Cant.</th>
+                                            <th>Valor Ref. Venta</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashGiftsTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="dashOwnStockView" role="tabpanel">
+                            <div class="row g-2 mb-3" id="dashOwnStockSummaryRow"></div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto en Stock</th>
+                                            <th>Marca</th>
+                                            <th>Campaña</th>
+                                            <th class="text-center">Unid. Disp.</th>
+                                            <th class="text-center">Estado</th>
+                                            <th>Inversión / Costo</th>
+                                            <th>Venta Potencial</th>
+                                            <th>Ganancia Potencial</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashOwnStockTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="dashPersonalView" role="tabpanel">
+                            <div class="row g-2 mb-3" id="dashPersonalSummaryRow"></div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Marca</th>
+                                            <th>Campaña</th>
+                                            <th class="text-center">Unidades</th>
+                                            <th class="text-center">Puntos</th>
+                                            <th>Costo Mayorista</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashPersonalTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 6: Asistente IA WhatsApp -->
+            <div class="tab-pane fade" id="aiAssistantTab" role="tabpanel">
+                <div class="row g-3">
                     <div class="col-md-5">
                         <div class="card p-4 mb-4">
                             <h5 class="card-title mb-3 text-primary"><i class="bi bi-robot me-2"></i>Generador de Mensajes IA</h5>
@@ -1239,6 +1418,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // Configuración de Firebase Firestore
         const firebaseConfig = {
             apiKey: "AIzaSyD6nfEiJ8Rkka4sWKzHweZ6tvFZu6BsI-0",
             authDomain: "minegocio-ventas-catalogo.firebaseapp.com",
@@ -1248,10 +1428,15 @@
             appId: "1:1031476884953:web:33e775518b497f1d3595c8"
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+        let db = null;
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.firestore();
+        } catch (err) {
+            console.warn('Firestore no disponible en este entorno:', err);
         }
-        const db = firebase.firestore();
 
         const LOCAL_CATALOG_KEY = 'catalogo_saved_products_v1';
         const LOCAL_CLIENTS_KEY = 'catalogo_saved_clients_v1';
@@ -1285,6 +1470,13 @@
         ]);
 
         let draggedCampaignId = null;
+        let campaigns = [];
+        let orders = [];
+        let savedCatalogProducts = [];
+        let savedClients = [];
+        let currentOrderItems = [];
+        let currentRevellerDiscount = parseInt(localStorage.getItem('reveller_tier')) || 25;
+        let activeTicketOrder = null;
 
         function showToastMessage(msg, type = 'success') {
             const box = document.getElementById('appToastBox');
@@ -1356,18 +1548,16 @@
             return addCalendarDaysAR(arrivalDate, 20);
         }
 
-        let campaigns = [];
-        let orders = [];
-        let savedCatalogProducts = [];
-        let savedClients = [];
-        let currentOrderItems = [];
-        let currentRevellerDiscount = parseInt(localStorage.getItem('reveller_tier')) || 25;
-        let activeTicketOrder = null;
-
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('globalRevellerTier').value = currentRevellerDiscount;
+            const tierSelect = document.getElementById('globalRevellerTier');
+            if (tierSelect) tierSelect.value = currentRevellerDiscount;
             loadLocalCaches();
             rebuildAutocompleteLists();
+            renderCampaigns();
+            updateCampaignSelects();
+            renderCollections();
+            renderOwnStock();
+            renderModule5Dashboard();
             initFirebaseListeners();
             calculateItemPreview();
         });
@@ -1523,7 +1713,7 @@
         }
 
         function updateRevellerTier(val) {
-            currentRevellerDiscount = parseInt(val);
+            currentRevellerDiscount = parseInt(val, 10) || 25;
             localStorage.setItem('reveller_tier', currentRevellerDiscount);
             calculateItemPreview();
         }
@@ -1564,8 +1754,8 @@
             const isGift = document.getElementById('itemIsGift').checked;
             const isNonBillable = isOwnStock || isPersonalUse;
             const brand = document.getElementById('itemBrand').value;
-            const qty = Math.max(1, parseInt(document.getElementById('itemQty').value) || 1);
-            const unitPts = Math.max(0, parseInt(document.getElementById('itemPoints').value) || 0);
+            const qty = Math.max(1, parseInt(document.getElementById('itemQty').value, 10) || 1);
+            const unitPts = Math.max(0, parseInt(document.getElementById('itemPoints').value, 10) || 0);
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
             const clientDiscountPct = parseFloat(document.getElementById('itemClientDiscount').value) || 0;
             const wholesaleDiscountPct = isGift ? 100 : getWholesaleDiscountForBrand(brand);
@@ -1603,14 +1793,14 @@
                 const isNonBillableItem = isOwnStock || isPersonalUse || isKitHeaderOnly;
                 const wholesaleDisc = isGift ? 100 : (Number(item?.wholesaleDiscountPct) || getWholesaleDiscountForBrand(brand));
 
-                // Mantenemos el costo guardado del ítem (por ejemplo, el costo exacto del kit o artículo cargado)
-                // y solo lo calculamos por fórmula cuando no viene guardado ni es un componente suelto ya prorrateado.
                 const hasSavedCost = item?.cost !== undefined && item?.cost !== null && item?.cost !== '';
-                const itemCost = isUnpackedKitComponent
+                const itemCost = isGift
                     ? 0
-                    : (hasSavedCost
-                        ? (Number(item.cost) || 0)
-                        : ((isGift ? 0 : basePrice * (1 - (wholesaleDisc / 100))) * qty));
+                    : (isUnpackedKitComponent
+                        ? 0
+                        : (hasSavedCost
+                            ? (Number(item.cost) || 0)
+                            : (basePrice * (1 - (wholesaleDisc / 100))) * qty));
 
                 const itemFinal = isNonBillableItem
                     ? 0
@@ -1648,7 +1838,6 @@
 
             const savedTotal = Number(o.total ?? o.totalClient ?? 0) || 0;
             const total = isNonBillableOrder ? 0 : (savedTotal > 0 ? savedTotal : calcItems.total);
-
             const totalCost = calcItems.cost;
 
             const savedProfit = Number(o.totalProfit ?? o.netProfit ?? o.profit ?? 0) || 0;
@@ -1674,6 +1863,7 @@
         }
 
         function initFirebaseListeners() {
+            if (!db) return;
             db.collection('campaigns').orderBy('startDate', 'desc').onSnapshot(snapshot => {
                 campaigns = [];
                 snapshot.forEach(doc => campaigns.push({ id: doc.id, ...doc.data() }));
@@ -1755,9 +1945,7 @@
 
         function handleCampaignDragStart(e, campId) {
             draggedCampaignId = campId;
-            if (e?.currentTarget) {
-                e.currentTarget.classList.add('dragging');
-            }
+            if (e?.currentTarget) e.currentTarget.classList.add('dragging');
             if (e?.dataTransfer) {
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/plain', campId);
@@ -1765,24 +1953,16 @@
         }
 
         function handleCampaignDragEnd(e) {
-            if (e?.currentTarget) {
-                e.currentTarget.classList.remove('dragging');
-            }
-            document.querySelectorAll('.campaign-draggable-col.drag-over').forEach(el => {
-                el.classList.remove('drag-over');
-            });
+            if (e?.currentTarget) e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.campaign-draggable-col.drag-over').forEach(el => el.classList.remove('drag-over'));
             draggedCampaignId = null;
         }
 
         function handleCampaignDragOver(e) {
             e.preventDefault();
-            if (e?.dataTransfer) {
-                e.dataTransfer.dropEffect = 'move';
-            }
+            if (e?.dataTransfer) e.dataTransfer.dropEffect = 'move';
             const col = e.currentTarget;
-            if (col && !col.classList.contains('drag-over')) {
-                col.classList.add('drag-over');
-            }
+            if (col && !col.classList.contains('drag-over')) col.classList.add('drag-over');
         }
 
         function handleCampaignDrop(e, targetCampId) {
@@ -1859,10 +2039,7 @@
                 return;
             }
 
-            const aoaData = [
-                ['CÓDIGO', 'QTDE']
-            ];
-
+            const aoaData = [['CÓDIGO', 'QTDE']];
             list.forEach(item => {
                 const cleanCode = String(item.code || '').trim();
                 const numericCode = /^\d+$/.test(cleanCode) ? Number(cleanCode) : cleanCode;
@@ -1891,8 +2068,9 @@
             const activeBadge = document.getElementById('activeCampaignBadge');
 
             const activeCamp = campaigns.find(c => c.status === 'Activa');
-            if (activeCamp) activeBadge.textContent = `Campaña: ${activeCamp.name}`;
-            else activeBadge.textContent = `Sin campaña activa`;
+            if (activeBadge) {
+                activeBadge.textContent = activeCamp ? `Campaña: ${activeCamp.name}` : 'Sin campaña activa';
+            }
 
             if (campaigns.length === 0) {
                 container.innerHTML = `<div class="col-12 text-center text-muted my-4">No hay campañas registradas.</div>`;
@@ -1946,6 +2124,8 @@
                 if (c.linkNatura) linksHtml += `<a href="${c.linkNatura}" target="_blank" class="btn btn-sm btn-outline-danger">Natura 🌸</a>`;
                 if (c.linkAvon) linksHtml += `<a href="${c.linkAvon}" target="_blank" class="btn btn-sm btn-outline-danger">Avon 💄</a>`;
                 if (c.linkCasa) linksHtml += `<a href="${c.linkCasa}" target="_blank" class="btn btn-sm btn-outline-dark">Casa & Estilo 🏠</a>`;
+
+                const safeCampName = String(c.name || '').replace(/'/g, "\\'");
 
                 container.innerHTML += `
                     <div class="col-md-6 mb-4 campaign-draggable-col" draggable="true" ondragstart="handleCampaignDragStart(event, '${c.id}')" ondragend="handleCampaignDragEnd(event)" ondragover="handleCampaignDragOver(event)" ondrop="handleCampaignDrop(event, '${c.id}')">
@@ -2018,7 +2198,7 @@
                                         <span class="small text-muted d-block">Factura Pagada:</span>
                                         <strong class="text-danger">-$${invoicePaid.toFixed(2)}</strong>
                                     </div>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="openInvoiceModal('${c.id}', '${c.name}', ${invoicePaid})">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="openInvoiceModal('${c.id}', '${safeCampName}', ${invoicePaid})">
                                         <i class="bi bi-receipt"></i> Pagar Factura
                                     </button>
                                 </div>
@@ -2081,6 +2261,10 @@
         async function confirmInvoicePayment() {
             const campId = document.getElementById('invCampaignId').value;
             const amount = parseFloat(document.getElementById('invAmount').value) || 0;
+            if (!db) {
+                showToastMessage('Sin conexión a base de datos para guardar la factura.', 'warning');
+                return;
+            }
             await db.collection('campaigns').doc(campId).update({ invoicePaid: amount });
             bootstrap.Modal.getInstance(document.getElementById('invoicePaymentModal')).hide();
             showToastMessage('¡Pago de factura registrado con éxito!');
@@ -2131,7 +2315,6 @@
                 ? campaigns.filter(c => c.name === selectedCamp)
                 : getOrderedCampaigns();
 
-            // 1. Métricas por Campaña
             const campaignRows = targetCampaigns.map(c => {
                 const cOrders = orders.map(normalizeOrderData).filter(o => o.campaign === c.name);
                 const shippingCost = Number(c.shippingCost ?? 4612) || 0;
@@ -2154,7 +2337,6 @@
                 };
             });
 
-            // 2. Métricas por Cliente (excluyendo Stock Propio y Consumo Personal)
             const clientMap = {};
             normOrders.forEach(o => {
                 const clientLower = String(o.clientName || '').trim().toLowerCase();
@@ -2191,7 +2373,6 @@
                 .map(c => ({ ...c, pending: Math.max(0, c.total - c.paid) }))
                 .sort((a, b) => b.total - a.total);
 
-            // 3. Regalos, 4. Stock Propio y 5. Consumo Personal
             const giftRows = [];
             const ownStockMap = {};
             const personalRows = [];
@@ -2225,10 +2406,13 @@
                                 brand: it.brand || 'Natura',
                                 campaign: o.campaign,
                                 isGift,
+                                isReadyForImmediateDelivery: it.isReadyForImmediateDelivery !== false,
                                 qty: 0,
                                 cost: 0,
                                 potentialSale: 0
                             };
+                        } else if (it.isReadyForImmediateDelivery === false) {
+                            ownStockMap[sKey].isReadyForImmediateDelivery = false;
                         }
                         ownStockMap[sKey].qty += qty;
                         ownStockMap[sKey].cost += itemCost;
@@ -2249,7 +2433,6 @@
 
             const ownStockRows = Object.values(ownStockMap).sort((a, b) => b.potentialSale - a.potentialSale);
 
-            // Totales útiles para tarjetas KPI
             const totalSoldAll = campaignRows.reduce((s, r) => s + r.sold, 0);
             const totalPendingAll = campaignRows.reduce((s, r) => s + r.pending, 0);
             const totalGiftsUnits = giftRows.reduce((s, r) => s + r.qty, 0);
@@ -2297,7 +2480,6 @@
                 </div>
             `;
 
-            // Render Tabla Por Campaña
             const campBody = document.getElementById('dashCampaignTableBody');
             if (campBody) {
                 campBody.innerHTML = campaignRows.length === 0
@@ -2315,7 +2497,6 @@
                     `).join('');
             }
 
-            // Render Tabla Por Cliente
             const clientBody = document.getElementById('dashClientTableBody');
             if (clientBody) {
                 clientBody.innerHTML = clientRows.length === 0
@@ -2333,7 +2514,6 @@
                     `).join('');
             }
 
-            // Render Regalos
             const giftsSummary = document.getElementById('dashGiftsSummaryRow');
             const giftsBody = document.getElementById('dashGiftsTableBody');
             if (giftsSummary) {
@@ -2359,7 +2539,6 @@
                     `).join('');
             }
 
-            // Render Stock Propio
             const stockSummary = document.getElementById('dashOwnStockSummaryRow');
             const stockBody = document.getElementById('dashOwnStockTableBody');
             const totalStockCost = ownStockRows.reduce((s, r) => s + r.cost, 0);
@@ -2373,15 +2552,19 @@
             }
             if (stockBody) {
                 stockBody.innerHTML = ownStockRows.length === 0
-                    ? `<tr><td colspan="7" class="text-center text-muted py-3">No hay unidades disponibles en Stock Propio.</td></tr>`
+                    ? `<tr><td colspan="8" class="text-center text-muted py-3">No hay unidades disponibles en Stock Propio.</td></tr>`
                     : ownStockRows.map(r => {
                         const potProfit = r.potentialSale - r.cost;
+                        const readyBadge = r.isReadyForImmediateDelivery
+                            ? '<span class="badge bg-success">Entrega inmediata</span>'
+                            : '<span class="badge bg-warning text-dark">Pendiente de llegada</span>';
                         return `
                             <tr>
                                 <td class="fw-semibold">${r.name} ${r.isGift ? '<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>' : ''}</td>
                                 <td><span class="badge ${r.brand === 'Natura' ? 'badge-natura' : (r.brand === 'Avon' ? 'badge-avon' : 'badge-casa')}">${r.brand}</span></td>
                                 <td><span class="badge bg-secondary">${r.campaign}</span></td>
                                 <td class="text-center fw-bold">${r.qty}</td>
+                                <td class="text-center">${readyBadge}</td>
                                 <td class="text-danger">$${r.cost.toFixed(2)}</td>
                                 <td class="fw-bold">$${r.potentialSale.toFixed(2)}</td>
                                 <td class="text-success fw-bold">+$${potProfit.toFixed(2)}</td>
@@ -2390,7 +2573,6 @@
                     }).join('');
             }
 
-            // Render Consumo Personal
             const personalSummary = document.getElementById('dashPersonalSummaryRow');
             const personalBody = document.getElementById('dashPersonalTableBody');
             const totalPersonalPts = personalRows.reduce((s, r) => s + r.points, 0);
@@ -2417,9 +2599,326 @@
             }
         }
 
-        function openInvoiceModal(campId, campName, currentAmount) {
-            if (!name || (!isNonBillable && price <= 0)) {
-                showToastMessage('Ingresá el nombre del producto y un precio de venta válido.', 'warning');
+        async function saveCampaign() {
+            const id = document.getElementById('campId').value;
+            const data = {
+                name: document.getElementById('campName').value.trim(),
+                status: document.getElementById('campStatus').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                shippingCost: Math.max(0, parseFloat(document.getElementById('campShippingCost')?.value) || 0),
+                linkNatura: document.getElementById('linkNatura').value.trim(),
+                linkAvon: document.getElementById('linkAvon').value.trim(),
+                linkCasa: document.getElementById('linkCasa').value.trim(),
+            };
+            if (!data.name) {
+                showToastMessage('Completá el nombre de la campaña.', 'warning');
+                return;
+            }
+            if (!db) {
+                if (id) {
+                    const idx = campaigns.findIndex(c => c.id === id);
+                    if (idx >= 0) campaigns[idx] = { ...campaigns[idx], ...data };
+                } else {
+                    campaigns.unshift({ id: 'local-' + Date.now(), ...data, invoicePaid: 0 });
+                }
+                renderCampaigns();
+                updateCampaignSelects();
+                renderModule5Dashboard();
+                bootstrap.Modal.getInstance(document.getElementById('campaignModal')).hide();
+                resetCampaignForm();
+                showToastMessage('¡Campaña guardada localmente!');
+                return;
+            }
+            if (id) {
+                await db.collection('campaigns').doc(id).update(data);
+                showToastMessage('¡Campaña actualizada!');
+            } else {
+                data.invoicePaid = 0;
+                await db.collection('campaigns').add(data);
+                showToastMessage('¡Campaña creada!');
+            }
+            bootstrap.Modal.getInstance(document.getElementById('campaignModal')).hide();
+            resetCampaignForm();
+        }
+
+        function editCampaign(id) {
+            const c = campaigns.find(item => item.id === id);
+            if (!c) return;
+
+            document.getElementById('campId').value = c.id;
+            document.getElementById('campName').value = c.name;
+            document.getElementById('campStatus').value = c.status;
+            document.getElementById('startDate').value = c.startDate || '';
+            document.getElementById('endDate').value = c.endDate || '';
+            if (document.getElementById('campShippingCost')) {
+                document.getElementById('campShippingCost').value = c.shippingCost ?? 4612;
+            }
+            document.getElementById('linkNatura').value = c.linkNatura || '';
+            document.getElementById('linkAvon').value = c.linkAvon || '';
+            document.getElementById('linkCasa').value = c.linkCasa || '';
+
+            document.getElementById('modalCampaignTitle').textContent = 'Editar Campaña';
+            new bootstrap.Modal(document.getElementById('campaignModal')).show();
+        }
+
+        function resetCampaignForm() {
+            document.getElementById('campaignForm').reset();
+            document.getElementById('campId').value = '';
+            if (document.getElementById('campShippingCost')) {
+                document.getElementById('campShippingCost').value = '4612';
+            }
+            document.getElementById('modalCampaignTitle').textContent = 'Configurar Campaña';
+        }
+
+        function goToQuickStockLoad() {
+            const tabEl = document.querySelector('button[data-bs-target="#ordersTab"]');
+            if (tabEl) new bootstrap.Tab(tabEl).show();
+            cancelOrderEdit();
+            const activeCamp = campaigns.find(c => c.status === 'Activa') || campaigns[0];
+            if (activeCamp) {
+                document.getElementById('orderCampaignSelect').value = activeCamp.name;
+            }
+            document.getElementById('clientName').value = 'Stock Propio';
+            document.getElementById('itemIsOwnStock').checked = true;
+            calculateItemPreview();
+            document.getElementById('itemCode').focus();
+        }
+
+        function openUnpackKitModal() {
+            updateCampaignSelects();
+            const activeOrFirst = campaigns.find(c => c.status === 'Activa') || campaigns[0];
+            if (activeOrFirst) {
+                document.getElementById('kitCampaignSelect').value = activeOrFirst.name;
+            }
+            document.getElementById('kitBrandSelect').value = DEFAULT_KIT_C17.brand;
+            document.getElementById('kitSkuInput').value = DEFAULT_KIT_C17.code;
+            document.getElementById('kitNameInput').value = DEFAULT_KIT_C17.name;
+            document.getElementById('kitQtyInput').value = DEFAULT_KIT_C17.qty;
+            document.getElementById('kitPointsInput').value = DEFAULT_KIT_C17.points;
+            document.getElementById('kitPaidInput').value = DEFAULT_KIT_C17.paidTotal;
+
+            const listEl = document.getElementById('kitComponentsList');
+            listEl.innerHTML = '';
+            DEFAULT_KIT_C17.components.forEach(comp => addKitComponentRow(comp));
+            recalcKitPreview();
+            new bootstrap.Modal(document.getElementById('unpackKitModal')).show();
+        }
+
+        function addKitComponentRow(comp = {}) {
+            const listEl = document.getElementById('kitComponentsList');
+            const row = document.createElement('div');
+            row.className = 'row g-2 align-items-center kit-comp-row';
+            row.innerHTML = `
+                <div class="col-6 col-md-7">
+                    <input type="text" class="form-control form-control-sm comp-name" placeholder="Nombre del producto" value="${String(comp.name || '').replace(/"/g, '&quot;')}" oninput="recalcKitPreview()">
+                </div>
+                <div class="col-2">
+                    <input type="number" class="form-control form-control-sm comp-qty" placeholder="Cant." value="${comp.qty || 1}" min="1" oninput="recalcKitPreview()">
+                </div>
+                <div class="col-3 col-md-2">
+                    <input type="number" class="form-control form-control-sm comp-price" placeholder="Venta $" value="${comp.suggestedPrice || ''}" step="0.01" oninput="recalcKitPreview()">
+                </div>
+                <div class="col-1 text-end">
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('.kit-comp-row').remove(); recalcKitPreview();" title="Quitar">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            `;
+            listEl.appendChild(row);
+            recalcKitPreview();
+        }
+
+        function getKitComponentsFromModal() {
+            const rows = Array.from(document.querySelectorAll('#kitComponentsList .kit-comp-row'));
+            return rows.map(r => ({
+                name: r.querySelector('.comp-name').value.trim(),
+                qty: Math.max(1, parseInt(r.querySelector('.comp-qty').value, 10) || 1),
+                suggestedPrice: parseFloat(r.querySelector('.comp-price').value) || 0
+            })).filter(c => c.name);
+        }
+
+        function recalcKitPreview() {
+            const kitQty = Math.max(1, parseInt(document.getElementById('kitQtyInput').value, 10) || 1);
+            const kitPts = Math.max(0, parseInt(document.getElementById('kitPointsInput').value, 10) || 0);
+            const kitPaid = parseFloat(document.getElementById('kitPaidInput').value) || 0;
+            const comps = getKitComponentsFromModal();
+
+            const totalSuggestedPerKit = comps.reduce((acc, c) => acc + (c.suggestedPrice * c.qty), 0);
+            document.getElementById('kitPreviewCost').textContent = `$${(kitPaid * kitQty).toFixed(2)}`;
+            document.getElementById('kitPreviewSuggested').textContent = `$${totalSuggestedPerKit.toFixed(2)}`;
+            document.getElementById('kitPreviewPoints').textContent = `${kitPts * kitQty} pts`;
+        }
+
+        async function confirmUnpackKitToStock() {
+            const campaign = document.getElementById('kitCampaignSelect').value;
+            const brand = document.getElementById('kitBrandSelect').value || 'Natura';
+            const kitSku = document.getElementById('kitSkuInput').value.trim();
+            const kitName = document.getElementById('kitNameInput').value.trim() || 'Kit';
+            const kitQty = Math.max(1, parseInt(document.getElementById('kitQtyInput').value, 10) || 1);
+            const kitPts = Math.max(0, parseInt(document.getElementById('kitPointsInput').value, 10) || 0);
+            const kitPaidPerUnit = parseFloat(document.getElementById('kitPaidInput').value) || 0;
+            const comps = getKitComponentsFromModal();
+
+            if (!campaign || !kitSku || comps.length === 0) {
+                showToastMessage('Completá la campaña, el código del kit y al menos un producto.', 'warning');
+                return;
+            }
+
+            const totalSuggestedPerKit = comps.reduce((acc, c) => acc + (c.suggestedPrice * c.qty), 0);
+            const totalKitCost = kitPaidPerUnit * kitQty;
+
+            const itemsToSave = [{
+                isOwnStock: false,
+                isKitHeaderOnly: true,
+                isGift: false,
+                brand,
+                code: kitSku,
+                page: '',
+                name: `${kitName} (Kit para desarmar)`,
+                qty: kitQty,
+                points: kitPts,
+                totalPoints: kitPts * kitQty,
+                price: 0,
+                clientDiscountPct: 0,
+                wholesaleDiscountPct: 0,
+                finalClientPrice: 0,
+                cost: totalKitCost,
+                profit: 0
+            }];
+
+            comps.forEach(c => {
+                const lineSuggestedPerKit = c.suggestedPrice * c.qty;
+                const propCostPerKit = totalSuggestedPerKit > 0
+                    ? (kitPaidPerUnit * (lineSuggestedPerKit / totalSuggestedPerKit))
+                    : (kitPaidPerUnit / comps.length);
+                const totalItemQty = c.qty * kitQty;
+                const totalItemCost = propCostPerKit * kitQty;
+
+                itemsToSave.push({
+                    isOwnStock: true,
+                    isGift: false,
+                    isReadyForImmediateDelivery: true,
+                    fromKitCode: kitSku,
+                    brand,
+                    code: `KIT-${kitSku}`,
+                    page: '',
+                    name: c.name,
+                    qty: totalItemQty,
+                    points: 0,
+                    totalPoints: 0,
+                    price: c.suggestedPrice,
+                    clientDiscountPct: 0,
+                    wholesaleDiscountPct: 0,
+                    finalClientPrice: 0,
+                    cost: totalItemCost,
+                    profit: 0
+                });
+            });
+
+            if (db) {
+                await db.collection('orders').add({
+                    campaign,
+                    clientName: 'Stock Propio',
+                    clientPhone: '',
+                    items: itemsToSave,
+                    isPureOwnStock: true,
+                    total: 0,
+                    totalProfit: 0,
+                    totalCost: totalKitCost,
+                    totalPoints: kitPts * kitQty,
+                    paidAmount: 0,
+                    paymentStatus: 'Stock Propio',
+                    lastPaymentMethod: '-',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('unpackKitModal')).hide();
+            showToastMessage(`¡Kit ${kitSku} sumado a ${campaign} y ${comps.length} productos pasados a Mi Stock!`);
+        }
+
+        function resetItemFormFields() {
+            document.getElementById('editingItemIndex').value = '-1';
+            document.getElementById('itemFormTitle').textContent = 'Agregar Artículo del Folleto';
+            document.getElementById('cancelEditItemBtn').classList.add('d-none');
+            document.getElementById('saveItemBtn').className = 'btn btn-outline-primary w-100';
+            document.getElementById('saveItemBtn').innerHTML = '<i class="bi bi-plus-lg me-1"></i> Añadir Artículo';
+
+            document.getElementById('itemIsOwnStock').checked = false;
+            document.getElementById('itemIsPersonalUse').checked = false;
+            document.getElementById('itemIsGift').checked = false;
+            document.getElementById('itemBrand').value = 'Natura';
+            document.getElementById('itemCode').value = '';
+            document.getElementById('itemPage').value = '';
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQty').value = '1';
+            document.getElementById('itemPoints').value = '0';
+            document.getElementById('itemPrice').value = '';
+            document.getElementById('itemClientDiscount').value = '0';
+            calculateItemPreview();
+        }
+
+        function editOrderItem(index) {
+            const item = currentOrderItems[index];
+            if (!item) return;
+
+            document.getElementById('editingItemIndex').value = String(index);
+            document.getElementById('itemFormTitle').textContent = `Editando Artículo #${index + 1}`;
+            document.getElementById('cancelEditItemBtn').classList.remove('d-none');
+            document.getElementById('saveItemBtn').className = 'btn btn-primary w-100 fw-bold';
+            document.getElementById('saveItemBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Guardar Cambios del Artículo';
+
+            document.getElementById('itemIsOwnStock').checked = Boolean(item.isOwnStock);
+            document.getElementById('itemIsPersonalUse').checked = Boolean(item.isPersonalUse);
+            document.getElementById('itemIsGift').checked = Boolean(item.isGift);
+            document.getElementById('itemBrand').value = item.brand || 'Natura';
+            document.getElementById('itemCode').value = item.code || '';
+            document.getElementById('itemPage').value = item.page || '';
+            document.getElementById('itemName').value = item.name || '';
+            document.getElementById('itemQty').value = item.qty || 1;
+            document.getElementById('itemPoints').value = item.points || 0;
+            document.getElementById('itemPrice').value = item.price || '';
+            document.getElementById('itemClientDiscount').value = item.clientDiscountPct || 0;
+
+            calculateItemPreview();
+            document.getElementById('itemName').focus();
+        }
+
+        function cancelItemEdit() {
+            resetItemFormFields();
+        }
+
+        function removeOrderItem(index) {
+            const editingIndex = parseInt(document.getElementById('editingItemIndex').value, 10);
+            currentOrderItems.splice(index, 1);
+            if (editingIndex === index) {
+                resetItemFormFields();
+            } else if (editingIndex > index) {
+                document.getElementById('editingItemIndex').value = String(editingIndex - 1);
+            }
+            renderOrderTable();
+        }
+
+        function addItemToOrder() {
+            const editingIndex = parseInt(document.getElementById('editingItemIndex').value, 10);
+            const existingItem = (!isNaN(editingIndex) && editingIndex >= 0) ? currentOrderItems[editingIndex] : null;
+            const isKitHeaderOnly = Boolean(existingItem?.isKitHeaderOnly);
+            const isOwnStock = !isKitHeaderOnly && document.getElementById('itemIsOwnStock').checked;
+            const isPersonalUse = !isKitHeaderOnly && !isOwnStock && document.getElementById('itemIsPersonalUse').checked;
+            const isGift = !isOwnStock && !isPersonalUse && document.getElementById('itemIsGift').checked;
+            const isNonBillable = isOwnStock || isPersonalUse || isKitHeaderOnly;
+            const brand = document.getElementById('itemBrand').value;
+            const code = document.getElementById('itemCode').value.trim();
+            const page = document.getElementById('itemPage').value.trim();
+            const name = document.getElementById('itemName').value.trim();
+            const qty = parseInt(document.getElementById('itemQty').value, 10) || 1;
+            const unitPts = Math.max(0, parseInt(document.getElementById('itemPoints').value, 10) || 0);
+            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+            const clientDiscountPct = parseFloat(document.getElementById('itemClientDiscount').value) || 0;
+
+            if (!name || (!isNonBillable && !isGift && price <= 0)) {
+                showToastMessage('Ingresá el nombre del producto y un precio válido.', 'warning');
                 return;
             }
 
@@ -2431,10 +2930,21 @@
 
             const newItem = {
                 ...(existingItem || {}),
-                isOwnStock, isPersonalUse, isGift, isKitHeaderOnly, brand, code, page, name, qty,
+                isOwnStock,
+                isPersonalUse,
+                isGift,
+                isKitHeaderOnly,
+                isReadyForImmediateDelivery: isOwnStock ? (existingItem?.isReadyForImmediateDelivery !== false) : true,
+                brand,
+                code,
+                page,
+                name,
+                qty,
                 points: unitPts,
                 totalPoints: linePoints,
-                price, clientDiscountPct, wholesaleDiscountPct,
+                price,
+                clientDiscountPct,
+                wholesaleDiscountPct,
                 finalClientPrice: finalClientPriceUnit * qty,
                 profit: unitProfit * qty,
                 cost: wholesaleCostUnit * qty
@@ -2488,12 +2998,11 @@
                 if (item.isOwnStock) specialBadges.push(`<span class="badge bg-info text-dark ms-1">📦 Stock</span>`);
                 if (item.isPersonalUse) specialBadges.push(`<span class="badge bg-success ms-1">🙋‍♀️ Consumo</span>`);
                 if (item.isGift && !item.isKitHeaderOnly) specialBadges.push(`<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>`);
-                const specialBadge = specialBadges.join('');
 
                 tbody.innerHTML += `
                     <tr>
                         <td><span class="badge ${badgeClass}">${item.brand}</span></td>
-                        <td>${item.name} ${specialBadge}</td>
+                        <td>${item.name} ${specialBadges.join('')}</td>
                         <td>${item.qty}</td>
                         <td class="fw-semibold" style="color: #7B3A1D;">${itemPts}</td>
                         <td>$${((Number(item.price) || 0) * (Number(item.qty) || 1)).toFixed(2)}</td>
@@ -2604,6 +3113,7 @@
             const campaign = document.getElementById('orderCampaignSelect').value;
             const isAllStock = currentOrderItems.length > 0 && currentOrderItems.every(i => i.isOwnStock);
             const isAllPersonalUse = currentOrderItems.length > 0 && currentOrderItems.every(i => i.isPersonalUse);
+            const isAllGiftToStock = currentOrderItems.length > 0 && currentOrderItems.every(i => i.isGift && i.isOwnStock);
             const isNonBillableOrder = isAllStock || isAllPersonalUse;
             const clientNameInput = document.getElementById('clientName').value.trim();
             const clientName = clientNameInput || (isAllStock ? 'Stock Propio' : (isAllPersonalUse ? 'Consumo Personal' : ''));
@@ -2620,7 +3130,7 @@
 
             const total = currentOrderItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.finalClientPrice) || 0)), 0);
             const totalProfit = currentOrderItems.reduce((acc, item) => acc + ((item.isOwnStock || item.isPersonalUse) ? 0 : (Number(item.profit) || 0)), 0);
-            const totalCost = currentOrderItems.reduce((acc, item) => acc + ((item.fromKitCode || /^KIT-/i.test(String(item.code || '').trim())) ? 0 : (Number(item.cost) || 0)), 0);
+            const totalCost = currentOrderItems.reduce((acc, item) => acc + ((item.isGift || item.fromKitCode || /^KIT-/i.test(String(item.code || '').trim())) ? 0 : (Number(item.cost) || 0)), 0);
             const totalPoints = currentOrderItems.reduce((acc, item) => acc + (item.isOwnStock ? 0 : (Number(item.totalPoints ?? ((Number(item.points) || 0) * (Number(item.qty) || 1))) || 0)), 0);
 
             const orderData = {
@@ -2633,27 +3143,56 @@
                 total,
                 totalProfit,
                 totalCost,
-                totalPoints,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                totalPoints
             };
 
             if (editingId) {
-                await db.collection('orders').doc(editingId).update(orderData);
+                if (db) {
+                    await db.collection('orders').doc(editingId).update({
+                        ...orderData,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    const idx = orders.findIndex(o => o.id === editingId);
+                    if (idx >= 0) orders[idx] = normalizeOrderData({ ...orders[idx], ...orderData });
+                    renderCampaigns();
+                    renderCollections();
+                    renderOwnStock();
+                    renderModule5Dashboard();
+                }
                 showToastMessage('¡Pedido actualizado con éxito!');
                 cancelOrderEdit();
             } else {
-                orderData.paidAmount = 0;
-                orderData.paymentStatus = isAllStock ? 'Stock Propio' : (isAllPersonalUse ? 'Consumo Personal' : 'Pendiente');
-                orderData.lastPaymentMethod = '-';
-                const docRef = await db.collection('orders').add(orderData);
+                const fullOrder = {
+                    ...orderData,
+                    paidAmount: 0,
+                    paymentStatus: isAllStock ? 'Stock Propio' : (isAllPersonalUse ? 'Consumo Personal' : 'Pendiente'),
+                    lastPaymentMethod: '-'
+                };
+                let docId = 'local-' + Date.now();
+                if (db) {
+                    const docRef = await db.collection('orders').add({
+                        ...fullOrder,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    docId = docRef.id;
+                } else {
+                    orders.unshift(normalizeOrderData({ id: docId, ...fullOrder }));
+                    renderCampaigns();
+                    renderCollections();
+                    renderOwnStock();
+                    renderModule5Dashboard();
+                }
 
-                const createdOrder = normalizeOrderData({ id: docRef.id, ...orderData });
+                const createdOrder = normalizeOrderData({ id: docId, ...fullOrder });
                 currentOrderItems = [];
                 document.getElementById('clientName').value = '';
                 document.getElementById('clientPhone').value = '';
                 renderOrderTable();
 
-                if (isAllStock) {
+                if (isAllGiftToStock) {
+                    showToastMessage('¡Regalo guardado en Mi Stock Propio con costo $0.00 (100% ganancia al venderse)!');
+                } else if (isAllStock) {
                     showToastMessage('¡Productos guardados en Mi Stock Propio y sumados a la campaña!');
                 } else if (isAllPersonalUse) {
                     showToastMessage('¡Productos de Consumo Personal sumados a la campaña (puntos y costo actualizados)!');
@@ -2661,7 +3200,9 @@
                     showToastMessage('¡Pedido guardado con éxito!');
                 } else {
                     showToastMessage('¡Pedido guardado con éxito!');
-                    orders.unshift(createdOrder);
+                    if (!orders.some(o => o.id === createdOrder.id)) {
+                        orders.unshift(createdOrder);
+                    }
                     openClientTicket(createdOrder.id);
                 }
             }
@@ -2674,6 +3215,21 @@
             const updatedItems = [...stockOrder.items];
             updatedItems.splice(itemIndex, 1);
 
+            if (!db) {
+                if (updatedItems.length === 0) {
+                    orders = orders.filter(o => o.id !== orderId);
+                } else {
+                    const idx = orders.findIndex(o => o.id === orderId);
+                    if (idx >= 0) orders[idx] = normalizeOrderData({ ...stockOrder, items: updatedItems });
+                }
+                renderCampaigns();
+                renderCollections();
+                renderOwnStock();
+                renderModule5Dashboard();
+                showToastMessage('Producto eliminado.', 'secondary');
+                return;
+            }
+
             if (updatedItems.length === 0) {
                 await db.collection('orders').doc(orderId).delete();
                 showToastMessage('Producto eliminado.', 'secondary');
@@ -2682,7 +3238,7 @@
 
             const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
             const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
-            const updatedCost = updatedItems.reduce((a, i) => a + ((i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
+            const updatedCost = updatedItems.reduce((a, i) => a + ((i.isGift || i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
             const updatedPoints = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.totalPoints ?? ((Number(i.points) || 0) * (Number(i.qty) || 1))) || 0)), 0);
 
             await db.collection('orders').doc(orderId).update({
@@ -2966,12 +3522,13 @@
             if (personalBadge) personalBadge.textContent = `${totalPersonalUnits} uds. personales`;
 
             if (stockEntries.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No tenés productos disponibles para vender en Stock Propio todavía.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">No tenés productos disponibles para vender en Stock Propio todavía.</td></tr>`;
             } else {
                 tbody.innerHTML = stockEntries.map(entry => {
                     const it = entry.item;
                     const qty = parseInt(it.qty, 10) || 1;
                     const isGiftItem = Boolean(it.isGift ?? it.isCompanyGift);
+                    const isReady = it.isReadyForImmediateDelivery !== false;
                     const unitCost = isGiftItem ? 0 : ((Number(it.cost) || 0) / qty);
                     const suggestedPrice = Number(it.price) || 0;
                     const brandBadge = it.brand === 'Natura' ? 'badge-natura' : (it.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
@@ -2989,6 +3546,12 @@
                             </td>
                             <td class="fw-bold">${it.name}${giftBadge}</td>
                             <td><span class="badge bg-light text-dark border">${entry.campaign}</span></td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-flex align-items-center justify-content-center gap-2 m-0">
+                                    <input class="form-check-input m-0" type="checkbox" role="switch" ${isReady ? 'checked' : ''} onchange="toggleStockImmediateDelivery('${entry.orderId}', ${entry.itemIndex}, this.checked)" title="Marcar o desmarcar si ya llegó para entrega inmediata">
+                                    <span class="badge ${isReady ? 'bg-success' : 'bg-warning text-dark'}">${isReady ? 'Listo' : 'No llegó'}</span>
+                                </div>
+                            </td>
                             <td class="text-center"><span class="badge bg-dark fs-6">${qty}</span></td>
                             <td class="${isGiftItem ? 'text-success' : 'text-danger'} fw-semibold">$${unitCost.toFixed(2)} c/u</td>
                             <td class="text-success fw-bold">$${suggestedPrice.toFixed(2)} c/u</td>
@@ -3055,6 +3618,30 @@
             }
         }
 
+        async function toggleStockImmediateDelivery(orderId, itemIndex, isReady) {
+            const stockOrder = orders.find(o => o.id === orderId);
+            if (!stockOrder || !Array.isArray(stockOrder.items) || !stockOrder.items[itemIndex]) return;
+
+            const updatedItems = [...stockOrder.items];
+            updatedItems[itemIndex] = {
+                ...updatedItems[itemIndex],
+                isReadyForImmediateDelivery: Boolean(isReady)
+            };
+
+            if (db) {
+                await db.collection('orders').doc(orderId).update({ items: updatedItems });
+            } else {
+                const idx = orders.findIndex(o => o.id === orderId);
+                if (idx >= 0) orders[idx] = normalizeOrderData({ ...stockOrder, items: updatedItems });
+                renderOwnStock();
+                renderModule5Dashboard();
+            }
+
+            showToastMessage(isReady
+                ? '¡Producto marcado como listo para entrega inmediata!'
+                : 'Producto destildado: queda marcado como pendiente de llegada.');
+        }
+
         async function moveStockItemToPersonalUse(orderId, itemIndex) {
             const stockOrder = orders.find(o => o.id === orderId);
             if (!stockOrder || !Array.isArray(stockOrder.items) || !stockOrder.items[itemIndex]) return;
@@ -3079,7 +3666,7 @@
             const isAllPersonalUse = updatedItems.every(i => i.isPersonalUse);
             const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
             const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
-            const updatedCost = updatedItems.reduce((a, i) => a + ((i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
+            const updatedCost = updatedItems.reduce((a, i) => a + ((i.isGift || i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
             const updatedPoints = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.totalPoints ?? ((Number(i.points) || 0) * (Number(i.qty) || 1))) || 0)), 0);
 
             const updatePayload = {
@@ -3097,7 +3684,16 @@
                 updatePayload.paymentStatus = 'Consumo Personal';
             }
 
-            await db.collection('orders').doc(orderId).update(updatePayload);
+            if (db) {
+                await db.collection('orders').doc(orderId).update(updatePayload);
+            } else {
+                const idx = orders.findIndex(o => o.id === orderId);
+                if (idx >= 0) orders[idx] = normalizeOrderData({ ...stockOrder, ...updatePayload });
+                renderCampaigns();
+                renderCollections();
+                renderOwnStock();
+                renderModule5Dashboard();
+            }
             showToastMessage('¡Producto pasado a Consumo Personal!');
         }
 
@@ -3150,7 +3746,8 @@
             rememberClientEntry(clientName, clientPhone);
             rebuildAutocompleteLists();
 
-            const unitCost = (Boolean(stockItem.isGift ?? stockItem.isCompanyGift)) ? 0 : ((Number(stockItem.cost) || 0) / availableQty);
+            const isGiftItem = Boolean(stockItem.isGift ?? stockItem.isCompanyGift);
+            const unitCost = isGiftItem ? 0 : ((Number(stockItem.cost) || 0) / availableQty);
             const saleTotal = unitPrice * sellQty;
             const saleCost = unitCost * sellQty;
             const saleProfit = saleTotal - saleCost;
@@ -3158,7 +3755,7 @@
             const soldItem = {
                 isOwnStock: false,
                 isPersonalUse: false,
-                isGift: Boolean(stockItem.isGift ?? stockItem.isCompanyGift),
+                isGift: isGiftItem,
                 brand: stockItem.brand || 'Natura',
                 code: stockItem.code || '',
                 page: stockItem.page || '',
@@ -3168,7 +3765,7 @@
                 totalPoints: 0,
                 price: unitPrice,
                 clientDiscountPct: 0,
-                wholesaleDiscountPct: stockItem.wholesaleDiscountPct || getWholesaleDiscountForBrand(stockItem.brand),
+                wholesaleDiscountPct: isGiftItem ? 100 : (stockItem.wholesaleDiscountPct || getWholesaleDiscountForBrand(stockItem.brand)),
                 finalClientPrice: saleTotal,
                 cost: saleCost,
                 profit: saleProfit
@@ -3186,17 +3783,31 @@
                 const mergedPaid = (Number(existingClientOrder.paidAmount) || 0) + (markPaid ? saleTotal : 0);
                 const mergedPhone = existingClientOrder.clientPhone || clientPhone;
 
-                await db.collection('orders').doc(existingClientOrder.id).update({
-                    clientPhone: mergedPhone,
-                    items: mergedItems,
-                    total: mergedTotal,
-                    totalProfit: mergedProfit,
-                    paidAmount: mergedPaid,
-                    paymentStatus: mergedPaid >= mergedTotal ? 'Pagado' : (mergedPaid > 0 ? 'Parcial' : 'Pendiente')
-                });
+                if (db) {
+                    await db.collection('orders').doc(existingClientOrder.id).update({
+                        clientPhone: mergedPhone,
+                        items: mergedItems,
+                        total: mergedTotal,
+                        totalProfit: mergedProfit,
+                        paidAmount: mergedPaid,
+                        paymentStatus: mergedPaid >= mergedTotal ? 'Pagado' : (mergedPaid > 0 ? 'Parcial' : 'Pendiente')
+                    });
+                } else {
+                    const cIdx = orders.findIndex(o => o.id === existingClientOrder.id);
+                    if (cIdx >= 0) {
+                        orders[cIdx] = normalizeOrderData({
+                            ...orders[cIdx],
+                            clientPhone: mergedPhone,
+                            items: mergedItems,
+                            total: mergedTotal,
+                            totalProfit: mergedProfit,
+                            paidAmount: mergedPaid
+                        });
+                    }
+                }
                 targetOrderId = existingClientOrder.id;
             } else {
-                const newOrderRef = await db.collection('orders').add({
+                const newSaleDoc = {
                     campaign: stockOrder.campaign,
                     clientName,
                     clientPhone,
@@ -3210,19 +3821,18 @@
                     totalPoints: 0,
                     paidAmount: markPaid ? saleTotal : 0,
                     paymentStatus: markPaid ? 'Pagado' : 'Pendiente',
-                    lastPaymentMethod: markPaid ? 'Efectivo' : '-',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                targetOrderId = newOrderRef.id;
-                orders.unshift(normalizeOrderData({
-                    id: targetOrderId,
-                    campaign: stockOrder.campaign,
-                    clientName,
-                    clientPhone,
-                    items: [soldItem],
-                    total: saleTotal,
-                    paidAmount: markPaid ? saleTotal : 0
-                }));
+                    lastPaymentMethod: markPaid ? 'Efectivo' : '-'
+                };
+                if (db) {
+                    const newOrderRef = await db.collection('orders').add({
+                        ...newSaleDoc,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    targetOrderId = newOrderRef.id;
+                } else {
+                    targetOrderId = 'local-sale-' + Date.now();
+                }
+                orders.unshift(normalizeOrderData({ id: targetOrderId, ...newSaleDoc }));
             }
 
             const updatedItems = [...stockOrder.items];
@@ -3237,18 +3847,31 @@
                 };
             }
 
-            if (updatedItems.length === 0) {
-                await db.collection('orders').doc(orderId).delete();
+            if (db) {
+                if (updatedItems.length === 0) {
+                    await db.collection('orders').doc(orderId).delete();
+                } else {
+                    const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
+                    const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
+                    const updatedCost = updatedItems.reduce((a, i) => a + ((i.isGift || i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
+                    await db.collection('orders').doc(orderId).update({
+                        items: updatedItems,
+                        total: updatedTotal,
+                        totalProfit: updatedProfit,
+                        totalCost: updatedCost
+                    });
+                }
             } else {
-                const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
-                const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
-                const updatedCost = updatedItems.reduce((a, i) => a + ((i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
-                await db.collection('orders').doc(orderId).update({
-                    items: updatedItems,
-                    total: updatedTotal,
-                    totalProfit: updatedProfit,
-                    totalCost: updatedCost
-                });
+                if (updatedItems.length === 0) {
+                    orders = orders.filter(o => o.id !== orderId);
+                } else {
+                    const sIdx = orders.findIndex(o => o.id === orderId);
+                    if (sIdx >= 0) orders[sIdx] = normalizeOrderData({ ...stockOrder, items: updatedItems });
+                }
+                renderCampaigns();
+                renderCollections();
+                renderOwnStock();
+                renderModule5Dashboard();
             }
 
             bootstrap.Modal.getInstance(document.getElementById('sellStockModal')).hide();
@@ -3303,7 +3926,6 @@
                 ? (31137.50 / 33100)
                 : (31938.52 / 33100);
 
-            // Si trasladamos el recargo del link para recibir el monto completo, dividimos por el factor neto.
             const linkAmount = passFeeToClient && netFactor > 0
                 ? (baseAmount / netFactor)
                 : baseAmount;
@@ -3348,17 +3970,35 @@
             if (!orderDoc) return;
 
             const newPaidAmount = (Number(orderDoc.paidAmount) || 0) + amountToAdd;
-            await db.collection('orders').doc(orderId).update({
-                paidAmount: newPaidAmount,
-                lastPaymentMethod: method
-            });
+            if (db) {
+                await db.collection('orders').doc(orderId).update({
+                    paidAmount: newPaidAmount,
+                    lastPaymentMethod: method
+                });
+            } else {
+                const idx = orders.findIndex(o => o.id === orderId);
+                if (idx >= 0) {
+                    orders[idx] = normalizeOrderData({ ...orderDoc, paidAmount: newPaidAmount, lastPaymentMethod: method });
+                }
+                renderCampaigns();
+                renderCollections();
+                renderModule5Dashboard();
+            }
 
             bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
             showToastMessage('¡Pago registrado con éxito!');
         }
 
         async function deleteOrder(id) {
-            await db.collection('orders').doc(id).delete();
+            if (db) {
+                await db.collection('orders').doc(id).delete();
+            } else {
+                orders = orders.filter(o => o.id !== id);
+                renderCampaigns();
+                renderCollections();
+                renderOwnStock();
+                renderModule5Dashboard();
+            }
             showToastMessage('Pedido eliminado.', 'secondary');
         }
 
@@ -3387,7 +4027,7 @@
                 const stockLines = [];
                 orders.map(normalizeOrderData).forEach(o => {
                     (o.items || []).forEach(it => {
-                        if (it.isOwnStock && (parseInt(it.qty, 10) || 0) > 0) {
+                        if (it.isOwnStock && it.isReadyForImmediateDelivery !== false && (parseInt(it.qty, 10) || 0) > 0) {
                             stockLines.push(`• *[${it.brand || 'Natura'}]* ${it.name} - $${(Number(it.price) || 0).toFixed(2)}`);
                         }
                     });
