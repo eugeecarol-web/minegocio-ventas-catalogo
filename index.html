@@ -1541,19 +1541,19 @@
 
             if (source === 'stock' && stockEl.checked) {
                 personalEl.checked = false;
-                giftEl.checked = false;
                 if (!clientInput.value.trim() || clientInput.value.trim().toLowerCase() === 'consumo personal') {
                     clientInput.value = 'Stock Propio';
                 }
             } else if (source === 'personal' && personalEl.checked) {
                 stockEl.checked = false;
-                giftEl.checked = false;
                 if (!clientInput.value.trim() || clientInput.value.trim().toLowerCase() === 'stock propio') {
                     clientInput.value = 'Consumo Personal';
                 }
             } else if (source === 'gift' && giftEl.checked) {
-                stockEl.checked = false;
-                personalEl.checked = false;
+                if (!stockEl.checked && !personalEl.checked && !clientInput.value.trim()) {
+                    stockEl.checked = true;
+                    clientInput.value = 'Stock Propio';
+                }
             }
             calculateItemPreview();
         }
@@ -1561,7 +1561,7 @@
         function calculateItemPreview() {
             const isOwnStock = document.getElementById('itemIsOwnStock').checked;
             const isPersonalUse = !isOwnStock && document.getElementById('itemIsPersonalUse').checked;
-            const isGift = !isOwnStock && !isPersonalUse && document.getElementById('itemIsGift').checked;
+            const isGift = document.getElementById('itemIsGift').checked;
             const isNonBillable = isOwnStock || isPersonalUse;
             const brand = document.getElementById('itemBrand').value;
             const qty = Math.max(1, parseInt(document.getElementById('itemQty').value) || 1);
@@ -1577,10 +1577,12 @@
 
             document.getElementById('previewWholesaleDiscount').textContent = isGift ? '100% (Regalo)' : `${wholesaleDiscountPct}%`;
             document.getElementById('previewItemPoints').textContent = `${totalPts} pts`;
-            document.getElementById('previewProfit').textContent = isOwnStock ? '$0.00 (Al venderse)' : (isPersonalUse ? '$0.00 (Consumo Personal)' : `$${profit.toFixed(2)}`);
+            document.getElementById('previewProfit').textContent = isOwnStock
+                ? (isGift ? '$0.00 (100% ganancia al vender)' : '$0.00 (Al venderse)')
+                : (isPersonalUse ? '$0.00 (Consumo Personal)' : `$${profit.toFixed(2)}`);
             document.getElementById('previewCost').textContent = `$${wholesaleCost.toFixed(2)}`;
             document.getElementById('previewFinalClientPrice').textContent = isOwnStock
-                ? '$0.00 (Stock Propio)'
+                ? (isGift ? '$0.00 (Regalo a Stock)' : '$0.00 (Stock Propio)')
                 : (isPersonalUse ? '$0.00 (Consumo Personal)' : `$${finalClientPrice.toFixed(2)}`);
         }
 
@@ -2393,9 +2395,17 @@
             const editingIndex = parseInt(document.getElementById('editingItemIndex').value, 10);
             const existingItem = (!isNaN(editingIndex) && editingIndex >= 0) ? currentOrderItems[editingIndex] : null;
             const isKitHeaderOnly = Boolean(existingItem?.isKitHeaderOnly);
-            const isOwnStock = !isKitHeaderOnly && document.getElementById('itemIsOwnStock').checked;
+            const isGift = document.getElementById('itemIsGift').checked;
+            let isOwnStock = !isKitHeaderOnly && document.getElementById('itemIsOwnStock').checked;
             const isPersonalUse = !isKitHeaderOnly && !isOwnStock && document.getElementById('itemIsPersonalUse').checked;
-            const isGift = !isOwnStock && !isPersonalUse && document.getElementById('itemIsGift').checked;
+            const clientInput = document.getElementById('clientName');
+
+            if (isGift && !isOwnStock && !isPersonalUse && !clientInput.value.trim()) {
+                isOwnStock = true;
+                document.getElementById('itemIsOwnStock').checked = true;
+                clientInput.value = 'Stock Propio';
+            }
+
             const isNonBillable = isOwnStock || isPersonalUse || isKitHeaderOnly;
             const brand = document.getElementById('itemBrand').value;
             const code = document.getElementById('itemCode').value.trim();
@@ -2471,13 +2481,12 @@
                 totalPoints += itemPts;
 
                 const badgeClass = item.brand === 'Natura' ? 'badge-natura' : (item.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
-                const specialBadge = item.isKitHeaderOnly
-                    ? `<span class="badge bg-warning text-dark ms-1">🎁 Kit (Puntos)</span>`
-                    : (item.isOwnStock
-                        ? `<span class="badge bg-info text-dark ms-1">📦 Stock</span>`
-                        : (item.isPersonalUse
-                            ? `<span class="badge bg-success ms-1">🙋‍♀️ Consumo</span>`
-                            : (item.isGift ? `<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : '')));
+                const specialBadges = [];
+                if (item.isKitHeaderOnly) specialBadges.push(`<span class="badge bg-warning text-dark ms-1">🎁 Kit (Puntos)</span>`);
+                if (item.isOwnStock) specialBadges.push(`<span class="badge bg-info text-dark ms-1">📦 Stock</span>`);
+                if (item.isPersonalUse) specialBadges.push(`<span class="badge bg-success ms-1">🙋‍♀️ Consumo</span>`);
+                if (item.isGift && !item.isKitHeaderOnly) specialBadges.push(`<span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>`);
+                const specialBadge = specialBadges.join('');
 
                 tbody.innerHTML += `
                     <tr>
@@ -2960,13 +2969,15 @@
                 tbody.innerHTML = stockEntries.map(entry => {
                     const it = entry.item;
                     const qty = parseInt(it.qty, 10) || 1;
-                    const unitCost = (Number(it.cost) || 0) / qty;
+                    const isGiftItem = Boolean(it.isGift ?? it.isCompanyGift);
+                    const unitCost = isGiftItem ? 0 : ((Number(it.cost) || 0) / qty);
                     const suggestedPrice = Number(it.price) || 0;
                     const brandBadge = it.brand === 'Natura' ? 'badge-natura' : (it.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
                     const rawCode = String(it.code || '').trim();
                     const skuLabel = it.fromKitCode
                         ? `Kit ${it.fromKitCode}`
                         : (rawCode && !/^KIT-/i.test(rawCode) ? `SKU: ${rawCode}` : 'S/C');
+                    const giftBadge = isGiftItem ? ` <span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : '';
 
                     return `
                         <tr>
@@ -2974,15 +2985,18 @@
                                 <span class="badge ${brandBadge}">${it.brand || 'Natura'}</span>
                                 <div class="small fw-bold text-secondary mt-1">${skuLabel}</div>
                             </td>
-                            <td class="fw-bold">${it.name}</td>
+                            <td class="fw-bold">${it.name}${giftBadge}</td>
                             <td><span class="badge bg-light text-dark border">${entry.campaign}</span></td>
                             <td class="text-center"><span class="badge bg-dark fs-6">${qty}</span></td>
-                            <td class="text-danger fw-semibold">$${unitCost.toFixed(2)} c/u</td>
+                            <td class="${isGiftItem ? 'text-success' : 'text-danger'} fw-semibold">$${unitCost.toFixed(2)} c/u</td>
                             <td class="text-success fw-bold">$${suggestedPrice.toFixed(2)} c/u</td>
                             <td class="text-nowrap">
                                 <div class="d-inline-flex align-items-center gap-1">
                                     <button class="btn btn-sm btn-success fw-bold" onclick="openSellStockModal('${entry.orderId}', ${entry.itemIndex})">
                                         <i class="bi bi-bag-check me-1"></i> Vender a Cliente
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success fw-semibold" onclick="moveStockItemToPersonalUse('${entry.orderId}', ${entry.itemIndex})" title="Pasar a Consumo Personal">
+                                        <i class="bi bi-person-heart me-1"></i> Pasar a Consumo
                                     </button>
                                     <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar producto">
                                         <i class="bi bi-pencil"></i>
@@ -3004,10 +3018,12 @@
                     personalTbody.innerHTML = personalEntries.map(entry => {
                         const it = entry.item;
                         const qty = parseInt(it.qty, 10) || 1;
-                        const totalCost = Number(it.cost) || 0;
+                        const isGiftItem = Boolean(it.isGift ?? it.isCompanyGift);
+                        const totalCost = isGiftItem ? 0 : (Number(it.cost) || 0);
                         const totalPts = Number(it.totalPoints ?? ((Number(it.points) || 0) * qty)) || 0;
                         const brandBadge = it.brand === 'Natura' ? 'badge-natura' : (it.brand === 'Avon' ? 'badge-avon' : 'badge-casa');
                         const rawCode = String(it.code || '').trim();
+                        const giftTag = isGiftItem ? ` <span class="badge bg-warning text-dark ms-1">🎁 Regalo</span>` : '';
 
                         return `
                             <tr>
@@ -3015,11 +3031,11 @@
                                     <span class="badge ${brandBadge}">${it.brand || 'Natura'}</span>
                                     <div class="small fw-bold text-secondary mt-1">${rawCode ? `SKU: ${rawCode}` : 'S/C'}</div>
                                 </td>
-                                <td class="fw-semibold">${it.name} <span class="badge bg-success bg-opacity-15 text-success border border-success ms-1">Uso propio</span></td>
+                                <td class="fw-semibold">${it.name}${giftTag} <span class="badge bg-success bg-opacity-15 text-success border border-success ms-1">Uso propio</span></td>
                                 <td><span class="badge bg-light text-dark border">${entry.campaign}</span></td>
                                 <td class="text-center"><span class="badge bg-secondary">${qty}</span></td>
                                 <td class="text-center fw-bold" style="color: #7B3A1D;">${totalPts} pts</td>
-                                <td class="text-danger fw-semibold">$${totalCost.toFixed(2)}</td>
+                                <td class="${isGiftItem ? 'text-success' : 'text-danger'} fw-semibold">$${totalCost.toFixed(2)}</td>
                                 <td class="text-nowrap">
                                     <div class="d-inline-flex align-items-center gap-1">
                                         <button class="btn btn-sm btn-outline-primary btn-icon-action" onclick="editOrder('${entry.orderId}')" title="Editar consumo personal">
@@ -3035,6 +3051,52 @@
                     }).join('');
                 }
             }
+        }
+
+        async function moveStockItemToPersonalUse(orderId, itemIndex) {
+            const stockOrder = orders.find(o => o.id === orderId);
+            if (!stockOrder || !Array.isArray(stockOrder.items) || !stockOrder.items[itemIndex]) return;
+
+            const updatedItems = [...stockOrder.items];
+            const targetItem = { ...updatedItems[itemIndex] };
+            const isGiftItem = Boolean(targetItem.isGift ?? targetItem.isCompanyGift);
+            const qty = Math.max(1, parseInt(targetItem.qty, 10) || 1);
+            const unitPts = Math.max(0, Number(targetItem.points) || 0);
+
+            updatedItems[itemIndex] = {
+                ...targetItem,
+                isOwnStock: false,
+                isPersonalUse: true,
+                cost: isGiftItem ? 0 : (Number(targetItem.cost) || 0),
+                totalPoints: Number(targetItem.totalPoints ?? (unitPts * qty)) || 0,
+                finalClientPrice: 0,
+                profit: 0
+            };
+
+            const isAllStock = updatedItems.every(i => i.isOwnStock);
+            const isAllPersonalUse = updatedItems.every(i => i.isPersonalUse);
+            const updatedTotal = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.finalClientPrice) || 0)), 0);
+            const updatedProfit = updatedItems.reduce((a, i) => a + ((i.isOwnStock || i.isPersonalUse || i.isKitHeaderOnly) ? 0 : (Number(i.profit) || 0)), 0);
+            const updatedCost = updatedItems.reduce((a, i) => a + ((i.fromKitCode || /^KIT-/i.test(String(i.code || '').trim())) ? 0 : (Number(i.cost) || 0)), 0);
+            const updatedPoints = updatedItems.reduce((a, i) => a + (i.isOwnStock ? 0 : (Number(i.totalPoints ?? ((Number(i.points) || 0) * (Number(i.qty) || 1))) || 0)), 0);
+
+            const updatePayload = {
+                items: updatedItems,
+                isPureOwnStock: isAllStock,
+                isPurePersonalUse: isAllPersonalUse,
+                total: updatedTotal,
+                totalProfit: updatedProfit,
+                totalCost: updatedCost,
+                totalPoints: updatedPoints
+            };
+
+            if (isAllPersonalUse) {
+                updatePayload.clientName = 'Consumo Personal';
+                updatePayload.paymentStatus = 'Consumo Personal';
+            }
+
+            await db.collection('orders').doc(orderId).update(updatePayload);
+            showToastMessage('¡Producto pasado a Consumo Personal!');
         }
 
         function openSellStockModal(orderId, itemIndex) {
@@ -3086,7 +3148,7 @@
             rememberClientEntry(clientName, clientPhone);
             rebuildAutocompleteLists();
 
-            const unitCost = (Number(stockItem.cost) || 0) / availableQty;
+            const unitCost = (Boolean(stockItem.isGift ?? stockItem.isCompanyGift)) ? 0 : ((Number(stockItem.cost) || 0) / availableQty);
             const saleTotal = unitPrice * sellQty;
             const saleCost = unitCost * sellQty;
             const saleProfit = saleTotal - saleCost;
@@ -3094,7 +3156,7 @@
             const soldItem = {
                 isOwnStock: false,
                 isPersonalUse: false,
-                isGift: false,
+                isGift: Boolean(stockItem.isGift ?? stockItem.isCompanyGift),
                 brand: stockItem.brand || 'Natura',
                 code: stockItem.code || '',
                 page: stockItem.page || '',
@@ -3356,7 +3418,7 @@
                 msg += `\n\n✨ *Novedades:* ${extraNotes}`;
             }
 
-            msg += `\n\nEscribime por acá y coordinamos con gusto 😊\n*M. Eugenia Carol* • 📱 381-519-3109`;
+            msg += `\n\nEscribime por acá y coordinamos con gusto 😊\n*Euge Carol* • 📱 381-519-3109`;
             return msg;
         }
 
